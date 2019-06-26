@@ -1,6 +1,7 @@
 import unittest
 from work_with_device import *
 
+
 class RTU327(unittest.TestCase):
 
     def test_gettime(self):
@@ -12,16 +13,16 @@ class RTU327(unittest.TestCase):
         device_datetime = datetime.datetime.utcfromtimestamp(formated_device_time)
         print(device_datetime)
 
-        #check ## секунды не проверяю
-        curr_datetime= datetime.datetime.now()
+        # check ## секунды не проверяю
+        curr_datetime = datetime.datetime.now()
         device_datetime = device_datetime + datetime.timedelta(hours=3)
-        difference_between_dates = abs((curr_datetime-device_datetime).total_seconds())
-        self.assertTrue(difference_between_dates < 59) # Разница, не больше 59 секунд.
+        difference_between_dates = abs((curr_datetime - device_datetime).total_seconds())
+        self.assertTrue(difference_between_dates < 59)  # Разница, не больше 59 секунд.
 
     def test_settime(self):
         # TODO
         # Правильно переписывать , без дублирования test_gettime()
-        
+
         hour_in_seconds = 3600
         # result_answer_map = send_command_and_get_answer(115) ## Без доп. параметров работает
         res_hex_time = get_right_hex(hex(hour_in_seconds)[2:])
@@ -31,9 +32,9 @@ class RTU327(unittest.TestCase):
             for _ in range(4 - int(amount_of_byte)):
                 result_hex_time += b'\x00'
         result_hex_time += res_hex_time.encode()
-        result_answer_map = send_command_and_get_answer(115, command_params=b'\x10\x0e\x00\x00') #3600 + добавляем 1 час на успд
+        result_answer_map = send_command_and_get_answer(115,
+                                                        command_params=b'\x10\x0e\x00\x00')  # 3600 + добавляем 1 час на успд
         # result_answer_map = send_command_and_get_answer(115, command_params=b'\xfe\xff\xff\xff')
-
 
         # check ## секунды не проверяю
         # Копия --- test_gettime
@@ -48,8 +49,7 @@ class RTU327(unittest.TestCase):
         difference_between_dates = abs((curr_datetime - device_datetime).total_seconds())
         self.assertTrue(3540 < difference_between_dates < 3660)  # Разница +- 1 минута
 
-
-    def test_getmaxlogid(self): ##
+    def test_getmaxlogid(self):  ##
         """ Просто проверяем количество ответа - 4 байта. """
         result_answer_map = send_command_and_get_answer(101, command_params=b'\x01')
         # answer_data = result_answer_map['answer_data'][::-1]
@@ -58,10 +58,31 @@ class RTU327(unittest.TestCase):
     def test_getlog(self):
         pass
 
-    def test_getshprn(self):
-        """серийный номер  ?? откуда брать ??
+    def test_getshprm(self):
+        """серийный номер успд ?? откуда брать ??
          10 18 47 60
          """
-        result_answer_map = send_command_and_get_answer(101, command_params=b'\x01')
-        # answer_data = result_answer_map['answer_data'][::-1]
-        self.assertEqual(4, len(result_answer_map['answer_data']))
+        result_answer_map = send_command_and_get_answer(112, command_params=b'\x00\x10\x18\x47\x60')
+        answer_data = result_answer_map['answer_data'][::-1] ##перевернутый ответ
+        vers = answer_data[:2]
+        typ_sh = answer_data[2]
+        kt = answer_data[3:11] ##FLOAT8
+        kn = answer_data[11:19] ##FLOAT8
+        m = answer_data[20:28] ##FLOAT8
+        interv = answer_data[29]
+        syb_rnk = answer_data[30:34] ##INT32
+        n_ob = answer_data[34:38] ##INT32
+        n_fid = answer_data[38:] ##INT32
+        print(result_answer_map)
+        print('vers :: ', vers)
+        print('typ_sh :: ', typ_sh)
+        print('kt :: ', kt)
+        print('kn :: ', kn)
+        print('m :: ', m)
+        print('interv :: ', interv)
+        print('syb_rnk :: ', syb_rnk)
+        print('n_ob :: ', n_ob)
+        print('n_fid :: ', n_fid)
+
+        # print(answer_data)
+        # self.assertEqual(4, len(result_answer_map['answer_data']))
