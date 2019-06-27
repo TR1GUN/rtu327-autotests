@@ -59,8 +59,12 @@ class RTU327(unittest.TestCase):
         self.assertEqual(4, len(result_answer_map['answer_data']))
 
     def test_get_log(self):
-        # self.assertEqual(13, len(answer_data))
-        pass
+        Nsect = b'\x00\x00\x00\x01'
+        Id = b'\x00\x00\x00\x01'
+        Num = b'\x00\x01'
+        result_answer_map = send_command_and_get_answer(117, command_params=Nsect + Id + Num)
+        print(result_answer_map)
+        self.assertEqual(13, len(result_answer_map))
 
     def test_get_shprm(self): ## Пока просто смотрим
         """серийный номер успд ?? откуда брать ??
