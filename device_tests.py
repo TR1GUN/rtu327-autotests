@@ -7,7 +7,7 @@ from work_with_device import *
 
 class RTU327(unittest.TestCase):
 
-    def test_gettime(self):
+    def test_get_time(self):
         result_answer_map = send_command_and_get_answer(114)
         answer_data = result_answer_map['answer_data'][::-1]
         result_answer_data = ''
@@ -22,7 +22,7 @@ class RTU327(unittest.TestCase):
         difference_between_dates = abs((curr_datetime - device_datetime).total_seconds())
         self.assertTrue(difference_between_dates < 59)  # Разница, не больше 59 секунд.
 
-    def test_settime(self):
+    def test_set_time(self):
         # TODO
         # Правильно переписывать , без дублирования test_gettime()
 
@@ -52,17 +52,17 @@ class RTU327(unittest.TestCase):
         difference_between_dates = abs((curr_datetime - device_datetime).total_seconds())
         self.assertTrue(3540 < difference_between_dates < 3660)  # Разница +- 1 минута
 
-    def test_getmaxlogid(self):  ##
+    def test_get_maxlogid(self):  ##
         """ Просто проверяем количество ответа - 4 байта. """
         result_answer_map = send_command_and_get_answer(101, command_params=b'\x01')
         # answer_data = result_answer_map['answer_data'][::-1]
         self.assertEqual(4, len(result_answer_map['answer_data']))
 
-    def test_getlog(self):
+    def test_get_log(self):
         # self.assertEqual(13, len(answer_data))
         pass
 
-    def test_getshprm(self): ## Пока просто смотрим
+    def test_get_shprm(self): ## Пока просто смотрим
         """серийный номер успд ?? откуда брать ??
          10 18 47 60
          """
@@ -97,7 +97,7 @@ class RTU327(unittest.TestCase):
         # print(answer_data)
         # self.assertEqual(4, len(result_answer_map['answer_data']))
 
-    def test_getpok(self):  ##
+    def test_get_pok(self):  ##
         """ Просто проверяем количество ответа - 8 байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
@@ -110,7 +110,7 @@ class RTU327(unittest.TestCase):
         print(answer_data)
         self.assertEqual(8, len(answer_data))
 
-    def test_getlp(self):  ##
+    def test_get_lp(self):  ##
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
@@ -124,7 +124,7 @@ class RTU327(unittest.TestCase):
         print(answer_data)
         self.assertEqual(15, len(answer_data))
 
-    def test_shortlp(self):        ## undone
+    def test_get_shortlp(self):        ## undone
         ## undone
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
@@ -141,7 +141,7 @@ class RTU327(unittest.TestCase):
         self.assertEqual(15, len(answer_data))
         ## undone
 
-    def test_gettests(self):  ## undone
+    def test_get_tests(self):  ## undone
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
@@ -154,7 +154,7 @@ class RTU327(unittest.TestCase):
         print(answer_data)
         self.assertTrue(len(answer_data) >= 18) #не менбше 18 байт - ?? как считается массиы ??
 
-    def test_autoread(self):  ## undone
+    def test_get_autoread(self):  ## undone
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
@@ -169,7 +169,7 @@ class RTU327(unittest.TestCase):
         # print(len(answer_data))
         self.assertEqual(198,len(answer_data))
 
-    def test_mtrlog(self):  ## undone
+    def test_get_mtrlog(self):  ## undone
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
@@ -183,22 +183,7 @@ class RTU327(unittest.TestCase):
         print(len(answer_data))
         # ?? self.assertEqual(198,len(answer_data)) ??
 
-    def test_lpcmn(self):  ## undone
-        """ Просто проверяем количество ответа - ?? байта.
-        Номер счетчика - b'\x00\x10\x18\x47\x60'
-        """
-        Nsh = b'\x00\x10\x18\x47\x60'
-        Tstart = b'\x00\x00\x00\x00'
-        Cnt = b'\x00\x01'
-        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
-        result_answer_map = send_command_and_get_answer(118, command_params=Nsh + Tstart + Cnt)
-        answer_data = result_answer_map['answer_data'][::-1]
-        print(answer_data)
-        print(len(answer_data))
-        # ?? self.assertEqual(198,len(answer_data)) ??
-
-
-# if __name__ == "__main__":
-#     # unittest.main()
-#     fast = unittest.TestSuite()
+if __name__ == "__main__":
+    unittest.main()
+    # fast = unittest.TestSuite()
 #     fast.addTests(TestFastThis)
