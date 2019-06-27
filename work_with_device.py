@@ -162,11 +162,14 @@ def parse_answer(answer_array): ## Неправильно работает ?
 
 def send_command_and_get_answer(command_number=None,command_params=b'', send_command_raw=None):
     res = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    res.connect(('192.168.205.10', 14101))
+
+    res.connect(('192.168.205.10', 14101)) ##тестовая
+    # res.connect(('192.168.202.81', 12345)) ##Серегина
+
     res.settimeout(5)
     if command_number:
         bb = send_command(command_number=command_number, command_params=command_params)
-    else:
+    elif send_command_raw: ## Не работает корректно ?
         bb = send_command_raw ##не работает правильно
     print(bb,'to_send')
     print(res.sendall(bb))

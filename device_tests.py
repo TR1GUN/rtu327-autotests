@@ -1,3 +1,6 @@
+"""
+py -m pytest device_tests.py::RTU327::test_gettime -s -v
+"""
 import unittest
 from work_with_device import *
 
@@ -56,23 +59,29 @@ class RTU327(unittest.TestCase):
         self.assertEqual(4, len(result_answer_map['answer_data']))
 
     def test_getlog(self):
+        # self.assertEqual(13, len(answer_data))
         pass
 
-    def test_getshprm(self):
+    def test_getshprm(self): ## Пока просто смотрим
         """серийный номер успд ?? откуда брать ??
          10 18 47 60
          """
-        result_answer_map = send_command_and_get_answer(112, command_params=b'\x00\x10\x18\x47\x60')
+        Nsh =b'\x00\x10\x18\x47\x60'
+        result_answer_map = send_command_and_get_answer(112, command_params=Nsh)
         answer_data = result_answer_map['answer_data'][::-1] ##перевернутый ответ
+        # answer_data = result_answer_map['answer_data'] ##перевернутый ответ
+        print(len(answer_data))
+        print(len(answer_data))
+        print(len(answer_data))
         vers = answer_data[:2]
         typ_sh = answer_data[2]
         kt = answer_data[3:11] ##FLOAT8
         kn = answer_data[11:19] ##FLOAT8
-        m = answer_data[20:28] ##FLOAT8
-        interv = answer_data[29]
-        syb_rnk = answer_data[30:34] ##INT32
-        n_ob = answer_data[34:38] ##INT32
-        n_fid = answer_data[38:] ##INT32
+        m = answer_data[19:27] ##FLOAT8
+        interv = answer_data[27]
+        syb_rnk = answer_data[28:32] ##INT32
+        n_ob = answer_data[32:36] ##INT32
+        n_fid = answer_data[36:] ##INT32
         print(result_answer_map)
         print('vers :: ', vers)
         print('typ_sh :: ', typ_sh)
@@ -83,6 +92,113 @@ class RTU327(unittest.TestCase):
         print('syb_rnk :: ', syb_rnk)
         print('n_ob :: ', n_ob)
         print('n_fid :: ', n_fid)
+        self.assertEqual(40, len(answer_data))
 
         # print(answer_data)
         # self.assertEqual(4, len(result_answer_map['answer_data']))
+
+    def test_getpok(self):  ##
+        """ Просто проверяем количество ответа - 8 байта.
+        Номер счетчика - b'\x00\x10\x18\x47\x60'
+        """
+        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
+        NSH  =b'\x00\x10\x18\x47\x60'
+        Chnl  = b'\x01'
+        Time  = b'\x00\x00\x00\x00'
+        result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+Time)
+        answer_data = result_answer_map['answer_data'][::-1]
+        print(answer_data)
+        self.assertEqual(8, len(answer_data))
+
+    def test_getlp(self):  ##
+        """ Просто проверяем количество ответа - ?? байта.
+        Номер счетчика - b'\x00\x10\x18\x47\x60'
+        """
+        Nsh =b'\x00\x10\x18\x47\x60'
+        Kanal = b'\x01'
+        Tstart = b'\x00\x00\x00\x00'
+        Kk = b'\x00\x01'
+        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
+        result_answer_map = send_command_and_get_answer(111, command_params=Nsh+Kanal+Tstart+Kk)
+        answer_data = result_answer_map['answer_data'][::-1]
+        print(answer_data)
+        self.assertEqual(15, len(answer_data))
+
+    def test_shortlp(self):        ## undone
+        ## undone
+        """ Просто проверяем количество ответа - ?? байта.
+        Номер счетчика - b'\x00\x10\x18\x47\x60'
+        """
+        Nsh =b'\x00\x10\x18\x47\x60'
+        Kanal = b'\x01'
+        Interval = b'\x00'
+        Tstart = b'\x00\x00\x00\x00'
+        Kk = b'\x00\x01'
+        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
+        result_answer_map = send_command_and_get_answer(105, command_params=Nsh+Kanal+Interval+Tstart+Kk)
+        answer_data = result_answer_map['answer_data'][::-1]
+        print(answer_data)
+        self.assertEqual(15, len(answer_data))
+        ## undone
+
+    def test_gettests(self):  ## undone
+        """ Просто проверяем количество ответа - ?? байта.
+        Номер счетчика - b'\x00\x10\x18\x47\x60'
+        """
+        Nsh =b'\x00\x10\x18\x47\x60'
+        Tstart = b'\x00\x00\x00\x00'
+        NumTests  = b'\x01'
+        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
+        result_answer_map = send_command_and_get_answer(107, command_params=Nsh+Tstart+NumTests)
+        answer_data = result_answer_map['answer_data'][::-1]
+        print(answer_data)
+        self.assertTrue(len(answer_data) >= 18) #не менбше 18 байт - ?? как считается массиы ??
+
+    def test_autoread(self):  ## undone
+        """ Просто проверяем количество ответа - ?? байта.
+        Номер счетчика - b'\x00\x10\x18\x47\x60'
+        """
+        N_SH =b'\x00\x10\x18\x47\x60'
+        Tday  = b'\x00\x00\x00\x00'
+        Kanal = b'\x01'
+        Kk = b'\x01'
+        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
+        result_answer_map = send_command_and_get_answer(109, command_params=N_SH + Tday + Kanal + Kk)
+        answer_data = result_answer_map['answer_data'][::-1]
+        # print(answer_data)
+        # print(len(answer_data))
+        self.assertEqual(198,len(answer_data))
+
+    def test_mtrlog(self):  ## undone
+        """ Просто проверяем количество ответа - ?? байта.
+        Номер счетчика - b'\x00\x10\x18\x47\x60'
+        """
+        Nsh = b'\x00\x10\x18\x47\x60'
+        Tstart = b'\x00\x00\x00\x00'
+        Cnt = b'\x00\x01'
+        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
+        result_answer_map = send_command_and_get_answer(116, command_params=Nsh + Tstart + Cnt)
+        answer_data = result_answer_map['answer_data'][::-1]
+        print(answer_data)
+        print(len(answer_data))
+        # ?? self.assertEqual(198,len(answer_data)) ??
+
+    def test_lpcmn(self):  ## undone
+        """ Просто проверяем количество ответа - ?? байта.
+        Номер счетчика - b'\x00\x10\x18\x47\x60'
+        """
+        Nsh = b'\x00\x10\x18\x47\x60'
+        Tstart = b'\x00\x00\x00\x00'
+        Cnt = b'\x00\x01'
+        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
+        result_answer_map = send_command_and_get_answer(118, command_params=Nsh + Tstart + Cnt)
+        answer_data = result_answer_map['answer_data'][::-1]
+        print(answer_data)
+        print(len(answer_data))
+        # ?? self.assertEqual(198,len(answer_data)) ??
+
+
+# if __name__ == "__main__":
+#     # unittest.main()
+#     fast = unittest.TestSuite()
+#     fast.addTests(TestFastThis)
