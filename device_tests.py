@@ -3,9 +3,13 @@ py -m pytest device_tests.py::RTU327::test_gettime -s -v
 """
 import unittest
 from work_with_device import *
+import work_with_device
 
 
 class RTU327(unittest.TestCase):
+
+    """'3c', 'a0', '2f' = неправильная контрольная сумма - жопа ответа
+    прокинуть в каждый тест ? """
 
     def test_get_time(self):
         result_answer_map = send_command_and_get_answer(114)
@@ -21,6 +25,21 @@ class RTU327(unittest.TestCase):
         device_datetime = device_datetime + datetime.timedelta(hours=3)
         difference_between_dates = abs((curr_datetime - device_datetime).total_seconds())
         self.assertTrue(difference_between_dates < 59)  # Разница, не больше 59 секунд.
+
+    def test_bad_crc(self):
+        prefix = b'\x02'  ## префикс
+        first_part_of_package_size = b'\x00'  ## \x00 ++ <тут мы подсчитываем \\x > - Длина пакета \
+        ordinal_number = b'\x01\x00'  ## порядковый номер
+        password = b'\x00\x00\x00\x00'  ## пароль
+        reserve = b'\x00\x00'  ## резерв
+
+        wrong_command = work_with_device.create_command(prefix=prefix, first_part_of_package_size=first_part_of_package_size,
+                                                        ordinal_number=ordinal_number, password=password, reserve=reserve,
+                                                        crc=b'\xff\xff', command_number=114)
+        print(wrong_command)
+        result_answer_map = send_command_and_get_answer(send_command_raw=wrong_command)
+        self.assertEqual(['a0', '2f'],result_answer_map['crc'])
+
 
     def test_set_time(self):
         # TODO
