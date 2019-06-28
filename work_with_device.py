@@ -83,10 +83,17 @@ def byte_request_to_hex_array(request):
     """
     Возвращает запрос в виде хексового представления чисел.
     Исплоьзует метод byte_request_to_int_array()
-    :param request: Запрос в виде byte 'строки'. Пример :  b'\x01\x00\x00\x00\x00\x00\x00\x00\x00\x84\x0c\x16]'
     :return: массив hex чисел
     """
     return [get_right_hex(hex(x)[2:]) for x in byte_request_to_int_array(request)]
+
+def byte_request_to_char_array(request):
+    """
+    Возвращает запрос в виде char.
+    Исплоьзует метод byte_request_to_int_array()
+    :return: массив символов(char)
+    """
+    return [chr((x)) for x in byte_request_to_int_array(request)]
 
 def parse_bytes_str_to_array(request,add_x_prefix=True):
     """ Кидать b'' команды . НЕ STR
@@ -125,16 +132,20 @@ def crc16_calc_tab_rtu(buf):
     crc = 0xffff  ##Стартовое число -- объявить в глобальных(статических) переменных ?*
     for x in buf:
         crc = np.uint16(((np.uint16(TableCRC[crc >> 8])) ^ (crc << 8) ^ (np.uint16((np.uint8(x))))))
+        # print((np.uint16(TableCRC[crc >> 8])), np.uint16((np.uint8(x))), 'hz1')
+        print(crc,'np')
     return crc
 
-def crc16_calc_tab_rtu_ctype(buf):
+def crc16_calc_tab_rtu_my_type(buf):
     """
     Вычисление контрольной суммы.
     """
     print(buf,'buf')
     crc = 0xffff  ##Стартовое число -- объявить в глобальных(статических) переменных ?*
     for x in buf:
-        crc = ctypes.c_uint16(((ctypes.c_uint16(TableCRC[crc >> 8])) ^ (crc << 8) ^ (ctypes.c_uint16((ctypes.c_uint8(x))))))
+        crc = to_uint16(((to_uint16(TableCRC[crc >> 8])) ^ (crc << 8) ^ (to_uint16((to_uint8(x))))))
+        # print((to_uint16(TableCRC[crc >> 8])), to_uint16((to_uint8(x))), 'hz2')
+        print(crc, 'my')
     return crc
 
 
@@ -148,13 +159,13 @@ def get_crc(request):
     res = crc16_calc_tab_rtu(request)
     return bytes.fromhex(get_right_hex(hex(res)[2:]))
 
-def get_crc_ctype(request):
+def get_crc_my_type(request):
     """
     Получение контрольной суммы.
     ??Иногда?? высчитывается контрольная сумма как 3da, из-за этого hex() метод не работает корректно.
     ??Надо?? использовать get_right_hex() метод
     """
-    res = crc16_calc_tab_rtu_ctype(request)
+    res = crc16_calc_tab_rtu_my_type(request)
     return bytes.fromhex(get_right_hex(hex(res)[2:]))
 
 def decode_hex_to_str_hex(hex_message):
@@ -300,3 +311,25 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     return parse_answer(hex_normal_view_answer_array)
 
 
+# def to_uint8(num):## НЕПРАВИЛЬНО ????
+#     if num < 0:## НЕПРАВИЛЬНО ????
+#         while num < 0: num += 256
+#     if num < 256: return num
+#     elif num == 256: return 0
+#     else:
+#         while num > 256: num = num - 256
+#     return num
+#
+# ## НЕПРАВИЛЬНО ????
+# def to_uint16(num): ## НЕПРАВИЛЬНО ????
+#     if num < 0:
+#         while num < 0: num += 65535
+#     if num < 65535 : return num
+#     elif num == 65535 : return 0
+#     else:
+#         while num > 65535 : num = num - 65535
+#     return num
+
+print(byte_request_to_int_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
+print(byte_request_to_char_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
+print(byte_request_to_hex_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
