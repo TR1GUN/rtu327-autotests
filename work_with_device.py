@@ -41,6 +41,7 @@ import socket
 import subprocess
 import threading
 import time
+import ctypes
 
 import numpy as np
 
@@ -68,6 +69,24 @@ TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x81
 def char_bytes_str_to_array(request):
     # print(parse_bytes_str_to_array(request))
     return hex_bytes_array_to_string([bytes.hex(_) for _ in parse_bytes_str_to_array(request)])
+
+def byte_request_to_int_array(request):
+    """
+    Возвращает запрос в виде массива чисел.
+    Каждый байт это число, так что просто проходимся по запросу.
+    :param request: Запрос в виде byte 'строки'. Пример :  b'\x01\x00\x00\x00\x00\x00\x00\x00\x00\x84\x0c\x16]'
+    :return: массив чисел
+    """
+    return [x for x in request]
+
+def byte_request_to_hex_array(request):
+    """
+    Возвращает запрос в виде хексового представления чисел.
+    Исплоьзует метод byte_request_to_int_array()
+    :param request: Запрос в виде byte 'строки'. Пример :  b'\x01\x00\x00\x00\x00\x00\x00\x00\x00\x84\x0c\x16]'
+    :return: массив hex чисел
+    """
+    return [get_right_hex(hex(x)[2:]) for x in byte_request_to_int_array(request)]
 
 def parse_bytes_str_to_array(request,add_x_prefix=True):
     """ Кидать b'' команды . НЕ STR
@@ -102,10 +121,22 @@ def crc16_calc_tab_rtu(buf):
     """
     Вычисление контрольной суммы.
     """
+    print(buf,'buf')
     crc = 0xffff  ##Стартовое число -- объявить в глобальных(статических) переменных ?*
     for x in buf:
         crc = np.uint16(((np.uint16(TableCRC[crc >> 8])) ^ (crc << 8) ^ (np.uint16((np.uint8(x))))))
     return crc
+
+def crc16_calc_tab_rtu_ctype(buf):
+    """
+    Вычисление контрольной суммы.
+    """
+    print(buf,'buf')
+    crc = 0xffff  ##Стартовое число -- объявить в глобальных(статических) переменных ?*
+    for x in buf:
+        crc = ctypes.c_uint16(((ctypes.c_uint16(TableCRC[crc >> 8])) ^ (crc << 8) ^ (ctypes.c_uint16((ctypes.c_uint8(x))))))
+    return crc
+
 
 
 def get_crc(request):
@@ -117,6 +148,14 @@ def get_crc(request):
     res = crc16_calc_tab_rtu(request)
     return bytes.fromhex(get_right_hex(hex(res)[2:]))
 
+def get_crc_ctype(request):
+    """
+    Получение контрольной суммы.
+    ??Иногда?? высчитывается контрольная сумма как 3da, из-за этого hex() метод не работает корректно.
+    ??Надо?? использовать get_right_hex() метод
+    """
+    res = crc16_calc_tab_rtu_ctype(request)
+    return bytes.fromhex(get_right_hex(hex(res)[2:]))
 
 def decode_hex_to_str_hex(hex_message):
     hex_message = hex_message.split('0x')
@@ -248,14 +287,16 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
             else:
                 raise Exception(ex)
     res.close()
-
+    print(answer_bytes)
     hex_normal_view_answer_array = hex_bytes_array_to_string(answer_bytes)
     print(hex_normal_view_answer_array,'parsed_answer')
     """ Проверить crc """
     if answer_bytes[-3:] == ['3c', 'a0', '2f']: print('bad answer')
+    result = b''
+    for _ in answer_bytes[3:-2]: result += _
+    # print([result + _ for _ in answer_bytes[3:-2]])
+    print(result)
+    print(get_crc(result))
     return parse_answer(hex_normal_view_answer_array)
 
 
-# print(get_crc(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
-# print(parse_bytes_str_to_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s9\x00\x00\x00'))
-# print(char_bytes_str_to_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s9\x00\x00\x00'))

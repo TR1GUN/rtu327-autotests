@@ -55,21 +55,23 @@ class RTU327(unittest.TestCase):
                 result_hex_time += b'\x00'
         result_hex_time += res_hex_time.encode()
         result_answer_map = send_command_and_get_answer(115,
-                                                        command_params=b'\x10\x0e\x00\x00')  # 3600 + добавляем 1 час на успд
+                                                        # command_params=b'\x10\x0e\x00\x00')  # 3600 + добавляем 1 час на успд
+                                                        command_params=b'\xf0\xf1\xff\xff')  # 3600 + добавляем 1 час на успд
         # result_answer_map = send_command_and_get_answer(115, command_params=b'\xfe\xff\xff\xff')
 
         # check ## секунды не проверяю
         # Копия --- test_gettime
-        result_answer_map = send_command_and_get_answer(114)
-        answer_data = result_answer_map['answer_data'][::-1]
-        result_answer_data = ''
-        for x in answer_data: result_answer_data += x
-        formated_device_time = int(result_answer_data, 16)
-        device_datetime = datetime.datetime.utcfromtimestamp(formated_device_time)
-        curr_datetime = datetime.datetime.now()
-        device_datetime = device_datetime + datetime.timedelta(hours=3)
-        difference_between_dates = abs((curr_datetime - device_datetime).total_seconds())
-        self.assertTrue(3540 < difference_between_dates < 3660)  # Разница +- 1 минута
+        """ Проверка """
+        # result_answer_map = send_command_and_get_answer(114)
+        # answer_data = result_answer_map['answer_data'][::-1]
+        # result_answer_data = ''
+        # for x in answer_data: result_answer_data += x
+        # formated_device_time = int(result_answer_data, 16)
+        # device_datetime = datetime.datetime.utcfromtimestamp(formated_device_time)
+        # curr_datetime = datetime.datetime.now()
+        # device_datetime = device_datetime + datetime.timedelta(hours=3)
+        # difference_between_dates = abs((curr_datetime - device_datetime).total_seconds())
+        # self.assertTrue(3540 < difference_between_dates < 3660)  # Разница +- 1 минута
 
     def test_get_maxlogid(self):  ##
         """ Просто проверяем количество ответа - 4 байта. """
