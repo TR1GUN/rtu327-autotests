@@ -20,7 +20,6 @@ FFFFFFFF - пароль (только для RTU327)
 \x72 - код команды\
 
 
-
 Ответ --
 b'\x02\x00\r\x01\x00\x00\x00\x00\x00\x00\x00\x00E\x97\xf6\\\x1aq'
 \x02 - префикс\
@@ -42,8 +41,39 @@ import subprocess
 import threading
 import time
 import ctypes
-
 import numpy as np
+
+class ThreadTimeHelper(threading.Thread):
+
+    def __init__(self, *args, **kwargs):
+        super(ThreadTimeHelper, self).__init__(*args, **kwargs)
+        # self._stop = threading.Event()
+        self._stop = False
+        self.start_time = datetime.datetime.now()
+
+        # function using _stop function
+
+    def stop(self):
+        self._stop = True
+
+    # def stopped(self):
+        # return self._stop.isSet()
+        # return True
+
+    def rerun(self):
+        self.start_time = datetime.datetime.now()
+
+    def run(self):
+        self.start_time = datetime.datetime.now()
+        while self._stop is False:
+            print("Hello, world!")
+            time.sleep(1)
+            if (datetime.datetime.now() - self.start_time).seconds > 5:
+                self.stop()
+                print(self._stop)
+                print("Время закончилось")
+                return ##Время закончилось
+
 
 TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c,
             0xd1ad, 0xe1ce, 0xf1ef, 0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6, 0x9339, 0x8318,
@@ -66,9 +96,11 @@ TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x81
             0x5c64, 0x4c45, 0x3ca2, 0x2c83, 0x1ce0, 0x0cc1, 0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9,
             0x9ff8, 0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0]
 
+
 def char_bytes_str_to_array(request):
     # print(parse_bytes_str_to_array(request))
     return hex_bytes_array_to_string([bytes.hex(_) for _ in parse_bytes_str_to_array(request)])
+
 
 def byte_request_to_int_array(request):
     """
@@ -79,6 +111,7 @@ def byte_request_to_int_array(request):
     """
     return [x for x in request]
 
+
 def byte_request_to_hex_array(request):
     """
     Возвращает запрос в виде хексового представления чисел.
@@ -86,6 +119,7 @@ def byte_request_to_hex_array(request):
     :return: массив hex чисел
     """
     return [get_right_hex(hex(x)[2:]) for x in byte_request_to_int_array(request)]
+
 
 def byte_request_to_char_array(request):
     """
@@ -95,8 +129,12 @@ def byte_request_to_char_array(request):
     """
     return [chr((x)) for x in byte_request_to_int_array(request)]
 
-def parse_bytes_str_to_array(request,add_x_prefix=True):
-    """ Кидать b'' команды . НЕ STR
+
+def parse_bytes_str_to_array(request, add_x_prefix=True):
+    """
+     Разбивает byte строку, по символам.
+
+     Кидать b'' команды . НЕ STR
     ??? Просто разбитые, не в Char представлении ???
     """
     result_array = []
@@ -104,13 +142,17 @@ def parse_bytes_str_to_array(request,add_x_prefix=True):
         # Первый и последний убираем, т.к. они не нужны. -- "b'" и b"'" соответственно.
         if _[0] == 'x' and len(_) > 2: _ = _[1:]  ## Проверяем x00
         if len(_) == 2:
-            if add_x_prefix : result_array.append(bytes.fromhex(_))
-            else : result_array.append(_)
+            if add_x_prefix:
+                result_array.append(bytes.fromhex(_))
+            else:
+                result_array.append(_)
         elif len(_) <= 1:
             raise Exception("Can't be 1 symbol")
         else:
-            if add_x_prefix : first_byte =bytes.fromhex(_[:2])
-            else : first_byte = _[:2]
+            if add_x_prefix:
+                first_byte = bytes.fromhex(_[:2])
+            else:
+                first_byte = _[:2]
             other_bytes = [_[2:]]
             result_array.append(first_byte)
             temp_arr = [x.encode() for x in list(' '.join(other_bytes))]
@@ -118,36 +160,38 @@ def parse_bytes_str_to_array(request,add_x_prefix=True):
     return result_array[:-1]  ## последний ' остался от b''
 
 
-# def _crc_by_int(resquest):
-#     separate = hex_bytes_array_to_string(resquest)
-#     res = []
-#     for _ in sss :
-#         res.append(int(_, 16))
-
 def crc16_calc_tab_rtu(buf):
     """
-    Вычисление контрольной суммы.
+    Вычисление контрольной суммы с помощью библиотеки numpy.
     """
-    print(buf,'buf')
+    print(buf, 'buf')
     crc = 0xffff  ##Стартовое число -- объявить в глобальных(статических) переменных ?*
     for x in buf:
         crc = np.uint16(((np.uint16(TableCRC[crc >> 8])) ^ (crc << 8) ^ (np.uint16((np.uint8(x))))))
-        # print((np.uint16(TableCRC[crc >> 8])), np.uint16((np.uint8(x))), 'hz1')
-        print(crc,'np')
     return crc
 
-def crc16_calc_tab_rtu_my_type(buf):
+
+def crc16_calc_tab_rtu_ctype(buf):
     """
-    Вычисление контрольной суммы.
+    Вычисление контрольной суммы с помощью библиотеки ctype.
     """
-    print(buf,'buf')
+    print(buf, 'buf')
     crc = 0xffff  ##Стартовое число -- объявить в глобальных(статических) переменных ?*
     for x in buf:
-        crc = to_uint16(((to_uint16(TableCRC[crc >> 8])) ^ (crc << 8) ^ (to_uint16((to_uint8(x))))))
-        # print((to_uint16(TableCRC[crc >> 8])), to_uint16((to_uint8(x))), 'hz2')
-        print(crc, 'my')
+        crc = ctypes.c_uint16((((ctypes.c_uint16(TableCRC[crc >> 8]).value) ^ (crc << 8) ^ (
+            ctypes.c_uint16((ctypes.c_uint8(x).value)).value)))).value
     return crc
 
+
+def calculate_crcex(buf):
+    """
+    Вычисление контрольной суммы  с помощью библиотеки numpy(вторая формула).
+    """
+    print(buf, 'buf')
+    crc = 0xffff  ##Стартовое число -- объявить в глобальных(статических) переменных ?*
+    for i in range(len(buf)):
+        crc = np.uint16(TableCRC[crc >> 8] ^ (crc << 8) ^ buf[i])
+    return crc
 
 
 def get_crc(request):
@@ -159,14 +203,16 @@ def get_crc(request):
     res = crc16_calc_tab_rtu(request)
     return bytes.fromhex(get_right_hex(hex(res)[2:]))
 
-def get_crc_my_type(request):
+
+def get_crc_ctype(request):
     """
     Получение контрольной суммы.
     ??Иногда?? высчитывается контрольная сумма как 3da, из-за этого hex() метод не работает корректно.
     ??Надо?? использовать get_right_hex() метод
     """
-    res = crc16_calc_tab_rtu_my_type(request)
+    res = crc16_calc_tab_rtu_ctype(request)
     return bytes.fromhex(get_right_hex(hex(res)[2:]))
+
 
 def decode_hex_to_str_hex(hex_message):
     hex_message = hex_message.split('0x')
@@ -176,8 +222,12 @@ def decode_hex_to_str_hex(hex_message):
 
 
 def get_number_of_request(request):
+    """
+    Подсчет количества байт(символов) из request.
+    """
     number_of_bytes = hex(len(parse_bytes_str_to_array(request)))[2:]
-    if len(number_of_bytes) == 1: number_of_bytes = '0' + number_of_bytes  # Если меньше 10, то нужен 0 - т.к. должно отражаться 2 символа , т.е. 09,10,01,00,99
+    if len(
+        number_of_bytes) == 1: number_of_bytes = '0' + number_of_bytes  # Если меньше 10, то нужен 0 - т.к. должно отражаться 2 символа , т.е. 09,10,01,00,99
     return bytes.fromhex(number_of_bytes)
 
 
@@ -190,12 +240,8 @@ def hex_bytes_array_to_string(hex_bytes_array):
 
 
 def divide_bytes_string_per_byte(bytes_string):  ## Может не правильно работать с \t,\r и т.д.
-    # return [x != '' for x in str(bytes_string)[2:-1].split(r'\x')]
     return [x for x in str(bytes_string)[2:-1].split('\\') if x != '']
 
-
-# def bytes_string_to_hex_array(bytes_string):
-#     return hex_bytes_array_to_string(divide_bytes_string_per_byte(bytes_string))
 
 def get_right_hex(hex_str):
     """
@@ -212,25 +258,22 @@ def get_right_hex(hex_str):
 def reverse_hex(hex_str):
     """
     Перевернуть hex команду. \x01\x02\x03\x04 ==> \x04\x03\x02\x01
-
     Работаем только с \x00 ??
     """
     return hex_str[::-1]
 
 
-def check_answer_crc(result):
-    """ Проверка crc команды, которая пришла от успд """
-    pass
-
-
 def get_result_request(request):
+    """ Получить запрос который будет отправлен на успд. """
     prefix = b'\x02'  ## префикс
     first_part_of_package_size = b'\x00'  ## \x00 ++ <тут мы подсчитываем \\x > - Длина пакета \
+    # print('---get_result_request---','\n',get_crc(request),'\n',get_crc_ctype(request),'\n', calculate_crcex(request) ,'\n', '---get_result_request---' ,'\n','\n')
     return prefix + first_part_of_package_size + get_number_of_request(request) + request + get_crc(request)
 
 
 def create_command(prefix, first_part_of_package_size, ordinal_number, password, reserve, command_number,
                    command_params=None, crc=None):
+    """ Кастомный сбор команды. """
     print(type(ordinal_number))
     print(type(password))
     print(type(reserve))
@@ -246,6 +289,7 @@ def create_command(prefix, first_part_of_package_size, ordinal_number, password,
 
 
 def send_command(command_number, command_params=b''):
+    """ Отправка команды. """
     ordinal_number = b'\x01\x00'  ## порядковый номер
     password = b'\x00\x00\x00\x00'  ## пароль
     reserve = b'\x00\x00'  ## резерв
@@ -262,6 +306,9 @@ def send_command(command_number, command_params=b''):
 #     return get_result_request(command)
 
 def parse_answer(answer_array):  ## Неправильно работает ?
+    """
+    Парсим ответ(answer_array) с успд.
+    """
     result_map = {}
     result_map['prefix_byte'] = answer_array[0]  ##0-индекс пустой??
     result_map['package_size'] = answer_array[1:3]  ##0-индекс пустой??
@@ -276,31 +323,73 @@ def parse_answer(answer_array):  ## Неправильно работает ?
 
 
 def send_command_and_get_answer(command_number=None, command_params=b'', send_command_raw=None):
+    """
+    Главный метод работы с успд - коннектимся к успд, отсылаем строку, получаем ответ.
+    """
     res = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    res.connect(('192.168.205.10', 14101))  ##тестовая
-    res.settimeout(5) ## Пока такое решение, на отключение ожидания ответа.
+    # res.connect(('192.168.205.10', 14101))  ##тестовая
+    res.connect(('192.168.202.81', 12345))  ##Серегина
+    res.settimeout(5)  ## Пока такое решение, на отключение ожидания ответа.
     # Но надо сделать отключение через цикл со временм. Например 20 сек с последнего байта - отключаемся.
     if command_number:
-        bb = send_command(command_number=command_number, command_params=command_params)
+        result_command = send_command(command_number=command_number, command_params=command_params)
     elif send_command_raw:  ## Не работает корректно ?
-        bb = send_command_raw  ##не работает правильно
-    print(bb, 'to_send')
-    print(res.sendall(bb))
+        result_command = send_command_raw  ##не работает правильно
+
+    print(result_command, 'to_send')
     answer_bytes = []
-    while True:
-        try:
-            temp_char = res.recv(1)
-            print(temp_char, '--')
-            answer_bytes.append(temp_char)
-        except Exception as ex:
-            if str(ex) == 'timed out':
-                break
-            else:
-                raise Exception(ex)
+
+    for i in range(3):  # Успд не вседа отвечает сразу #Работает ?
+        print(res.sendall(result_command))
+        while True:
+            try:
+                temp_char = res.recv(1)
+                print(temp_char, '--')
+                answer_bytes.append(temp_char)
+                # time_check_helper.stop
+            except Exception as ex:
+                if str(ex) == 'timed out':
+                    break
+                else:
+                    raise Exception(ex)
+
+        # thread
+        # thread
+
+        # time_check_helper = ThreadTimeHelper()
+        # time_check_helper.start()
+        # count = 0
+        # while time_check_helper._stop is False:
+        #     temp_char = res.recv(1)
+        #     print(temp_char, '--')
+        #     # print('rerun')
+        #     time_check_helper.rerun()
+        #     # print(time_check_helper.stopped())
+        #     count += 1
+        #     if count == 10 : time_check_helper._stop = True
+        #     print(time_check_helper._stop)
+        # print('ya tut2')
+        # time_check_helper.join()
+            ## rerun
+
+        # thread
+        # thread
+
+        if answer_bytes != []:
+            break
+        elif answer_bytes == []:
+            print(str(i), 'try to get answer')
+            continue
+        elif answer_bytes == [] and i == 3:
+            res.close()
+            raise Exception("USPD didn't answer")
+
     res.close()
-    print(answer_bytes)
+    print(answer_bytes, 'answer')
+    print(answer_bytes, 'answer')
+    print(answer_bytes, 'answer')
     hex_normal_view_answer_array = hex_bytes_array_to_string(answer_bytes)
-    print(hex_normal_view_answer_array,'parsed_answer')
+    print(hex_normal_view_answer_array, 'parsed_answer')
     """ Проверить crc """
     if answer_bytes[-3:] == ['3c', 'a0', '2f']: print('bad answer')
     result = b''
@@ -308,10 +397,14 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     # print([result + _ for _ in answer_bytes[3:-2]])
     print(result)
     print(get_crc(result))
+    print('answer crc')
+    print(hex(crc16_calc_tab_rtu(result)))
+    print(hex(crc16_calc_tab_rtu_ctype(result)))
+    print('answer crc')
     return parse_answer(hex_normal_view_answer_array)
 
 
-# def to_uint8(num):## НЕПРАВИЛЬНО ????
+# def to_uint8(num):## НЕПРАВИЛЬНО работает ????
 #     if num < 0:## НЕПРАВИЛЬНО ????
 #         while num < 0: num += 256
 #     if num < 256: return num
@@ -321,7 +414,7 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
 #     return num
 #
 # ## НЕПРАВИЛЬНО ????
-# def to_uint16(num): ## НЕПРАВИЛЬНО ????
+# def to_uint16(num): ## НЕПРАВИЛЬНО работает ????
 #     if num < 0:
 #         while num < 0: num += 65535
 #     if num < 65535 : return num
@@ -330,6 +423,11 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
 #         while num > 65535 : num = num - 65535
 #     return num
 
-print(byte_request_to_int_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
-print(byte_request_to_char_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
-print(byte_request_to_hex_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
+# print(byte_request_to_int_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
+# print(byte_request_to_char_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
+# print(byte_request_to_hex_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
+#
+# print(hex(crc16_calc_tab_rtu((b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\xff'))))
+# print(hex(crc16_calc_tab_rtu_ctype((b'\x01\x00\x00\x00\x00\x00\x00\x00<'))))
+# print(calculate_crcex(b'\x01\x00\x00\x00\x00\x00\x00\x00s\xf0\xf1\xff\xff'))
+# print(hex(calculate_crcex(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\xff')))
