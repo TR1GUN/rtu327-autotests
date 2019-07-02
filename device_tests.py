@@ -11,6 +11,21 @@ class RTU327(unittest.TestCase):
     """'3c', 'a0', '2f' = неправильная контрольная сумма - жопа ответа
     прокинуть в каждый тест ? """
 
+    def test_ver(self):
+        result_answer_map = send_command_and_get_answer(3)
+        answer_data = result_answer_map['answer_data'][::-1]
+        result_answer_data = ''
+        for x in answer_data: result_answer_data += x
+        formated_device_time = int(result_answer_data, 16)
+        device_datetime = datetime.datetime.utcfromtimestamp(formated_device_time)
+        print(device_datetime)
+
+        # check ## секунды не проверяю
+        # curr_datetime = datetime.datetime.now()
+        # device_datetime = device_datetime + datetime.timedelta(hours=3)
+        # difference_between_dates = abs((curr_datetime - device_datetime).total_seconds())
+        # self.assertTrue(difference_between_dates < 59)  # Разница, не больше 59 секунд.
+
     def test_get_time(self):
         result_answer_map = send_command_and_get_answer(114)
         answer_data = result_answer_map['answer_data'][::-1]

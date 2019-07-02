@@ -37,42 +37,8 @@ b'\x02\x00\r\x01\x00\x00\x00\x00\x00\x00\x00\x00E\x97\xf6\\\x1aq'
 """
 import datetime
 import socket
-import subprocess
-import threading
-import time
 import ctypes
 import numpy as np
-
-class ThreadTimeHelper(threading.Thread):
-
-    def __init__(self, *args, **kwargs):
-        super(ThreadTimeHelper, self).__init__(*args, **kwargs)
-        # self._stop = threading.Event()
-        self._stop = False
-        self.start_time = datetime.datetime.now()
-
-        # function using _stop function
-
-    def stop(self):
-        self._stop = True
-
-    # def stopped(self):
-        # return self._stop.isSet()
-        # return True
-
-    def rerun(self):
-        self.start_time = datetime.datetime.now()
-
-    def run(self):
-        self.start_time = datetime.datetime.now()
-        while self._stop is False:
-            print("Hello, world!")
-            time.sleep(1)
-            if (datetime.datetime.now() - self.start_time).seconds > 5:
-                self.stop()
-                print(self._stop)
-                print("Время закончилось")
-                return ##Время закончилось
 
 
 TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c,
@@ -96,6 +62,11 @@ TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x81
             0x5c64, 0x4c45, 0x3ca2, 0x2c83, 0x1ce0, 0x0cc1, 0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9,
             0x9ff8, 0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0]
 
+def hex_to_dec(byte_hex_str):
+    """Из байтовой hex(Например b'\x01\x00') строки возвращает dec представление/ """
+    hex_str_array = byte_request_to_hex_array(byte_hex_str)
+    hex_str = hex_str_array[0] + hex_str_array[1]
+    return int(hex_str, 16)
 
 def char_bytes_str_to_array(request):
     # print(parse_bytes_str_to_array(request))
@@ -341,39 +312,21 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
 
     for i in range(3):  # Успд не вседа отвечает сразу #Работает ?
         print(res.sendall(result_command))
-        while True:
-            try:
-                temp_char = res.recv(1)
-                print(temp_char, '--')
-                answer_bytes.append(temp_char)
-                # time_check_helper.stop
-            except Exception as ex:
-                if str(ex) == 'timed out':
-                    break
-                else:
-                    raise Exception(ex)
+        # Сначала читаем первые 3 байта.
+        # Второй и третий байт - это длина пакета.
+        for _ in range(3):
+            temp_char = res.recv(1)
+            print(temp_char, '--')
+            answer_bytes.append(temp_char)
 
-        # thread
-        # thread
-
-        # time_check_helper = ThreadTimeHelper()
-        # time_check_helper.start()
-        # count = 0
-        # while time_check_helper._stop is False:
-        #     temp_char = res.recv(1)
-        #     print(temp_char, '--')
-        #     # print('rerun')
-        #     time_check_helper.rerun()
-        #     # print(time_check_helper.stopped())
-        #     count += 1
-        #     if count == 10 : time_check_helper._stop = True
-        #     print(time_check_helper._stop)
-        # print('ya tut2')
-        # time_check_helper.join()
-            ## rerun
-
-        # thread
-        # thread
+        result_byte_str = b''
+        for _ in answer_bytes[1:]:
+            result_byte_str += _
+        answer_length_without_crc = hex_to_dec(result_byte_str)
+        for _ in range(answer_length_without_crc + 2): ##Длина тела пакета + 2 байта на crc
+            temp_char = res.recv(1)
+            print(temp_char, '--')
+            answer_bytes.append(temp_char)
 
         if answer_bytes != []:
             break
@@ -383,11 +336,8 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
         elif answer_bytes == [] and i == 3:
             res.close()
             raise Exception("USPD didn't answer")
-
     res.close()
-    print(answer_bytes, 'answer')
-    print(answer_bytes, 'answer')
-    print(answer_bytes, 'answer')
+
     hex_normal_view_answer_array = hex_bytes_array_to_string(answer_bytes)
     print(hex_normal_view_answer_array, 'parsed_answer')
     """ Проверить crc """
