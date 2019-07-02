@@ -327,8 +327,8 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     Главный метод работы с успд - коннектимся к успд, отсылаем строку, получаем ответ.
     """
     res = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # res.connect(('192.168.205.10', 14101))  ##тестовая
-    res.connect(('192.168.202.81', 12345))  ##Серегина
+    res.connect(('192.168.205.10', 14101))  ##тестовая
+    # res.connect(('192.168.202.81', 12345))  ##Серегина
     res.settimeout(5)  ## Пока такое решение, на отключение ожидания ответа.
     # Но надо сделать отключение через цикл со временм. Например 20 сек с последнего байта - отключаемся.
     if command_number:
