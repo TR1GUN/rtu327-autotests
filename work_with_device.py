@@ -44,37 +44,6 @@ import time
 import ctypes
 import numpy as np
 
-class ThreadTimeHelper(threading.Thread):
-
-    def __init__(self, *args, **kwargs):
-        super(ThreadTimeHelper, self).__init__(*args, **kwargs)
-        # self._stop = threading.Event()
-        self._stop = False
-        self.start_time = datetime.datetime.now()
-
-        # function using _stop function
-
-    def stop(self):
-        self._stop = True
-
-    # def stopped(self):
-        # return self._stop.isSet()
-        # return True
-
-    def rerun(self):
-        self.start_time = datetime.datetime.now()
-
-    def run(self):
-        self.start_time = datetime.datetime.now()
-        while self._stop is False:
-            print("Hello, world!")
-            time.sleep(1)
-            if (datetime.datetime.now() - self.start_time).seconds > 5:
-                self.stop()
-                print(self._stop)
-                print("Время закончилось")
-                return ##Время закончилось
-
 
 TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c,
             0xd1ad, 0xe1ce, 0xf1ef, 0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6, 0x9339, 0x8318,
@@ -371,11 +340,8 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
         elif answer_bytes == [] and i == 3:
             res.close()
             raise Exception("USPD didn't answer")
-
     res.close()
-    print(answer_bytes, 'answer')
-    print(answer_bytes, 'answer')
-    print(answer_bytes, 'answer')
+
     hex_normal_view_answer_array = hex_bytes_array_to_string(answer_bytes)
     print(hex_normal_view_answer_array, 'parsed_answer')
     """ Проверить crc """
