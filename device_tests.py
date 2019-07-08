@@ -2,15 +2,55 @@
 py -m pytest device_tests.py::RTU327::test_gettime -s -v
 """
 import unittest
+
+from communication_engineering_serialport_helper.main_methods.methods import send_read
 from work_with_device import *
 import work_with_device
 
 
 class RTU327(unittest.TestCase):
 
+    counter_number = b'\x00\x10\x18\x47\x60'  ## Номер счетчика
+    uspd_tcp_ip = '192.168.205.10'
+    uspd_tcp_port = 14101
+    uspd_password = '00000000'
+
     """'3c', 'a0', '2f' = неправильная контрольная сумма - жопа ответа
     прокинуть в каждый тест ? """
 
+    def test_preparation_stage(self):
+        """
+        пример -- 138_TRANSADD_write_2_test.py
+        TRANSADD
+        Команда текстового протокола - ('1','','3','1','303030303030','303030303030','0','Auto','','','','',None,None,None,'OK'),
+        00000000,TRANSOPEN2050 (00000000,TRANSOPEN)
+        00000000,CLEARTABLE6CF (00000000,CLEARTABLE)
+        00000000,TRANSADD=1;3;60;010101010101;020202020202;0;4;6;8;0;0D1E6 (00000000,TRANSADD=1;3;60;010101010101;020202020202;0;4;6;8;0;0)
+        00000000,TRANSCOMMIT48FD (00000000,TRANSCOMMIT)
+        """
+
+        ##Текстовый протокол
+        commands = ['TRANSOPEN', 'CLEARTABL', ['TRANSADD',['1','3','60','010101010101','020202020202','0','4','6','8','0','0']], 'TRANSCOMMIT']
+        for command in commands:
+            if type(command) is list:
+                all_strings = send_read(password=RTU327.uspd_password,tcp_ip=RTU327.uspd_tcp_ip, tcp_port=RTU327.uspd_tcp_port,
+                                        command=command[0], args_list=command[1], tcp_timeout=5)
+            elif type(command) is str:
+                all_strings = send_read(password=RTU327.uspd_password,tcp_ip=RTU327.uspd_tcp_ip, tcp_port=RTU327.uspd_tcp_port,
+                                        command=command, tcp_timeout=5)
+            else:
+                raise Exception('Неизвестный тип')
+
+            print(all_strings)
+            ## Проверка Ответа - пока только OK05C7??
+            self.assertEqual('OK05C7',all_strings.strip())
+
+        ##Далее мы просто ждем ????
+        print('!!!GOING TO SLEEP FOR 15 MINUTES!!!\n'*10)
+        time.sleep(15*60) #15 минут
+        # print('was\\done\n'*10)
+
+    @work_with_device.check_ip_args
     def test_get_time(self):
         result_answer_map = send_command_and_get_answer(114)
         answer_data = result_answer_map['answer_data'][::-1]
@@ -92,23 +132,28 @@ class RTU327(unittest.TestCase):
     def test_get_shprm(self): ## Пока просто смотрим
         """серийный номер успд ?? откуда брать ??
          10 18 47 60
-         """
-        Nsh =b'\x00\x10\x18\x47\x60'
+        """
+
+        ##RTU327 протокол
+        Nsh = RTU327.counter_number ## Номер счетчика
         result_answer_map = send_command_and_get_answer(112, command_params=Nsh)
-        answer_data = result_answer_map['answer_data'][::-1] ##перевернутый ответ
+        answer_data = result_answer_map['answer_data'][::-1]  ##перевернутый ответ
         # answer_data = result_answer_map['answer_data'] ##перевернутый ответ
+        print(answer_data)
+        print(answer_data)
+        print(answer_data)
         print(len(answer_data))
         print(len(answer_data))
         print(len(answer_data))
         vers = answer_data[:2]
         typ_sh = answer_data[2]
-        kt = answer_data[3:11] ##FLOAT8
-        kn = answer_data[11:19] ##FLOAT8
-        m = answer_data[19:27] ##FLOAT8
+        kt = answer_data[3:11]  ##FLOAT8
+        kn = answer_data[11:19]  ##FLOAT8
+        m = answer_data[19:27]  ##FLOAT8
         interv = answer_data[27]
-        syb_rnk = answer_data[28:32] ##INT32
-        n_ob = answer_data[32:36] ##INT32
-        n_fid = answer_data[36:] ##INT32
+        syb_rnk = answer_data[28:32]  ##INT32
+        n_ob = answer_data[32:36]  ##INT32
+        n_fid = answer_data[36:]  ##INT32
         print(result_answer_map)
         print('vers :: ', vers)
         print('typ_sh :: ', typ_sh)
@@ -121,27 +166,34 @@ class RTU327(unittest.TestCase):
         print('n_fid :: ', n_fid)
         self.assertEqual(40, len(answer_data))
 
-        # print(answer_data)
-        # self.assertEqual(4, len(result_answer_map['answer_data']))
-
     def test_get_pok(self):  ##
         """ Просто проверяем количество ответа - 8 байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
-        NSH  =b'\x00\x10\x18\x47\x60'
+        NSH  = RTU327.counter_number
         Chnl  = b'\x01'
-        Time  = b'\x00\x00\x00\x00'
-        result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+Time)
+        # Time  = b'\x00\x00\x00\x00'
+        # Time_month  = b'\x00\x78\xFD\xFF' ##minus 1 month
+        time_minus_month  = get_reversed_time_bytes(date_to_seconds(datetime.datetime.now())) ##minus 1 month
+        # result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+time_minus_month)
+        result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+get_reversed_bytes_string_byte_ver(time_minus_month))
         answer_data = result_answer_map['answer_data'][::-1]
         print(answer_data)
-        self.assertEqual(8, len(answer_data))
+        print(str(len(answer_data)))
+        # self.assertEqual(8, len(answer_data))
+
+        ##Текстовый протокол
+        # gg = send_read(password=RTU327.uspd_password,tcp_ip = RTU327.uspd_tcp_ip, tcp_port = RTU327.uspd_tcp_ip,
+        #                command='READMONTH', tcp_timeout=25)
+        # print(gg)
+
 
     def test_get_lp(self):  ##
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
-        Nsh =b'\x00\x10\x18\x47\x60'
+        Nsh = RTU327.counter_number
         Kanal = b'\x01'
         Tstart = b'\x00\x00\x00\x00'
         Kk = b'\x00\x01'
@@ -156,7 +208,7 @@ class RTU327(unittest.TestCase):
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
-        Nsh =b'\x00\x10\x18\x47\x60'
+        Nsh = RTU327.counter_number
         Kanal = b'\x01'
         Interval = b'\x00'
         Tstart = b'\x00\x00\x00\x00'
@@ -172,7 +224,7 @@ class RTU327(unittest.TestCase):
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
-        Nsh =b'\x00\x10\x18\x47\x60'
+        Nsh = RTU327.counter_number
         Tstart = b'\x00\x00\x00\x00'
         NumTests  = b'\x01'
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
@@ -185,7 +237,7 @@ class RTU327(unittest.TestCase):
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
-        N_SH =b'\x00\x10\x18\x47\x60'
+        N_SH = RTU327.counter_number
         Tday  = b'\x00\x00\x00\x00'
         Kanal = b'\x01'
         Kk = b'\x01'
@@ -196,19 +248,7 @@ class RTU327(unittest.TestCase):
         # print(len(answer_data))
         self.assertEqual(198,len(answer_data))
 
-    def test_get_mtrlog(self):  ## undone
-        """ Просто проверяем количество ответа - ?? байта.
-        Номер счетчика - b'\x00\x10\x18\x47\x60'
-        """
-        Nsh = b'\x00\x10\x18\x47\x60'
-        Tstart = b'\x00\x00\x00\x00'
-        Cnt = b'\x00\x01'
-        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
-        result_answer_map = send_command_and_get_answer(116, command_params=Nsh + Tstart + Cnt)
-        answer_data = result_answer_map['answer_data'][::-1]
-        print(answer_data)
-        print(len(answer_data))
-        # ?? self.assertEqual(198,len(answer_data)) ??
+
 
 if __name__ == "__main__":
     unittest.main()

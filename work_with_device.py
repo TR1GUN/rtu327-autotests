@@ -38,6 +38,7 @@ b'\x02\x00\r\x01\x00\x00\x00\x00\x00\x00\x00\x00E\x97\xf6\\\x1aq'
 import datetime
 import socket
 import subprocess
+import sys
 import threading
 import time
 import ctypes
@@ -96,6 +97,11 @@ TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x81
             0x5c64, 0x4c45, 0x3ca2, 0x2c83, 0x1ce0, 0x0cc1, 0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9,
             0x9ff8, 0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0]
 
+def hex_to_dec(byte_hex_str):
+    """Из байтовой hex(Например b'\x01\x00') строки возвращает dec представление/ """
+    hex_str_array = byte_request_to_hex_array(byte_hex_str)
+    hex_str = hex_str_array[0] + hex_str_array[1]
+    return int(hex_str, 16)
 
 def char_bytes_str_to_array(request):
     # print(parse_bytes_str_to_array(request))
@@ -226,8 +232,7 @@ def get_number_of_request(request):
     Подсчет количества байт(символов) из request.
     """
     number_of_bytes = hex(len(parse_bytes_str_to_array(request)))[2:]
-    if len(
-        number_of_bytes) == 1: number_of_bytes = '0' + number_of_bytes  # Если меньше 10, то нужен 0 - т.к. должно отражаться 2 символа , т.е. 09,10,01,00,99
+    if len(number_of_bytes) == 1: number_of_bytes = '0' + number_of_bytes  # Если меньше 10, то нужен 0 - т.к. должно отражаться 2 символа , т.е. 09,10,01,00,99
     return bytes.fromhex(number_of_bytes)
 
 
@@ -329,6 +334,7 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     res = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     res.connect(('192.168.205.10', 14101))  ##тестовая
     # res.connect(('192.168.202.81', 12345))  ##Серегина
+    # res.connect(('85.115.238.160', 12345))  ##Серегина
     res.settimeout(5)  ## Пока такое решение, на отключение ожидания ответа.
     # Но надо сделать отключение через цикл со временм. Например 20 сек с последнего байта - отключаемся.
     if command_number:
@@ -341,39 +347,21 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
 
     for i in range(3):  # Успд не вседа отвечает сразу #Работает ?
         print(res.sendall(result_command))
-        while True:
-            try:
-                temp_char = res.recv(1)
-                print(temp_char, '--')
-                answer_bytes.append(temp_char)
-                # time_check_helper.stop
-            except Exception as ex:
-                if str(ex) == 'timed out':
-                    break
-                else:
-                    raise Exception(ex)
+        # Сначала читаем первые 3 байта.
+        # Второй и третий байт - это длина пакета.
+        for _ in range(3):
+            temp_char = res.recv(1)
+            print(temp_char, '--')
+            answer_bytes.append(temp_char)
 
-        # thread
-        # thread
-
-        # time_check_helper = ThreadTimeHelper()
-        # time_check_helper.start()
-        # count = 0
-        # while time_check_helper._stop is False:
-        #     temp_char = res.recv(1)
-        #     print(temp_char, '--')
-        #     # print('rerun')
-        #     time_check_helper.rerun()
-        #     # print(time_check_helper.stopped())
-        #     count += 1
-        #     if count == 10 : time_check_helper._stop = True
-        #     print(time_check_helper._stop)
-        # print('ya tut2')
-        # time_check_helper.join()
-            ## rerun
-
-        # thread
-        # thread
+        result_byte_str = b''
+        for _ in answer_bytes[1:]:
+            result_byte_str += _
+        answer_length_without_crc = hex_to_dec(result_byte_str)
+        for _ in range(answer_length_without_crc + 2):  ##Длина тела пакета + 2 байта на crc
+            temp_char = res.recv(1)
+            print(temp_char, '--')
+            answer_bytes.append(temp_char)
 
         if answer_bytes != []:
             break
@@ -403,6 +391,55 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     print('answer crc')
     return parse_answer(hex_normal_view_answer_array)
 
+def date_to_seconds(date):
+    """
+    Передаем datetime.datetime - получаем время в секундах от 01.01.1970.
+    """
+    return int(time.mktime(date.timetuple()))
+
+def bytes_string_to_upper_hex(bytes_string):
+    """ Берет байтовую строку, и превращает в строку с hex значениями.
+    Пример:
+    Ввод :  b'\x10\xf3"]'
+    Вывод : 10 F3 22 5D
+    """
+    result = ''
+    for _ in bytes_string:
+        result += (hex(_)[2:] + ' ').upper()
+    return result.strip()
+
+def bytes_string_to_upper_hex_array(bytes_string):
+    """ Берет байтовую строку, и превращает в строку с hex значениями.
+    Пример:
+    Ввод :  b'\x10\xf3"]'
+    Вывод : ['10', 'F3', '22', '5D']
+    """
+    return bytes_string_to_upper_hex(bytes_string).split()
+
+def get_reversed_bytes_string_byte_ver(bytes_string):
+    """ Переворачиваем BYTE!!! строку"""
+    result = bytes_string_to_upper_hex_array(bytes_string)
+    result.reverse()  ## !!! Переворачиваем быйты !!!
+    result = [get_right_hex(_) for _ in result] ## Надо проверять что возвращается, бывает ['5D', '23', 'F', '50'] и надо дописывать до 'правильного' HEX.
+    res_str = bytes.fromhex(' '.join(result).upper())
+    return res_str
+
+def get_reversed_bytes_string_str_ver(bytes_string):
+    """ Переворачиваем STR!!!(Строку) """
+    result = [bytes_string[x * (2): x * (2) + 2] for x in range(int(len(bytes_string) / 2))]
+    result.reverse()  ## !!! Переворачиваем быйты !!!
+    res_str = bytes.fromhex(' '.join(result).upper())
+    return res_str
+
+def get_reversed_time_bytes(datetime_in_seconds):
+   """Дату(в секундах) переводим в hex. Дальше переворачиваем эту конструкцию, и возвращаем в байтах"""
+   hex_datetime = get_right_hex(hex(datetime_in_seconds)[2:])
+   # result = [hex_datetime[x * (2): x * (2) + 2] for x in range(int(len(hex_datetime) / 2))]
+   # result.reverse() ## !!! Переворачиваем быйты !!!
+   # res_str = bytes.fromhex(' '.join(result).upper())
+   res_str = get_reversed_bytes_string_str_ver(hex_datetime)
+   return res_str
+
 
 # def to_uint8(num):## НЕПРАВИЛЬНО работает ????
 #     if num < 0:## НЕПРАВИЛЬНО ????
@@ -431,3 +468,18 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
 # print(hex(crc16_calc_tab_rtu_ctype((b'\x01\x00\x00\x00\x00\x00\x00\x00<'))))
 # print(calculate_crcex(b'\x01\x00\x00\x00\x00\x00\x00\x00s\xf0\xf1\xff\xff'))
 # print(hex(calculate_crcex(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\xff')))
+
+
+## Utils
+
+def check_ip_args(method):
+    def decorator(*args, **kwargs):
+        print('ima here')
+        print(sys.argv)
+        print(sys.argv)
+        print(sys.argv)
+        print(sys.argv)
+        print('ima here2')
+        print('ima here3')
+        method(*args, **kwargs)
+    return decorator
