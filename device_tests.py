@@ -50,6 +50,25 @@ class RTU327(unittest.TestCase):
         time.sleep(15*60) #15 минут
         # print('was\\done\n'*10)
 
+    def test_get_version(self):
+        """
+        USPD_RETURN :
+            Описание версии, состоящее из 6 символов:
+                2 байта – старший номер версии
+                2 байта – средний номер версии
+                2 байта – младший номер версии
+        """
+
+        result_answer_map = send_command_and_get_answer(3)
+        answer_data = result_answer_map['answer_data']
+        print(answer_data)
+        self.assertEqual(6 , len(answer_data))
+
+        ## Ожидаемый ответ железки
+        ## ['0x30','0x32','0x30','0x31','0x30','0x32']
+        self.assertEqual(['30', '32', '30', '31', '30', '32'], result_answer_map['answer_data'])
+
+
     @work_with_device.check_ip_args
     def test_get_time(self):
         result_answer_map = send_command_and_get_answer(114)
@@ -118,8 +137,11 @@ class RTU327(unittest.TestCase):
     def test_get_maxlogid(self):  ##
         """ Просто проверяем количество ответа - 4 байта. """
         result_answer_map = send_command_and_get_answer(101, command_params=b'\x01')
-        # answer_data = result_answer_map['answer_data'][::-1]
         self.assertEqual(4, len(result_answer_map['answer_data']))
+
+        ##сгенерить событие -->> проверить, что увеличился
+
+
 
     def test_get_log(self):
         Nsect = b'\x00\x00\x00\x01'
@@ -173,8 +195,6 @@ class RTU327(unittest.TestCase):
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
         NSH  = RTU327.counter_number
         Chnl  = b'\x01'
-        # Time  = b'\x00\x00\x00\x00'
-        # Time_month  = b'\x00\x78\xFD\xFF' ##minus 1 month
         time_minus_month  = get_reversed_time_bytes(date_to_seconds(datetime.datetime.now())) ##minus 1 month
         # result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+time_minus_month)
         result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+get_reversed_bytes_string_byte_ver(time_minus_month))
