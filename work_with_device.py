@@ -76,6 +76,40 @@ def char_bytes_str_to_array(request):
     # print(parse_bytes_str_to_array(request))
     return hex_bytes_array_to_string([bytes.hex(_) for _ in parse_bytes_str_to_array(request)])
 
+def add_empty_bytes(byte_str, add_number, at_start=True):
+    """
+    Добавляем пустые байты к выражению.
+    Если at_start=True - добавляем спереди --> Пример : \xff ==> \x00\xff.
+    Еслм at_start=True - добавляем сзади --> Пример : \xff ==> \xff\x00.
+    """
+    if at_start:
+        for _ in range(add_number):
+            byte_str = b'\x00' + byte_str
+    else:
+        for _ in range(add_number):
+            byte_str += b'\x00'
+    return byte_str
+
+def dec_from_bytes_array(bytes_array):
+    """
+    Из получаемого ответа(паршеный ответ в виде массива байт) можно кидать прямо сюда куски, чтобы получить число.
+    Например:
+     -- передаем - ['ba', '34', '00', '00']
+     -- получаем - 47668
+    """
+    return hex_to_dec(bytes.fromhex((' '.join(bytes_array).strip()).upper()))
+
+def dec_to_hex(number):
+    """
+    Из числа получаем hex.(Противоположно методу dec_from_bytes_array)
+    Например:
+     -- передаем - 47668
+     -- получаем - b'\xba4'
+    """
+    temp = get_right_hex(hex(number)[2:])
+    result = str_to_byte_symbol_array(temp)
+    return bytes.fromhex((' '.join(result).strip()).upper())
+
 
 def byte_request_to_int_array(request):
     """
@@ -107,9 +141,9 @@ def byte_request_to_char_array(request):
 
 def parse_bytes_str_to_array(request, add_x_prefix=True):
     """
-     Разбивает byte строку, по символам.
+    Разбивает byte строку, по символам.
 
-     Кидать b'' команды . НЕ STR
+    Кидать b'' команды . НЕ STR
     ??? Просто разбитые, не в Char представлении ???
     """
     result_array = []
@@ -162,7 +196,7 @@ def calculate_crcex(buf):
     """
     Вычисление контрольной суммы  с помощью библиотеки numpy(вторая формула).
     """
-    print(buf, 'buf')
+    # print(buf, 'buf')
     crc = 0xffff  ##Стартовое число -- объявить в глобальных(статических) переменных ?*
     for i in range(len(buf)):
         crc = np.uint16(TableCRC[crc >> 8] ^ (crc << 8) ^ buf[i])
@@ -248,11 +282,11 @@ def get_result_request(request):
 def create_command(prefix, first_part_of_package_size, ordinal_number, password, reserve, command_number,
                    command_params=None, crc=None):
     """ Кастомный сбор команды. """
-    print(type(ordinal_number))
-    print(type(password))
-    print(type(reserve))
-    print(type(decode_hex_to_str_hex(hex(command_number))))
-    print(type(command_params))
+    # print(type(ordinal_number))
+    # print(type(password))
+    # print(type(reserve))
+    # print(type(decode_hex_to_str_hex(hex(command_number))))
+    # print(type(command_params))
     request = ordinal_number + password + reserve + decode_hex_to_str_hex(hex(command_number)) + (
         command_params if command_params else b'')
     if crc:
@@ -320,7 +354,7 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
         # Второй и третий байт - это длина пакета.
         for _ in range(3):
             temp_char = res.recv(1)
-            print(temp_char, '--')
+            # print(temp_char, '--')
             answer_bytes.append(temp_char)
 
         result_byte_str = b''
@@ -329,7 +363,7 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
         answer_length_without_crc = hex_to_dec(result_byte_str)
         for _ in range(answer_length_without_crc + 2):  ##Длина тела пакета + 2 байта на crc
             temp_char = res.recv(1)
-            print(temp_char, '--')
+            # print(temp_char, '--')
             answer_bytes.append(temp_char)
 
         if answer_bytes != []:
@@ -349,12 +383,12 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     result = b''
     for _ in answer_bytes[3:-2]: result += _
     # print([result + _ for _ in answer_bytes[3:-2]])
-    print(result)
-    print(get_crc(result))
-    print('answer crc')
-    print(hex(crc16_calc_tab_rtu(result)))
-    print(hex(crc16_calc_tab_rtu_ctype(result)))
-    print('answer crc')
+    print(result, 'result')
+    print(get_crc(result), 'get_crc(result)')
+    # print('answer crc')
+    # print(hex(crc16_calc_tab_rtu(result)))
+    # print(hex(crc16_calc_tab_rtu_ctype(result)))
+    # print('answer crc')
     return parse_answer(hex_normal_view_answer_array)
 
 def date_to_seconds(date):
@@ -390,9 +424,12 @@ def get_reversed_bytes_string_byte_ver(bytes_string):
     res_str = bytes.fromhex(' '.join(result).upper())
     return res_str
 
+def str_to_byte_symbol_array(string):
+    return [string[x * (2): x * (2) + 2] for x in range(int(len(string) / 2))]
+
 def get_reversed_bytes_string_str_ver(bytes_string):
     """ Переворачиваем STR!!!(Строку) """
-    result = [bytes_string[x * (2): x * (2) + 2] for x in range(int(len(bytes_string) / 2))]
+    result = str_to_byte_symbol_array(bytes_string)
     result.reverse()  ## !!! Переворачиваем быйты !!!
     res_str = bytes.fromhex(' '.join(result).upper())
     return res_str

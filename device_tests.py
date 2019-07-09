@@ -105,6 +105,8 @@ class RTU327(unittest.TestCase):
         # Правильно переписывать , без дублирования test_gettime()
 
         hour_in_seconds = 3600
+        # # # get_reversed_bytes_string_str_ver(get_right_hex(hex(3600)[2:])) -- > b'\x10\x0e'
+
         # result_answer_map = send_command_and_get_answer(115) ## Без доп. параметров работает
         res_hex_time = get_right_hex(hex(hour_in_seconds)[2:])
         amount_of_byte = len(res_hex_time) / 2
@@ -114,38 +116,53 @@ class RTU327(unittest.TestCase):
                 result_hex_time += b'\x00'
         result_hex_time += res_hex_time.encode()
         result_answer_map = send_command_and_get_answer(115,
-                                                        # command_params=b'\x10\x0e\x00\x00')  # 3600 + добавляем 1 час на успд
+                                                        command_params=b'\x10\x0e\x00\x00')  # 3600 + добавляем 1 час на успд
                                                         # command_params=b'\xf0\xf1\xff\xff')  # 3600 + добавляем 1 час на успд
-                                                        command_params=b'\x00\x00\x00\xff')  # 3600 + добавляем 1 час на успд
+                                                        # command_params=b'\x00\x00\x00\xff')  # 3600 + добавляем 1 час на успд
         # result_answer_map = send_command_and_get_answer(115, command_params=b'\xfe\xff\xff\xff')
         # check ## секунды не проверяю
         # Копия --- test_gettime
 
 
         """ Проверка """
-        # result_answer_map = send_command_and_get_answer(114)
-        # answer_data = result_answer_map['answer_data'][::-1]
-        # result_answer_data = ''
-        # for x in answer_data: result_answer_data += x
-        # formated_device_time = int(result_answer_data, 16)
-        # device_datetime = datetime.datetime.utcfromtimestamp(formated_device_time)
-        # curr_datetime = datetime.datetime.now()
-        # device_datetime = device_datetime + datetime.timedelta(hours=3)
-        # difference_between_dates = abs((curr_datetime - device_datetime).total_seconds())
-        # self.assertTrue(3540 < difference_between_dates < 3660)  # Разница +- 1 минута
+        result_answer_map = send_command_and_get_answer(114)
+        answer_data = result_answer_map['answer_data'][::-1]
+        result_answer_data = ''
+        for x in answer_data: result_answer_data += x
+        formated_device_time = int(result_answer_data, 16)
+        device_datetime = datetime.datetime.utcfromtimestamp(formated_device_time)
+        curr_datetime = datetime.datetime.now()
+        device_datetime = device_datetime + datetime.timedelta(hours=3)
+        difference_between_dates = abs((curr_datetime - device_datetime).total_seconds())
+        self.assertTrue(3540 < difference_between_dates < 3660)  # Разница +- 1 минута
+
+    def helper_test_get_maxlogid(self):
+        result_answer_map = send_command_and_get_answer(101, command_params=b'\x01')
+        self.assertEqual(4, len(result_answer_map['answer_data']))
+        before_generation_event = result_answer_map['answer_data']
+        return dec_from_bytes_array(before_generation_event)
 
     def test_get_maxlogid(self):  ##
         """ Просто проверяем количество ответа - 4 байта. """
-        result_answer_map = send_command_and_get_answer(101, command_params=b'\x01')
-        self.assertEqual(4, len(result_answer_map['answer_data']))
+        max_log_id_before = self.helper_test_get_maxlogid()
+        ## Сгенерить событие -->> проверить, что увеличился
+        ## Уввеличиваем время
+        result_answer_map = send_command_and_get_answer(115, command_params=b'\x10\x0e\x00\x00')  # 3600 + добавляем 1 час на успд
+        # print(result_answer_map)
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
+        max_log_id_after = self.helper_test_get_maxlogid()
+        print(max_log_id_before, max_log_id_after)
 
-        ##сгенерить событие -->> проверить, что увеличился
-
-
+        if max_log_id_before > 60000 and max_log_id_after < 5000: ##случай с обнулением: -- 65535
+            pass
+        else:
+            self.assertTrue(max_log_id_after > max_log_id_before)
 
     def test_get_log(self):
         Nsect = b'\x00\x00\x00\x01'
-        Id = b'\x00\x00\x00\x01'
+        # Id = b'\x00\x00\x00\x01' ## id события - вот тут надо доставать последнее событие из журнала --> test_get_maxlogid()
+        Id = dec_to_hex(self.helper_test_get_maxlogid()) ## id события - вот тут надо доставать последнее событие из журнала --> test_get_maxlogid()
+        Id = add_empty_bytes(Id, 4-len(Id)) ## Доставляем до 4-х байтов
         Num = b'\x00\x01'
         result_answer_map = send_command_and_get_answer(117, command_params=Nsect + Id + Num)
         print(result_answer_map)
@@ -161,12 +178,12 @@ class RTU327(unittest.TestCase):
         result_answer_map = send_command_and_get_answer(112, command_params=Nsh)
         answer_data = result_answer_map['answer_data'][::-1]  ##перевернутый ответ
         # answer_data = result_answer_map['answer_data'] ##перевернутый ответ
-        print(answer_data)
-        print(answer_data)
-        print(answer_data)
-        print(len(answer_data))
-        print(len(answer_data))
-        print(len(answer_data))
+        # print(answer_data)
+        # print(answer_data)
+        # print(answer_data)
+        # print(len(answer_data))
+        # print(len(answer_data))
+        # print(len(answer_data))
         vers = answer_data[:2]
         typ_sh = answer_data[2]
         kt = answer_data[3:11]  ##FLOAT8
