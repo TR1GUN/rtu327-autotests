@@ -30,7 +30,17 @@ class RTU327(unittest.TestCase):
         """
 
         ##Текстовый протокол
-        commands = ['TRANSOPEN', 'CLEARTABL', ['TRANSADD',['1','3','60','010101010101','020202020202','0','4','6','8','0','0']], 'TRANSCOMMIT']
+        # commands = ['TRANSOPEN', 'CLEARTABL', ['TRANSADD',['1','3','60','010101010101','020202020202','0','4','6','8','0','0']], 'TRANSCOMMIT']
+        commands = ['TRANSOPEN', ## Открываем соединение
+                    'CLEARTABL', ['TRANSADD',['1','3','60','010101010101','020202020202','0','4','6','8','0','0','1','1','1']],
+                    ## Последние три единички :: Syb_Rnk - Тип объекта :: N_Ob - Номер объекта :: N_Fid - Номер фидера
+                    ['WARCHPRM',['1','1','1','1','0','0','0','1']],['WSCHEDAQUAL',['0','0','0','30']], ## Записываем -- для test_get_tests -- Качество сети приборов учета.
+                    'TRANSCOMMIT'] ## Закрываем соединение
+        """Последние три единички
+            Syb_Rnk - Тип объекта  
+            N_Ob - Номер объекта 
+            N_Fid - Номер фидера 
+        """
         for command in commands:
             if type(command) is list:
                 all_strings = send_read(password=RTU327.uspd_password,tcp_ip=RTU327.uspd_tcp_ip, tcp_port=RTU327.uspd_tcp_port,
@@ -46,8 +56,8 @@ class RTU327(unittest.TestCase):
             self.assertEqual('OK05C7',all_strings.strip())
 
         ##Далее мы просто ждем ????
-        print('!!!GOING TO SLEEP FOR 15 MINUTES!!!\n'*10)
-        time.sleep(15*60) #15 минут
+        # print('!!!GOING TO SLEEP FOR 15 MINUTES!!!\n'*10)
+        # time.sleep(15*60) #15 минут
         # print('was\\done\n'*10)
 
     def test_get_version(self):
@@ -176,14 +186,8 @@ class RTU327(unittest.TestCase):
         ##RTU327 протокол
         Nsh = RTU327.counter_number ## Номер счетчика
         result_answer_map = send_command_and_get_answer(112, command_params=Nsh)
-        answer_data = result_answer_map['answer_data'][::-1]  ##перевернутый ответ
-        # answer_data = result_answer_map['answer_data'] ##перевернутый ответ
-        # print(answer_data)
-        # print(answer_data)
-        # print(answer_data)
-        # print(len(answer_data))
-        # print(len(answer_data))
-        # print(len(answer_data))
+        # answer_data = result_answer_map['answer_data'][::-1]  ##перевернутый ответ
+        answer_data = result_answer_map['answer_data']
         vers = answer_data[:2]
         typ_sh = answer_data[2]
         kt = answer_data[3:11]  ##FLOAT8
@@ -204,6 +208,10 @@ class RTU327(unittest.TestCase):
         print('n_ob :: ', n_ob)
         print('n_fid :: ', n_fid)
         self.assertEqual(40, len(answer_data))
+        ## Данные сравниваются с теми, которые были записаны по текстовому протоколу - команда TRANSADD
+        self.assertEqual(['01', '00', '00', '00'], syb_rnk) ## Надо переворачивать ??
+        self.assertEqual(['01', '00', '00', '00'], n_ob) ## Надо переворачивать ??
+        self.assertEqual(['01', '00', '00', '00'], n_fid) ## Надо переворачивать ??
 
     def test_get_pok(self):  ##
         """ Просто проверяем количество ответа - 8 байта.
@@ -232,10 +240,16 @@ class RTU327(unittest.TestCase):
         """
         Nsh = RTU327.counter_number
         Kanal = b'\x01'
-        Tstart = b'\x00\x00\x00\x00'
+        # Tstart = b'\x00\x00\x00\x00'
+        Tstart = get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7))) ## Откуда забирать дату данных со счетчика ??
+        # Tstart = get_reversed_bytes_string_byte_ver(
+        #     get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7)))) ## Откуда забирать дату данных со счетчика ??
+        self.assertEqual(4, len(Tstart))
         Kk = b'\x00\x01'
+
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
-        result_answer_map = send_command_and_get_answer(111, command_params=Nsh+Kanal+Tstart+Kk)
+        # result_answer_map = send_command_and_get_answer(111, command_params=Nsh+Kanal+get_reversed_bytes_string_byte_ver(Tstart))
+        result_answer_map = send_command_and_get_answer(111, command_params=Nsh+Kanal+Tstart + Kk)
         answer_data = result_answer_map['answer_data'][::-1]
         print(answer_data)
         self.assertEqual(15, len(answer_data))
@@ -248,7 +262,8 @@ class RTU327(unittest.TestCase):
         Nsh = RTU327.counter_number
         Kanal = b'\x01'
         Interval = b'\x00'
-        Tstart = b'\x00\x00\x00\x00'
+        # Tstart = b'\x00\x00\x00\x00'
+        Tstart = get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7)))
         Kk = b'\x00\x01'
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
         result_answer_map = send_command_and_get_answer(105, command_params=Nsh+Kanal+Interval+Tstart+Kk)
@@ -262,6 +277,10 @@ class RTU327(unittest.TestCase):
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
         Nsh = RTU327.counter_number
+        # Tstart = b'\x00\x00\x00\x00'
+        # Tstart = get_reversed_bytes_string_byte_ver(get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7))))
+        # Tstart = get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7)))
+        # Tstart = b'\x5c\xac\xa4\x16'
         Tstart = b'\x00\x00\x00\x00'
         NumTests  = b'\x01'
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
@@ -285,6 +304,33 @@ class RTU327(unittest.TestCase):
         # print(len(answer_data))
         self.assertEqual(198,len(answer_data))
 
+        Nsh = answer_data[:11]
+        Dd_mm_yyyy = answer_data[11:15]
+        Akwh = answer_data[15:23]
+        Akw = answer_data[23:31]
+        Atd = answer_data[31:39]
+        Akwcum = answer_data[39:47]
+        Akwc = answer_data[47:55]
+        Bkwh = answer_data[55:63]
+        Bkw = answer_data[63:71]
+        Btd = answer_data[71:75]
+        Bkwcum = answer_data[75:83]
+        Bkwc = answer_data[83:91]
+        Ckwh = answer_data[91:99]
+        Ckw = answer_data[99:107]
+        Ctd = answer_data[107:111]
+        Ckwcum = answer_data[111:119]
+        Ckwc = answer_data[119:127]
+        dkwh = answer_data[127:135]
+        dkw = answer_data[135:143]
+        dtd = answer_data[143:147]
+        dkwcum = answer_data[147:155]
+        dkwc = answer_data[155:163]
+        Kwha = answer_data[163:171]
+        Q1 = answer_data[171:179]
+        Q2 = answer_data[179:187]
+        Q3 = answer_data[187:195]
+        Q4 = answer_data[195:]
 
 
 if __name__ == "__main__":
