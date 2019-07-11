@@ -44,7 +44,17 @@ import threading
 import time
 import ctypes
 import numpy as np
+from configparser import ConfigParser
 
+from communication_engineering_serialport_helper.main_methods.methods import send_read
+# from device_tests import RTU327
+
+"""
+TODO:
+
+Возможно все операции по переводу чисел в hex и обратно, надо переписать
+черезе struct.pack()/struct.unpack() - для простоты работы.
+"""
 
 TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c,
             0xd1ad, 0xe1ce, 0xf1ef, 0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6, 0x9339, 0x8318,
@@ -66,6 +76,13 @@ TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x81
             0x1ad0, 0x2ab3, 0x3a92, 0xfd2e, 0xed0f, 0xdd6c, 0xcd4d, 0xbdaa, 0xad8b, 0x9de8, 0x8dc9, 0x7c26, 0x6c07,
             0x5c64, 0x4c45, 0x3ca2, 0x2c83, 0x1ce0, 0x0cc1, 0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9,
             0x9ff8, 0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0]
+
+temp_config_parser = ConfigParser()
+temp_config_parser.read('uspd_settings.ini')
+temp_config_parser.get('RTU-327', 'uspd_tcp_ip')
+uspd_tcp_ip = temp_config_parser.get('RTU-327', 'uspd_tcp_ip')
+uspd_tcp_port = int(temp_config_parser.get('RTU-327', 'uspd_tcp_port'))
+uspd_password = temp_config_parser.get('RTU-327', 'uspd_password')
 
 def hex_to_dec(byte_hex_str):
     """Из байтовой hex(Например b'\x01\x00') строки возвращает dec представление/ """
@@ -124,12 +141,14 @@ def dec_to_hex(number):
     result = str_to_byte_symbol_array(temp)
     return bytes.fromhex((' '.join(result).strip()).upper())
 
+
 def hex_to_double(hex_array):
     """
     Из hex делаем double.
     Минус - много лишних действий.
     """
-    return struct.unpack('>d', dec_to_hex(hex_array_to_dec(hex_array)))[0] ## >d когда перевернуто, d когда не первернуто.
+    return struct.unpack('>d', dec_to_hex(hex_array_to_dec(hex_array)))[0] ##> - прямой порядок , < - обратный порядок
+
 
 def byte_request_to_int_array(request):
     """
@@ -512,14 +531,37 @@ def get_reversed_time_bytes(datetime_in_seconds):
 #             res_array[_] = temp_vars[_]
 #     return res_array
 
+##unused
 def check_ip_args(method):
     def decorator(*args, **kwargs):
-        print('ima here')
-        print(sys.argv)
-        print(sys.argv)
-        print(sys.argv)
-        print(sys.argv)
-        print('ima here2')
-        print('ima here3')
         method(*args, **kwargs)
     return decorator
+##unused
+
+## text_protocol -- в device_test.py я импорчу все из work_with_device.py --> Получается циклическая рекурсия
+def get_uspd_count_number():
+    ## TODO
+    ## Возможно следует READQUAL следует заменить на другую -- чтобы меньше грузилась успд.
+    all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+                            command='READAQUAL', tcp_timeout=5)
+    return all_strings.split('\n')[3].split(';')[-1].replace('<','')
+
+##helpers
+def save_settings_in_ini_file(section_name, dictionary):
+    """ Создает/ дописывает в конец файла новую настройку.
+
+    Записывается одна настройка.
+    Пример:
+    save_settings_in_ini_file("RTU-327",
+                          {"counter_number":'0010184760',
+                           "uspd_tcp_ip":'192.168.205.10',
+                           "uspd_tcp_port":'14101',
+                           "uspd_password":'00000000'})
+    """
+
+    temp_config_parser = ConfigParser()
+    temp_config_parser.add_section(section_name)
+    for key in dictionary:
+        temp_config_parser.set(section_name, key, dictionary[key])
+    with open('uspd_settings.ini','a') as config_file:
+        temp_config_parser.write(config_file)

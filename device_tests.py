@@ -1,6 +1,7 @@
 """
 py -m pytest device_tests.py::RTU327::test_gettime -s -v
 """
+import re
 import unittest
 
 from communication_engineering_serialport_helper.main_methods.methods import send_read
@@ -11,9 +12,13 @@ import work_with_device
 class RTU327(unittest.TestCase):
 
     counter_number = b'\x00\x10\x18\x47\x60'  ## Номер счетчика
-    uspd_tcp_ip = '192.168.205.10'
-    uspd_tcp_port = 14101
-    uspd_password = '00000000'
+
+    # temp_config_parser = ConfigParser()
+    # temp_config_parser.read('uspd_settings.ini')
+    # temp_config_parser.get('RTU-327','uspd_tcp_ip')
+    # uspd_tcp_ip = temp_config_parser.get('RTU-327','uspd_tcp_ip')
+    # uspd_tcp_port = int(temp_config_parser.get('RTU-327','uspd_tcp_port'))
+    # uspd_password = temp_config_parser.get('RTU-327','uspd_password')
 
     """'3c', 'a0', '2f' = неправильная контрольная сумма - жопа ответа
     прокинуть в каждый тест ? """
@@ -43,10 +48,10 @@ class RTU327(unittest.TestCase):
         """
         for command in commands:
             if type(command) is list:
-                all_strings = send_read(password=RTU327.uspd_password,tcp_ip=RTU327.uspd_tcp_ip, tcp_port=RTU327.uspd_tcp_port,
+                all_strings = send_read(password=uspd_password,tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
                                         command=command[0], args_list=command[1], tcp_timeout=5)
             elif type(command) is str:
-                all_strings = send_read(password=RTU327.uspd_password,tcp_ip=RTU327.uspd_tcp_ip, tcp_port=RTU327.uspd_tcp_port,
+                all_strings = send_read(password=uspd_password,tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
                                         command=command, tcp_timeout=5)
             else:
                 raise Exception('Неизвестный тип')
@@ -59,6 +64,14 @@ class RTU327(unittest.TestCase):
         # print('!!!GOING TO SLEEP FOR 15 MINUTES!!!\n'*10)
         # time.sleep(15*60) #15 минут
         # print('was\\done\n'*10)
+
+    @staticmethod
+    def get_uspd_count_number():
+        ## TODO
+        ## Возможно следует READQUAL следует заменить на другую -- чтобы меньше грузилась успд.
+        all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+                                command='READAQUAL', tcp_timeout=5)
+        return all_strings.split('\n')[3]
 
     def test_get_version(self):
         """
@@ -79,7 +92,7 @@ class RTU327(unittest.TestCase):
         self.assertEqual(['30', '32', '30', '31', '30', '32'], result_answer_map['answer_data'])
 
 
-    @work_with_device.check_ip_args
+    # @work_with_device.check_ip_args
     def test_get_time(self):
         result_answer_map = send_command_and_get_answer(114)
         answer_data = result_answer_map['answer_data'][::-1]
@@ -310,8 +323,8 @@ class RTU327(unittest.TestCase):
         # print(len(answer_data))
         self.assertEqual(198,len(answer_data))
 
-        autoread_temp_Nsh = answer_data[:10][::-1] ## 10 или 5 байт ?? STR<10> ++ переворачиваем ответ
-        autoread_temp_Dd_mm_yyyy = answer_data[10:14][::-1] ## TIME_T
+        autoread_temp_Nsh = answer_data[:10] ## 10 или 5 байт ?? STR<10> ++ переворачиваем ответ
+        autoread_temp_Dd_mm_yyyy = answer_data[10:14][::-1] ## TIME_T ## Надо переворачивать  ?
         autoread_temp_Akwh = answer_data[14:22][::-1] ## FLOAT8 --> Double
         autoread_temp_Akw = answer_data[22:30][::-1] ## FLOAT8 --> Double
         autoread_temp_Atd = answer_data[30:34][::-1] ## TIME_T --> datetime
@@ -343,28 +356,36 @@ class RTU327(unittest.TestCase):
         for _ in temp_vars:
             if _.startswith('autoread_temp_'):
                 res_array[_] = temp_vars[_]
+                print(_, temp_vars[_])
 
-
-        # for _ in res_array:
-            # С чем сравнивать
-            # print(_, res_array[_])
-
+        ## Проверяем только
+        ## - *kwh
+        ## - даты ?
+        ## Остальные значения по идеи -1 --> ['bf', 'f0', '00', '00', '00', '00', '00', '00']
 
         for _ in res_array:
-            if _ in ['autoread_temp_Dd_mm_yyyy','autoread_temp_Atd','autoread_temp_Btd','autoread_temp_Ctd',
-                     'autoread_temp_dtd']:
-                if res_array[_] == ['00', '00', '00', '00'] : ##Нулевая дата
-                    pass
-                else:
-                    # print(res_array[_])
-                    # print(dec_from_bytes_array(res_array[_]))
-                    # print(hex_array_to_dec(res_array[_]))
+            # print('cur_key','__' + _ + '__')
+            if _.strip() == 'autoread_temp_Nsh':
+                ## Номер счетчика откуда брать??
+                ## ['30', '30', '31', '30', '31', '38', '34', '37', '36', '30'] --> 0010184760
 
-                    print((get_reversed_bytes_string_byte_ver(res_array[_]))) ## Вот здесь get_reversed_bytes_string_byte_ver -- передаются чисто байты, а я уже передаю byte_array
-                    print(hex_array_to_dec(get_reversed_bytes_string_byte_ver(res_array[_])))
-                    temp = date_from_seconds(hex_array_to_dec(get_reversed_bytes_string_byte_ver(res_array[_])))
-                    print(temp)
-                    print()
+                uspd_counter_number = [str(int(bytes.fromhex(_), 16)) for _ in res_array[_]]
+                uspd_counter_number = int(''.join(uspd_counter_number))
+                self.assertEqual(10184760, uspd_counter_number)
+                # self.assertEqual(['30', '30', '31', '30', '31', '38', '34', '37', '36', '30'], res_array[_])
+            elif _.strip() in ['autoread_temp_Dd_mm_yyyy', 'autoread_temp_Atd', 'autoread_temp_Btd',
+                               'autoread_temp_Ctd', 'autoread_temp_dtd']:
+                cur_date_from_answer_in_seconds = dec_from_bytes_array(res_array[_])
+                self.assertTrue(cur_date_from_answer_in_seconds >= 0)
+            elif _.strip().endswith('kwh'): #Akwh, Bkwh, Ckwh, Dkwh
+                ## TODO
+                ## Как проверять ?
+                pass
+                # print(_,'kwh_pal')
+                # self.assertEqual(1.0, hex_to_double(res_array[_]))
+            else:
+                # По идеи все остальные параметры должны быть -1
+                self.assertEqual(-1.0, hex_to_double(res_array[_]))
 
 
 if __name__ == "__main__":
