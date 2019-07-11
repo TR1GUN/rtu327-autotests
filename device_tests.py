@@ -190,13 +190,13 @@ class RTU327(unittest.TestCase):
         answer_data = result_answer_map['answer_data']
         vers = answer_data[:2]
         typ_sh = answer_data[2]
-        kt = answer_data[3:11]  ##FLOAT8
-        kn = answer_data[11:19]  ##FLOAT8
-        m = answer_data[19:27]  ##FLOAT8
+        kt = answer_data[3:11][::-1]  ##FLOAT8 ## Надо переворачивать ??
+        kn = answer_data[11:19][::-1]  ##FLOAT8 ## Надо переворачивать ??
+        m = answer_data[19:27][::-1]  ##FLOAT8 ## Надо переворачивать ??
         interv = answer_data[27]
-        syb_rnk = answer_data[28:32]  ##INT32
-        n_ob = answer_data[32:36]  ##INT32
-        n_fid = answer_data[36:]  ##INT32
+        syb_rnk = answer_data[28:32][::-1]  ##INT32 ## Надо переворачивать ??
+        n_ob = answer_data[32:36][::-1]  ##INT32 ## Надо переворачивать ??
+        n_fid = answer_data[36:][::-1]  ##INT32 ## Надо переворачивать ??
         print(result_answer_map)
         print('vers :: ', vers)
         print('typ_sh :: ', typ_sh)
@@ -209,9 +209,14 @@ class RTU327(unittest.TestCase):
         print('n_fid :: ', n_fid)
         self.assertEqual(40, len(answer_data))
         ## Данные сравниваются с теми, которые были записаны по текстовому протоколу - команда TRANSADD
-        self.assertEqual(['01', '00', '00', '00'], syb_rnk) ## Надо переворачивать ??
-        self.assertEqual(['01', '00', '00', '00'], n_ob) ## Надо переворачивать ??
-        self.assertEqual(['01', '00', '00', '00'], n_fid) ## Надо переворачивать ??
+
+        self.assertEqual(1.0, hex_to_double(kt))
+        self.assertEqual(1.0, hex_to_double(kn))
+        self.assertEqual(1.0, hex_to_double(m))
+        self.assertEqual(1, hex_array_to_dec(syb_rnk))
+        self.assertEqual(1, hex_array_to_dec(n_ob))
+        self.assertEqual(1, hex_array_to_dec(n_fid))
+
 
     def test_get_pok(self):  ##
         """ Просто проверяем количество ответа - 8 байта.
@@ -299,41 +304,84 @@ class RTU327(unittest.TestCase):
         Kk = b'\x01'
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
         result_answer_map = send_command_and_get_answer(109, command_params=N_SH + Tday + Kanal + Kk)
-        answer_data = result_answer_map['answer_data'][::-1]
+        # answer_data = result_answer_map['answer_data'][::-1]
+        answer_data = result_answer_map['answer_data']
         # print(answer_data)
         # print(len(answer_data))
         self.assertEqual(198,len(answer_data))
 
-        Nsh = answer_data[:11]
-        Dd_mm_yyyy = answer_data[11:15]
-        Akwh = answer_data[15:23]
-        Akw = answer_data[23:31]
-        Atd = answer_data[31:39]
-        Akwcum = answer_data[39:47]
-        Akwc = answer_data[47:55]
-        Bkwh = answer_data[55:63]
-        Bkw = answer_data[63:71]
-        Btd = answer_data[71:75]
-        Bkwcum = answer_data[75:83]
-        Bkwc = answer_data[83:91]
-        Ckwh = answer_data[91:99]
-        Ckw = answer_data[99:107]
-        Ctd = answer_data[107:111]
-        Ckwcum = answer_data[111:119]
-        Ckwc = answer_data[119:127]
-        dkwh = answer_data[127:135]
-        dkw = answer_data[135:143]
-        dtd = answer_data[143:147]
-        dkwcum = answer_data[147:155]
-        dkwc = answer_data[155:163]
-        Kwha = answer_data[163:171]
-        Q1 = answer_data[171:179]
-        Q2 = answer_data[179:187]
-        Q3 = answer_data[187:195]
-        Q4 = answer_data[195:]
+        autoread_temp_Nsh = answer_data[:10][::-1] ## 10 или 5 байт ?? STR<10> ++ переворачиваем ответ
+        autoread_temp_Dd_mm_yyyy = answer_data[10:14][::-1] ## TIME_T
+        autoread_temp_Akwh = answer_data[14:22][::-1] ## FLOAT8 --> Double
+        autoread_temp_Akw = answer_data[22:30][::-1] ## FLOAT8 --> Double
+        autoread_temp_Atd = answer_data[30:34][::-1] ## TIME_T --> datetime
+        autoread_temp_Akwcum = answer_data[34:42][::-1] ## FLOAT8 --> Double
+        autoread_temp_Akwc = answer_data[42:50][::-1] ## FLOAT8 --> Double
+        autoread_temp_Bkwh = answer_data[50:58][::-1] ## FLOAT8 --> Double
+        autoread_temp_Bkw = answer_data[58:66][::-1] ## FLOAT8 --> Double
+        autoread_temp_Btd = answer_data[66:70][::-1] ## TIME_T --> datetime
+        autoread_temp_Bkwcum = answer_data[70:78][::-1] ## FLOAT8 --> Double
+        autoread_temp_Bkwc = answer_data[78:86][::-1] ## FLOAT8 --> Double
+        autoread_temp_Ckwh = answer_data[86:94][::-1] ## FLOAT8 --> Double
+        autoread_temp_Ckw = answer_data[94:102][::-1] ## FLOAT8 --> Double
+        autoread_temp_Ctd = answer_data[102:106][::-1] ## TIME_T --> datetime
+        autoread_temp_Ckwcum = answer_data[106:114][::-1] ## FLOAT8 --> Double
+        autoread_temp_Ckwc = answer_data[114:122][::-1] ## FLOAT8 --> Double
+        autoread_temp_dkwh = answer_data[122:130][::-1] ## FLOAT8 --> Double
+        autoread_temp_dkw = answer_data[130:138][::-1] ## FLOAT8 --> Double
+        autoread_temp_dtd = answer_data[138:142][::-1] ## TIME_T --> datetime
+        autoread_temp_dkwcum = answer_data[142:150][::-1] ## FLOAT8 --> Double
+        autoread_temp_dkwc = answer_data[150:158][::-1] ## FLOAT8 --> Double
+        autoread_temp_Kwha = answer_data[158:166][::-1] ## FLOAT8 --> Double
+        autoread_temp_Q1 = answer_data[166:174][::-1] ## FLOAT8 --> Double
+        autoread_temp_Q2 = answer_data[174:182][::-1] ## FLOAT8 --> Double
+        autoread_temp_Q3 = answer_data[182:190][::-1] ## FLOAT8 --> Double
+        autoread_temp_Q4 = answer_data[190:][::-1] ## FLOAT8 --> Double
+
+        temp_vars = vars().copy()  ## Делаем копию переменных, т.к. список ?почему-то? изменяется в реальном времени.
+        res_array = {}
+        for _ in temp_vars:
+            if _.startswith('autoread_temp_'):
+                res_array[_] = temp_vars[_]
+
+
+        # for _ in res_array:
+            # С чем сравнивать
+            # print(_, res_array[_])
+
+
+        for _ in res_array:
+            if _ in ['autoread_temp_Dd_mm_yyyy','autoread_temp_Atd','autoread_temp_Btd','autoread_temp_Ctd',
+                     'autoread_temp_dtd']:
+                if res_array[_] == ['00', '00', '00', '00'] : ##Нулевая дата
+                    pass
+                else:
+                    # print(res_array[_])
+                    # print(dec_from_bytes_array(res_array[_]))
+                    # print(hex_array_to_dec(res_array[_]))
+
+                    print((get_reversed_bytes_string_byte_ver(res_array[_]))) ## Вот здесь get_reversed_bytes_string_byte_ver -- передаются чисто байты, а я уже передаю byte_array
+                    print(hex_array_to_dec(get_reversed_bytes_string_byte_ver(res_array[_])))
+                    temp = date_from_seconds(hex_array_to_dec(get_reversed_bytes_string_byte_ver(res_array[_])))
+                    print(temp)
+                    print()
 
 
 if __name__ == "__main__":
     unittest.main()
     # fast = unittest.TestSuite()
 #     fast.addTests(TestFastThis)
+
+#======
+
+def get_var_name_and_var_value_from_vars(var_prefix):
+    """
+    Ищем (вроде) во всех переменных, переменные с префиксом --var_prefix--
+    """
+    temp_vars = vars().copy()  ## Делаем копию переменных, т.к. список ?почему-то? изменяется в реальном времени.
+    print(vars())
+    res_array = {}
+    for _ in temp_vars:
+        if _.startswith(var_prefix):
+            res_array[_] = temp_vars[_]
+    return res_array

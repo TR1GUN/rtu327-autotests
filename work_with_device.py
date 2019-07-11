@@ -37,6 +37,7 @@ b'\x02\x00\r\x01\x00\x00\x00\x00\x00\x00\x00\x00E\x97\xf6\\\x1aq'
 """
 import datetime
 import socket
+import struct
 import subprocess
 import sys
 import threading
@@ -72,6 +73,16 @@ def hex_to_dec(byte_hex_str):
     hex_str = hex_str_array[0] + hex_str_array[1]
     return int(hex_str, 16)
 
+def hex_array_to_dec(hex_array):
+    """
+    Переводим hex_array в число::
+    Пример ::
+        hex_array == ['5b', '37', 'ef', '50']
+    Вывод ::
+        1530392400
+    """
+    return int(''.join(hex_array), 16)
+
 def char_bytes_str_to_array(request):
     # print(parse_bytes_str_to_array(request))
     return hex_bytes_array_to_string([bytes.hex(_) for _ in parse_bytes_str_to_array(request)])
@@ -97,6 +108,9 @@ def dec_from_bytes_array(bytes_array):
      -- передаем - ['ba', '34', '00', '00']
      -- получаем - 47668
     """
+    print((' '.join(bytes_array).strip()).upper())
+    print(bytes.fromhex((' '.join(bytes_array).strip()).upper()))
+    print(hex_to_dec(bytes.fromhex((' '.join(bytes_array).strip()).upper())))
     return hex_to_dec(bytes.fromhex((' '.join(bytes_array).strip()).upper()))
 
 def dec_to_hex(number):
@@ -110,6 +124,12 @@ def dec_to_hex(number):
     result = str_to_byte_symbol_array(temp)
     return bytes.fromhex((' '.join(result).strip()).upper())
 
+def hex_to_double(hex_array):
+    """
+    Из hex делаем double.
+    Минус - много лишних действий.
+    """
+    return struct.unpack('>d', dec_to_hex(hex_array_to_dec(hex_array)))[0] ## >d когда перевернуто, d когда не первернуто.
 
 def byte_request_to_int_array(request):
     """
@@ -397,6 +417,12 @@ def date_to_seconds(date):
     """
     return int(time.mktime(date.timetuple()))
 
+def date_from_seconds(seconds):
+    """
+    Возвращаем дату из секунд(Отсчет с 01.01.1970)
+    """
+    return datetime.datetime.utcfromtimestamp(seconds)
+
 def bytes_string_to_upper_hex(bytes_string):
     """ Берет байтовую строку, и превращает в строку с hex значениями.
     Пример:
@@ -474,6 +500,17 @@ def get_reversed_time_bytes(datetime_in_seconds):
 
 
 ## Utils
+
+# def get_var_name_and_var_value_from_vars(var_prefix):
+#     """
+#     Ищем (вроде) во всех переменных, переменные с префиксом --var_prefix--
+#     """
+#     temp_vars = vars().copy()  ## Делаем копию переменных, т.к. список ?почему-то? изменяется в реальном времени.
+#     res_array = {}
+#     for _ in temp_vars:
+#         if _.startswith(var_prefix):
+#             res_array[_] = temp_vars[_]
+#     return res_array
 
 def check_ip_args(method):
     def decorator(*args, **kwargs):
