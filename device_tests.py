@@ -4,6 +4,7 @@ py -m pytest device_tests.py::RTU327::test_gettime -s -v
 import re
 import unittest
 
+from communication_engineering_serialport_helper.Utils.helpActions import get_normal_text
 from communication_engineering_serialport_helper.main_methods.methods import send_read
 from work_with_device import *
 import work_with_device
@@ -11,7 +12,7 @@ import work_with_device
 
 class RTU327(unittest.TestCase):
 
-    counter_number = b'\x00\x10\x18\x47\x60'  ## Номер счетчика
+    # counter_number = b'\x00\x10\x18\x47\x60'  ## Номер счетчика
 
     # temp_config_parser = ConfigParser()
     # temp_config_parser.read('uspd_settings.ini')
@@ -20,8 +21,17 @@ class RTU327(unittest.TestCase):
     # uspd_tcp_port = int(temp_config_parser.get('RTU-327','uspd_tcp_port'))
     # uspd_password = temp_config_parser.get('RTU-327','uspd_password')
 
-    """'3c', 'a0', '2f' = неправильная контрольная сумма - жопа ответа
-    прокинуть в каждый тест ? """
+    def commands_send_helper(self, command):
+        if type(command) is list:
+            all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+                                    command=command[0], args_list=command[1], tcp_timeout=5)
+        elif type(command) is str:
+            all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+                                    command=command, tcp_timeout=5)
+        else:
+            raise Exception('Неизвестный тип')
+        return all_strings
+
 
     def test_preparation_stage(self):
         """
@@ -47,18 +57,14 @@ class RTU327(unittest.TestCase):
             N_Fid - Номер фидера 
         """
         for command in commands:
-            if type(command) is list:
-                all_strings = send_read(password=uspd_password,tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
-                                        command=command[0], args_list=command[1], tcp_timeout=5)
-            elif type(command) is str:
-                all_strings = send_read(password=uspd_password,tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
-                                        command=command, tcp_timeout=5)
-            else:
-                raise Exception('Неизвестный тип')
-
+            all_strings = self.commands_send_helper(command)
             print(all_strings)
             ## Проверка Ответа - пока только OK05C7??
             self.assertEqual('OK05C7',all_strings.strip())
+
+        ## TODO
+        ## Тут собирать uspd_settings.ini --> ConfigParser
+
 
         ##Далее мы просто ждем ????
         # print('!!!GOING TO SLEEP FOR 15 MINUTES!!!\n'*10)
@@ -66,7 +72,7 @@ class RTU327(unittest.TestCase):
         # print('was\\done\n'*10)
 
     @staticmethod
-    def get_uspd_count_number():
+    def get_uspd_count_number(): ## Использовать для проверок
         ## TODO
         ## Возможно следует READQUAL следует заменить на другую -- чтобы меньше грузилась успд.
         all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
@@ -83,9 +89,10 @@ class RTU327(unittest.TestCase):
         """
 
         result_answer_map = send_command_and_get_answer(3)
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         answer_data = result_answer_map['answer_data']
         print(answer_data)
-        self.assertEqual(6 , len(answer_data))
+        self.assertEqual(6, len(answer_data))
 
         ## Ожидаемый ответ железки
         ## ['0x30','0x32','0x30','0x31','0x30','0x32']
@@ -95,6 +102,7 @@ class RTU327(unittest.TestCase):
     # @work_with_device.check_ip_args
     def test_get_time(self):
         result_answer_map = send_command_and_get_answer(114)
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         answer_data = result_answer_map['answer_data'][::-1]
         result_answer_data = ''
         for x in answer_data: result_answer_data += x
@@ -140,8 +148,7 @@ class RTU327(unittest.TestCase):
         result_hex_time += res_hex_time.encode()
         result_answer_map = send_command_and_get_answer(115,
                                                         command_params=b'\x10\x0e\x00\x00')  # 3600 + добавляем 1 час на успд
-                                                        # command_params=b'\xf0\xf1\xff\xff')  # 3600 + добавляем 1 час на успд
-                                                        # command_params=b'\x00\x00\x00\xff')  # 3600 + добавляем 1 час на успд
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         # result_answer_map = send_command_and_get_answer(115, command_params=b'\xfe\xff\xff\xff')
         # check ## секунды не проверяю
         # Копия --- test_gettime
@@ -149,6 +156,7 @@ class RTU327(unittest.TestCase):
 
         """ Проверка """
         result_answer_map = send_command_and_get_answer(114)
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         answer_data = result_answer_map['answer_data'][::-1]
         result_answer_data = ''
         for x in answer_data: result_answer_data += x
@@ -159,8 +167,16 @@ class RTU327(unittest.TestCase):
         difference_between_dates = abs((curr_datetime - device_datetime).total_seconds())
         self.assertTrue(3540 < difference_between_dates < 3660)  # Разница +- 1 минута
 
+        ## Возвращаем время назад
+
+        result_answer_map = send_command_and_get_answer(115,
+                                                        command_params=b'\xf0\xf1\xff\xff')  # 3600 + убираем 1 час на успд
+        self.assertEqual('00',
+                         result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
+
     def helper_test_get_maxlogid(self):
         result_answer_map = send_command_and_get_answer(101, command_params=b'\x01')
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         self.assertEqual(4, len(result_answer_map['answer_data']))
         before_generation_event = result_answer_map['answer_data']
         return dec_from_bytes_array(before_generation_event)
@@ -181,6 +197,9 @@ class RTU327(unittest.TestCase):
         else:
             self.assertTrue(max_log_id_after > max_log_id_before)
 
+        ## Возвращаем время назад
+        send_command_and_get_answer(115, command_params=b'\xf0\xf1\xff\xff')  # 3600 == убираем 1 час на успд
+
     def test_get_log(self):
         Nsect = b'\x00\x00\x00\x01'
         # Id = b'\x00\x00\x00\x01' ## id события - вот тут надо доставать последнее событие из журнала --> test_get_maxlogid()
@@ -189,17 +208,18 @@ class RTU327(unittest.TestCase):
         Num = b'\x00\x01'
         result_answer_map = send_command_and_get_answer(117, command_params=Nsect + Id + Num)
         print(result_answer_map)
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         self.assertEqual(13, len(result_answer_map))
 
     def test_get_shprm(self): ## Пока просто смотрим
         """серийный номер успд ?? откуда брать ??
          10 18 47 60
         """
-
         ##RTU327 протокол
-        Nsh = RTU327.counter_number ## Номер счетчика
+        Nsh = work_with_device.uspd_counter_number ## Номер счетчика
         result_answer_map = send_command_and_get_answer(112, command_params=Nsh)
         # answer_data = result_answer_map['answer_data'][::-1]  ##перевернутый ответ
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         answer_data = result_answer_map['answer_data']
         vers = answer_data[:2]
         typ_sh = answer_data[2]
@@ -235,31 +255,79 @@ class RTU327(unittest.TestCase):
         """ Просто проверяем количество ответа - 8 байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
-        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
-        NSH  = RTU327.counter_number
-        Chnl  = b'\x01'
-        time_minus_month  = get_reversed_time_bytes(date_to_seconds(datetime.datetime.now())) ##minus 1 month
-        # result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+time_minus_month)
-        result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+get_reversed_bytes_string_byte_ver(time_minus_month))
-        answer_data = result_answer_map['answer_data'][::-1]
-        print(answer_data)
-        print(str(len(answer_data)))
-        # self.assertEqual(8, len(answer_data))
 
-        ##Текстовый протокол
-        # gg = send_read(password=RTU327.uspd_password,tcp_ip = RTU327.uspd_tcp_ip, tcp_port = RTU327.uspd_tcp_ip,
-        #                command='READMONTH', tcp_timeout=25)
-        # print(gg)
+        ## Читаем показания счетчика - по текстовому протоколу
+        ## TODO
+        ## ? Перенести в Текстовый протокол ?
+        cur_date = datetime.datetime.now() - datetime.timedelta(days=1)
+        temp_date_array = [str(cur_date.year)[2:], '.',
+               str(cur_date.month) if cur_date.month > 9 else '0' + str(cur_date.month), '.',
+               str(cur_date.day) if cur_date.day > 9 else '0' + str(cur_date.day)]
+        command = ['READDAY',[''.join(temp_date_array)]]
+
+        all_strings = self.commands_send_helper(command)
+        array_of_string = get_normal_text(all_strings.split('\n')).split('\n')
+
+        # print(array_of_string)
+        # print(array_of_string)
+        res_text_protocol_dict = {}
+        for line in array_of_string:
+            line_array = line.split()
+            if len(line_array) <= 1:
+                pass
+            else:
+                res_text_protocol_dict[line_array[0]] = line_array[1]
+
+
+        print(res_text_protocol_dict)
+
+
+        # Вторая реализация -- проверяем все Chnl
+        for _ in [1,3,7,15]: ## 1,3,7,15 --> постепенное заполнение битами , т.е. 0001 / 0011 / 0111 / 1111 ### 1111 -- > (R-)/(R+)/(A-)/(A+)
+            Chnl = dec_to_hex(_)
+            NSH = work_with_device.uspd_counter_number
+
+            # ставим дату - предыдущий день -- 00:00
+            cur_date = datetime.datetime.now()
+            previous_day = get_reversed_time_bytes(
+                date_to_seconds(datetime.datetime.now() - datetime.timedelta(days=1, hours=cur_date.hour,minutes=cur_date.minute, seconds=cur_date.second,microseconds=cur_date.microsecond)
+                               ))
+
+            # result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+time_minus_month)
+            result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+previous_day)
+            self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
+            answer_data = result_answer_map['answer_data'][::-1]
+            print(answer_data,str(len(answer_data)))
+
+            if _ == 1:
+                answer_data_for_1 = answer_data
+                self.assertEqual(8, len(answer_data))
+                self.assertEqual(int(float(res_text_protocol_dict['dA+0'])), int(hex_to_double(answer_data)*1000))
+            elif _ == 3:
+                answer_data_for_3 = answer_data
+                self.assertTrue(answer_data_for_1 == answer_data_for_3[8:])  ## ?? Спереди или сзади проверять ответ ??
+                self.assertEqual(int(float(res_text_protocol_dict['dA-0'])), int(hex_to_double(answer_data[:8])*1000)) ## float , а дальше в int не осень красиво
+                self.assertEqual(16, len(answer_data))
+            elif _ == 7:
+                answer_data_for_7 = answer_data
+                self.assertTrue(answer_data_for_3 == answer_data_for_7[8:])  ## ?? Спереди или сзади проверять ответ ??
+                self.assertEqual(24, len(answer_data))
+                self.assertEqual(int(float(res_text_protocol_dict['dR+0'])), int(hex_to_double(answer_data[:8])*1000))
+            elif _ == 15:
+                answer_data_for_15 = answer_data
+                self.assertTrue(answer_data_for_7 == answer_data_for_15[8:])  ## ?? Спереди или сзади проверять ответ ??
+                self.assertEqual(32, len(answer_data))
+                self.assertEqual(int(float(res_text_protocol_dict['dR-0'])), int(hex_to_double(answer_data[:8])*1000))
 
 
     def test_get_lp(self):  ##
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
-        Nsh = RTU327.counter_number
+        Nsh = work_with_device.uspd_counter_number
         Kanal = b'\x01'
-        # Tstart = b'\x00\x00\x00\x00'
-        Tstart = get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7))) ## Откуда забирать дату данных со счетчика ??
+        Tstart = b'\x00\x00\x00\x00'
+        # Tstart = get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7))) ## Откуда забирать дату данных со счетчика ??
         # Tstart = get_reversed_bytes_string_byte_ver(
         #     get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7)))) ## Откуда забирать дату данных со счетчика ??
         self.assertEqual(4, len(Tstart))
@@ -268,6 +336,7 @@ class RTU327(unittest.TestCase):
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
         # result_answer_map = send_command_and_get_answer(111, command_params=Nsh+Kanal+get_reversed_bytes_string_byte_ver(Tstart))
         result_answer_map = send_command_and_get_answer(111, command_params=Nsh+Kanal+Tstart + Kk)
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         answer_data = result_answer_map['answer_data'][::-1]
         print(answer_data)
         self.assertEqual(15, len(answer_data))
@@ -277,7 +346,7 @@ class RTU327(unittest.TestCase):
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
-        Nsh = RTU327.counter_number
+        Nsh = work_with_device.uspd_counter_number
         Kanal = b'\x01'
         Interval = b'\x00'
         # Tstart = b'\x00\x00\x00\x00'
@@ -285,6 +354,7 @@ class RTU327(unittest.TestCase):
         Kk = b'\x00\x01'
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
         result_answer_map = send_command_and_get_answer(105, command_params=Nsh+Kanal+Interval+Tstart+Kk)
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         answer_data = result_answer_map['answer_data'][::-1]
         print(answer_data)
         self.assertEqual(15, len(answer_data))
@@ -294,15 +364,17 @@ class RTU327(unittest.TestCase):
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
-        Nsh = RTU327.counter_number
+        Nsh = work_with_device.uspd_counter_number
         # Tstart = b'\x00\x00\x00\x00'
         # Tstart = get_reversed_bytes_string_byte_ver(get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7))))
         # Tstart = get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7)))
         # Tstart = b'\x5c\xac\xa4\x16'
-        Tstart = b'\x00\x00\x00\x00'
+        # Tstart = b'\x00\x00\x00\x00'
+        Tstart = b'\x16\xa4\xac\x5c'
         NumTests  = b'\x01'
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
         result_answer_map = send_command_and_get_answer(107, command_params=Nsh+Tstart+NumTests)
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         answer_data = result_answer_map['answer_data'][::-1]
         print(answer_data)
         self.assertTrue(len(answer_data) >= 18) #не менбше 18 байт - ?? как считается массиы ??
@@ -311,12 +383,26 @@ class RTU327(unittest.TestCase):
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
-        N_SH = RTU327.counter_number
-        Tday  = b'\x00\x00\x00\x00'
+        # N_SH = RTU327.counter_number
+        N_SH = work_with_device.uspd_counter_number
+        # Tday  = b'\x00\x00\x00\x00'
+
+        Tday  = b'\x4f\x7f\x27\x5d' ## При 7f ок
+        # Tday  = b'\x4f\x80\x27\x5d' ## При 80 не ок, т.е. при > 7f , crc на успд уже не так считается
+
+        # Tday  = b'\x7f\x7f\x7f\x7f'
+
+        # Tday = b'\x5d\x27\xa3\x4f'
+        # Tday = b'\x4f\xa3\x27\x5d'
+
+        # Tday = b'\x95\xff\x26\x5d'
+        # Tday = b'\x5d\x26\xff\x95'
+
         Kanal = b'\x01'
         Kk = b'\x01'
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
         result_answer_map = send_command_and_get_answer(109, command_params=N_SH + Tday + Kanal + Kk)
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         # answer_data = result_answer_map['answer_data'][::-1]
         answer_data = result_answer_map['answer_data']
         # print(answer_data)
@@ -368,13 +454,15 @@ class RTU327(unittest.TestCase):
             if _.strip() == 'autoread_temp_Nsh':
                 ## Номер счетчика откуда брать??
                 ## ['30', '30', '31', '30', '31', '38', '34', '37', '36', '30'] --> 0010184760
-
                 uspd_counter_number = [str(int(bytes.fromhex(_), 16)) for _ in res_array[_]]
                 uspd_counter_number = int(''.join(uspd_counter_number))
-                self.assertEqual(10184760, uspd_counter_number)
+                # self.assertEqual(10184760, uspd_counter_number)
+                self.assertEqual(uspd_counter_number_as_int, uspd_counter_number)
                 # self.assertEqual(['30', '30', '31', '30', '31', '38', '34', '37', '36', '30'], res_array[_])
             elif _.strip() in ['autoread_temp_Dd_mm_yyyy', 'autoread_temp_Atd', 'autoread_temp_Btd',
                                'autoread_temp_Ctd', 'autoread_temp_dtd']:
+                ## TODO
+                ## Как смотреть -- autoread_temp_Dd_mm_yyyy  ????
                 cur_date_from_answer_in_seconds = dec_from_bytes_array(res_array[_])
                 self.assertTrue(cur_date_from_answer_in_seconds >= 0)
             elif _.strip().endswith('kwh'): #Akwh, Bkwh, Ckwh, Dkwh

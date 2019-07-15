@@ -67,7 +67,6 @@ def save_settings_in_ini_file(section_name, dictionary):
                            "uspd_tcp_port":'14101',
                            "uspd_password":'00000000'})
     """
-
     temp_config_parser = ConfigParser()
     temp_config_parser.add_section(section_name)
     for key in dictionary:
@@ -107,7 +106,8 @@ TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x81
 # temp_config_parser = ConfigParser()
 # temp_config_parser.read('uspd_settings.ini')
 uspd_rtu_dict = get_settings_dictionary_from_ini_file('uspd_settings.ini', 'RTU-327')
-# temp_config_parser.get('uspd_tcp_ip')
+uspd_counter_number = b''.join(list((bytes.fromhex(uspd_rtu_dict.get('counter_number')[_ * 2:_ * 2 + 2])) for _ in range(int(len(uspd_rtu_dict.get('counter_number')) / 2))))  ## Номер счетчика
+uspd_counter_number_as_int = int(uspd_rtu_dict.get('counter_number'))
 uspd_tcp_ip = uspd_rtu_dict.get('uspd_tcp_ip')
 uspd_tcp_port = int(uspd_rtu_dict.get('uspd_tcp_port'))
 uspd_password = uspd_rtu_dict.get('uspd_password')
@@ -212,6 +212,8 @@ def parse_bytes_str_to_array(request, add_x_prefix=True):
 
     Кидать b'' команды . НЕ STR
     ??? Просто разбитые, не в Char представлении ???
+
+    !!! Не работает если спереди уже стоит char передставление !!!
     """
     result_array = []
     for _ in str(request).split(r'\x')[1:]:  ## Не учтен вариант если спереди уже байтовое представление
@@ -239,11 +241,16 @@ def parse_bytes_str_to_array(request, add_x_prefix=True):
 def crc16_calc_tab_rtu(buf):
     """
     Вычисление контрольной суммы с помощью библиотеки numpy.
+
+    ## !!! В конце стоят int, вместо uint !!!
     """
-    print(buf, 'buf')
+    # print(buf, 'buf')
+
     crc = 0xffff  ##Стартовое число -- объявить в глобальных(статических) переменных ?*
     for x in buf:
-        crc = np.uint16(((np.uint16(TableCRC[crc >> 8])) ^ (crc << 8) ^ (np.uint16((np.uint8(x))))))
+        # print(crc, x)
+        # crc = np.uint16(np.uint16(TableCRC[crc >> 8]) ^ (crc << 8) ^ np.uint16(np.uint8(x)))
+        crc = np.uint16(np.uint16(TableCRC[crc >> 8]) ^ (crc << 8) ^ np.int16(np.int8(x))) ## !!! В конце стоят int, вместо uint !!!
     return crc
 
 
@@ -251,7 +258,7 @@ def crc16_calc_tab_rtu_ctype(buf):
     """
     Вычисление контрольной суммы с помощью библиотеки ctype.
     """
-    print(buf, 'buf')
+    # print(buf, 'buf')
     crc = 0xffff  ##Стартовое число -- объявить в глобальных(статических) переменных ?*
     for x in buf:
         crc = ctypes.c_uint16((((ctypes.c_uint16(TableCRC[crc >> 8]).value) ^ (crc << 8) ^ (
@@ -343,6 +350,7 @@ def get_result_request(request):
     prefix = b'\x02'  ## префикс
     first_part_of_package_size = b'\x00'  ## \x00 ++ <тут мы подсчитываем \\x > - Длина пакета \
     # print('---get_result_request---','\n',get_crc(request),'\n',get_crc_ctype(request),'\n', calculate_crcex(request) ,'\n', '---get_result_request---' ,'\n','\n')
+    print('request',request)
     return prefix + first_part_of_package_size + get_number_of_request(request) + request + get_crc(request)
 
 
@@ -450,12 +458,8 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     result = b''
     for _ in answer_bytes[3:-2]: result += _
     # print([result + _ for _ in answer_bytes[3:-2]])
-    print(result, 'result')
-    print(get_crc(result), 'get_crc(result)')
-    # print('answer crc')
-    # print(hex(crc16_calc_tab_rtu(result)))
-    # print(hex(crc16_calc_tab_rtu_ctype(result)))
-    # print('answer crc')
+    # Проверяем crc, который пришл в ответ.
+    assert hex_bytes_to_string(get_crc(result)) == hex(crc16_calc_tab_rtu(result))[2:] ## убираем префикс 0x
     return parse_answer(hex_normal_view_answer_array)
 
 def date_to_seconds(date):
@@ -469,6 +473,14 @@ def date_from_seconds(seconds):
     Возвращаем дату из секунд(Отсчет с 01.01.1970)
     """
     return datetime.datetime.utcfromtimestamp(seconds)
+
+def hex_datetime(date_time):
+    """
+    Из обычной даты, возвращаем Hex.
+
+    Пример:
+    """
+    return get_right_hex(hex(date_to_seconds(date_time))[2:])
 
 def bytes_string_to_upper_hex(bytes_string):
     """ Берет байтовую строку, и превращает в строку с hex значениями.
@@ -515,26 +527,6 @@ def get_reversed_time_bytes(datetime_in_seconds):
    # res_str = bytes.fromhex(' '.join(result).upper())
    res_str = get_reversed_bytes_string_str_ver(hex_datetime)
    return res_str
-
-
-# def to_uint8(num):## НЕПРАВИЛЬНО работает ????
-#     if num < 0:## НЕПРАВИЛЬНО ????
-#         while num < 0: num += 256
-#     if num < 256: return num
-#     elif num == 256: return 0
-#     else:
-#         while num > 256: num = num - 256
-#     return num
-#
-# ## НЕПРАВИЛЬНО ????
-# def to_uint16(num): ## НЕПРАВИЛЬНО работает ????
-#     if num < 0:
-#         while num < 0: num += 65535
-#     if num < 65535 : return num
-#     elif num == 65535 : return 0
-#     else:
-#         while num > 65535 : num = num - 65535
-#     return num
 
 # print(byte_request_to_int_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
 # print(byte_request_to_char_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
