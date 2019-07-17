@@ -146,7 +146,7 @@ def add_empty_bytes(byte_str, add_number, at_start=True):
             byte_str += b'\x00'
     return byte_str
 
-def dec_from_bytes_array(bytes_array):
+def dec_from_bytes_array(bytes_array): ## hex_array_to_dec
     """
     Из получаемого ответа(паршеный ответ в виде массива байт) можно кидать прямо сюда куски, чтобы получить число.
     Например:
@@ -558,6 +558,15 @@ def check_ip_args(method):
     return decorator
 ##unused
 
+def get_previous_day_datetime():
+    cur_date = datetime.datetime.now()
+    previous_day = get_reversed_time_bytes(
+        date_to_seconds(
+            datetime.datetime.now() - datetime.timedelta(days=1, hours=cur_date.hour, minutes=cur_date.minute,
+                                                         seconds=cur_date.second, microseconds=cur_date.microsecond)
+        ))
+    return previous_day
+
 ## text_protocol -- в device_test.py я импорчу все из work_with_device.py --> Получается циклическая рекурсия
 def get_uspd_count_number():
     ## TODO
@@ -565,6 +574,21 @@ def get_uspd_count_number():
     all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
                             command='READAQUAL', tcp_timeout=5)
     return all_strings.split('\n')[3].split(';')[-1].replace('<','')
+
+def get_str_date_from_datetime(datetime_to_str, format = '%y.%m.%d %H:%M:%S'): ## %y -- последние 2 цифры года
+    """
+    Возвращает из строки(дата в виде строки) объект datetime.
+    """
+    return datetime.datetime.strftime(datetime_to_str, format)
+
+def get_datetime_from_string(str_datetime, date_parse_format = '%Y.%m.%d %H:%M:%S'):
+    """
+    Возвравщает из строки объект datetime.
+    :param str_datetime: Сюда передаем str дату --> Пример : '19.07.16 13:00:05'
+    :param date_parse_format: Сюда передаем формат даты--> Дефолтный пример : '%y.%m.%d %H:%M:%S'
+    :return: Возвращает объект datetime
+    """
+    return datetime.datetime.strptime(str_datetime, date_parse_format)
 
 ##helpers
 # def save_settings_in_ini_file(section_name, dictionary):
@@ -591,3 +615,16 @@ def get_uspd_count_number():
 #     temp_config_parser.read(file_path)
 #     dict_schema = temp_config_parser.__dict__['_sections'][uspd_name]
 #     return dict(dict_schema) ## Кастим OrderDict в обычный
+
+
+def commands_send_helper(uspd_password,uspd_tcp_ip,uspd_tcp_port, command):
+    ## В некоторых местах неправильно прокидывает.
+    if type(command) is list:
+        all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+                                command=command[0], args_list=command[1], tcp_timeout=5) ## ## Как command правильно записать?
+    elif type(command) is str:
+        all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+                                command=command, tcp_timeout=5)
+    else:
+        raise Exception('Неизвестный тип')
+    return all_strings

@@ -22,6 +22,10 @@ class RTU327(unittest.TestCase):
     # uspd_password = temp_config_parser.get('RTU-327','uspd_password')
 
     def commands_send_helper(self, command):
+        # print(command)
+        # print(command)
+        # print(command)
+        print(uspd_password,uspd_tcp_ip,uspd_tcp_port,command)
         if type(command) is list:
             all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
                                     command=command[0], args_list=command[1], tcp_timeout=5)
@@ -31,6 +35,8 @@ class RTU327(unittest.TestCase):
         else:
             raise Exception('Неизвестный тип')
         return all_strings
+        # work_with_device.commands_send_helper(uspd_password=uspd_password, uspd_tcp_ip=uspd_tcp_ip,
+        #                                       uspd_tcp_port=uspd_tcp_port, command=command)
 
 
     def test_preparation_stage(self):
@@ -49,7 +55,7 @@ class RTU327(unittest.TestCase):
         commands = ['TRANSOPEN', ## Открываем соединение
                     'CLEARTABL', ['TRANSADD',['1','3','60','010101010101','020202020202','0','4','6','8','0','0','1','1','1']],
                     ## Последние три единички :: Syb_Rnk - Тип объекта :: N_Ob - Номер объекта :: N_Fid - Номер фидера
-                    ['WARCHPRM',['1','1','1','1','0','0','0','1']],['WSCHEDAQUAL',['0','0','0','30']], ## Записываем -- для test_get_tests -- Качество сети приборов учета.
+                    ['WARCHPRM',['1','1','1','1','1','1','1','1']],['WSCHEDAQUAL',['1','0','0','30']], ## Записываем -- для test_get_tests -- Качество сети приборов учета.
                     'TRANSCOMMIT'] ## Закрываем соединение
         """Последние три единички
             Syb_Rnk - Тип объекта  
@@ -68,7 +74,7 @@ class RTU327(unittest.TestCase):
 
         ##Далее мы просто ждем ????
         # print('!!!GOING TO SLEEP FOR 15 MINUTES!!!\n'*10)
-        # time.sleep(15*60) #15 минут
+        # time.sleep(30*60) #30 минут -- ждем когда появятся ?? архивные данные + номер счетчика
         # print('was\\done\n'*10)
 
     @staticmethod
@@ -264,12 +270,8 @@ class RTU327(unittest.TestCase):
                str(cur_date.month) if cur_date.month > 9 else '0' + str(cur_date.month), '.',
                str(cur_date.day) if cur_date.day > 9 else '0' + str(cur_date.day)]
         command = ['READDAY',[''.join(temp_date_array)]]
-
         all_strings = self.commands_send_helper(command)
         array_of_string = get_normal_text(all_strings.split('\n')).split('\n')
-
-        # print(array_of_string)
-        # print(array_of_string)
         res_text_protocol_dict = {}
         for line in array_of_string:
             line_array = line.split()
@@ -278,26 +280,18 @@ class RTU327(unittest.TestCase):
             else:
                 res_text_protocol_dict[line_array[0]] = line_array[1]
 
-
-        print(res_text_protocol_dict)
-
-
         # Вторая реализация -- проверяем все Chnl
         for _ in [1,3,7,15]: ## 1,3,7,15 --> постепенное заполнение битами , т.е. 0001 / 0011 / 0111 / 1111 ### 1111 -- > (R-)/(R+)/(A-)/(A+)
             Chnl = dec_to_hex(_)
             NSH = work_with_device.uspd_counter_number
 
             # ставим дату - предыдущий день -- 00:00
-            cur_date = datetime.datetime.now()
-            previous_day = get_reversed_time_bytes(
-                date_to_seconds(datetime.datetime.now() - datetime.timedelta(days=1, hours=cur_date.hour,minutes=cur_date.minute, seconds=cur_date.second,microseconds=cur_date.microsecond)
-                               ))
+            previous_day = get_previous_day_datetime()
 
             # result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+time_minus_month)
             result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+previous_day)
             self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
             answer_data = result_answer_map['answer_data'][::-1]
-            print(answer_data,str(len(answer_data)))
 
             if _ == 1:
                 answer_data_for_1 = answer_data
@@ -364,40 +358,116 @@ class RTU327(unittest.TestCase):
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
+
+        ## Читаем дату + данные из текстового протокола
+        ## Надо везде открывать закрывать соединение ?????
+        ## 1. Читаем за последние 1 час READAQUAL - и забираем последнюю дату + данные
+        #Читаем последние данные.
+        commands = ['READAQUAL',
+                    [get_str_date_from_datetime(datetime.datetime.now() - datetime.timedelta(minutes=32)) + ' 0 ' +
+                     get_str_date_from_datetime(datetime.datetime.now()) + ' 0']]
+        all_strings = self.commands_send_helper(commands)
+        array_of_string = get_normal_text(all_strings.split('\n')).split('\n')
+        res_text_protocol_dict = {}
+        for line in array_of_string:
+            line_array = line.split()
+            if len(line_array) <= 1:
+                pass
+            else:
+                res_text_protocol_dict[line_array[0]] = line_array[1]
+        print(all_strings)
+
+        ## Работаем с RTU327
         Nsh = work_with_device.uspd_counter_number
-        # Tstart = b'\x00\x00\x00\x00'
-        # Tstart = get_reversed_bytes_string_byte_ver(get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7))))
-        # Tstart = get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7)))
-        # Tstart = b'\x5c\xac\xa4\x16'
-        # Tstart = b'\x00\x00\x00\x00'
-        Tstart = b'\x16\xa4\xac\x5c'
-        NumTests  = b'\x01'
+        # Tstart = get_previous_day_datetime()
+        #undone
+        # Tstart = get_reversed_time_bytes(date_to_seconds(get_datetime_from_string('2019.07.17 18:00:00'))) ## <-- Сюда прокидывать дату из READAQUAL -- > ['READAQUAL', ['19.07.16 13:00:05']]
+        Tstart = get_reversed_time_bytes(
+            date_to_seconds(get_datetime_from_string(
+                get_str_date_from_datetime(datetime.datetime.now() - datetime.timedelta(minutes=32)), '%y.%m.%d %H:%M:%S' )))
+        #undone
+
+        NumTests = b'\x01'
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
         result_answer_map = send_command_and_get_answer(107, command_params=Nsh+Tstart+NumTests)
         self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
-        answer_data = result_answer_map['answer_data'][::-1]
-        print(answer_data)
-        self.assertTrue(len(answer_data) >= 18) #не менбше 18 байт - ?? как считается массиы ??
+        answer_data = result_answer_map['answer_data']
+        self.assertTrue(len(answer_data) >= 18) #не меньше 18 байт - ?? как считается массиы ??
+        tests_temp_BITSTATS  = answer_data[:4]  ##INT32
+        tests_temp_Realint = answer_data[4]   ## INT8
+        tests_temp_Elm = answer_data[5]  ## INT8
+
+        # tests_temp_other = answer_data[6:]  ## FLOAT8 --> Double ## Если много дат, как поняьт где даты / а где данные
+        tests_temp_data_time = answer_data[6:10]
+        tests_temp_data = answer_data[10:]
+
+        temp_vars = vars().copy()  ## Делаем копию переменных, т.к. список ?почему-то? изменяется в реальном времени.
+        for _ in temp_vars:
+            if _.startswith('tests_temp_'):
+                print(_, temp_vars[_])
+
+        aqual_vars_from_rtu_protocol = {}
+        aqual_vars_names = ['P0','P1','P2','S0','S1','S2','F','I0','I1','I2',
+                            'U0','U1','U2','Ang0','Ang2'] ##Нет Ang 1???
+
+        round_number = 1000 ## На сколько домонжаем
+
+        for _ in range(int(len(tests_temp_data) / 8 )):
+            print(hex_to_double(tests_temp_data[_*8: _*8 + 8][::-1]) * round_number)
+            aqual_vars_from_rtu_protocol[aqual_vars_names[_]] = hex_to_double(tests_temp_data[_*8: _*8 + 8][::-1]) * 1000
+
+        # print(aqual_vars_from_rtu_protocol)
+        # print(aqual_vars_from_rtu_protocol)
+        print(aqual_vars_from_rtu_protocol)
+        print(res_text_protocol_dict)
+        for key in aqual_vars_from_rtu_protocol.keys():
+            if key in ['P0','P1','P2','S0','S1','S2']:
+                ## Обнуление до двух знаков после запятой -- float???
+                print(float(aqual_vars_from_rtu_protocol[key]),float(res_text_protocol_dict[key]))
+                self.assertEqual(float(aqual_vars_from_rtu_protocol[key]),float(res_text_protocol_dict[key]))
+            elif key in ['F','I0','I1','I2','U0','U1','U2','Ang0','Ang2']:
+                if key in ['U2','Ang0','Ang2']:
+                    ## 'U2','Ang0','Ang2' имеют много знаков после запятой
+                    ## Пока просто преобразуем в Int --> отбрасываем знаки после запятой.
+                    self.assertEqual(int(float((aqual_vars_from_rtu_protocol[key] / round_number))),
+                                     int(float(res_text_protocol_dict[key])))
+                else:
+                   print(float( (aqual_vars_from_rtu_protocol[key] / round_number)),float(res_text_protocol_dict[key]))
+                   self.assertEqual(float( (aqual_vars_from_rtu_protocol[key] / round_number) ),float(res_text_protocol_dict[key]))
+
+
+            print('--',key,'--', aqual_vars_from_rtu_protocol[key],'--',res_text_protocol_dict[key])
+        # for _ in
+
 
     def test_get_autoread(self):  ## undone
         """ Просто проверяем количество ответа - ?? байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
         """
+
+        ## Текстовы протокол
+        ## Дублирование -- из get_pok()
+        cur_date = datetime.datetime.now()
+        temp_date_array = [str(cur_date.year)[2:], '.',
+               str(cur_date.month) if cur_date.month > 9 else '0' + str(cur_date.month), '.',
+               str(cur_date.day) if cur_date.day > 9 else '0' + str(cur_date.day)]
+        command = ['READDAY',[''.join(temp_date_array)]]
+        all_strings = self.commands_send_helper(command)
+        array_of_string = get_normal_text(all_strings.split('\n')).split('\n')
+        res_text_protocol_dict = {}
+        for line in array_of_string:
+            line_array = line.split()
+            if len(line_array) <= 1:
+                pass
+            else:
+                res_text_protocol_dict[line_array[0]] = line_array[1]
+
         # N_SH = RTU327.counter_number
         N_SH = work_with_device.uspd_counter_number
-        # Tday  = b'\x00\x00\x00\x00'
-
-        Tday  = b'\x4f\x7f\x27\x5d' ## При 7f ок
-        # Tday  = b'\x4f\x80\x27\x5d' ## При 80 не ок, т.е. при > 7f , crc на успд уже не так считается
-
-        # Tday  = b'\x7f\x7f\x7f\x7f'
-
-        # Tday = b'\x5d\x27\xa3\x4f'
-        # Tday = b'\x4f\xa3\x27\x5d'
-
-        # Tday = b'\x95\xff\x26\x5d'
-        # Tday = b'\x5d\x26\xff\x95'
-
+        Tday = get_previous_day_datetime() ## !!! Смотрит на текущую дату, а не минус день. !!!!
+        # cur_date = datetime.datetime.now()
+        # Tday = get_reversed_time_bytes(date_to_seconds(cur_date - datetime.timedelta(hours=cur_date.hour, minutes=cur_date.minute,
+        #                                                  seconds=cur_date.second, microseconds=cur_date.microsecond)))
         Kanal = b'\x01'
         Kk = b'\x01'
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
@@ -443,12 +513,6 @@ class RTU327(unittest.TestCase):
             if _.startswith('autoread_temp_'):
                 res_array[_] = temp_vars[_]
                 print(_, temp_vars[_])
-
-        ## Проверяем только
-        ## - *kwh
-        ## - даты ?
-        ## Остальные значения по идеи -1 --> ['bf', 'f0', '00', '00', '00', '00', '00', '00']
-
         for _ in res_array:
             # print('cur_key','__' + _ + '__')
             if _.strip() == 'autoread_temp_Nsh':
@@ -465,12 +529,21 @@ class RTU327(unittest.TestCase):
                 ## Как смотреть -- autoread_temp_Dd_mm_yyyy  ????
                 cur_date_from_answer_in_seconds = dec_from_bytes_array(res_array[_])
                 self.assertTrue(cur_date_from_answer_in_seconds >= 0)
-            elif _.strip().endswith('kwh'): #Akwh, Bkwh, Ckwh, Dkwh
-                ## TODO
-                ## Как проверять ?
-                pass
-                # print(_,'kwh_pal')
-                # self.assertEqual(1.0, hex_to_double(res_array[_]))
+            elif _.strip().endswith('kwh') or _.strip().endswith('Kwha'): #Akwh, Bkwh, Ckwh, Dkwh
+                # print(_, hex_to_double(res_array[_]) * 1000)
+                if _ == 'autoread_temp_Akwh':
+                    self.assertEqual(int(float(res_text_protocol_dict['dA+1'])), int(float(hex_to_double(res_array[_]) * 1000))) ## float , а дальше в int не осень красиво
+                elif _ == 'autoread_temp_Bkwh':
+                    self.assertEqual(int(float(res_text_protocol_dict['dA+2'])), int(float(hex_to_double(res_array[_]) * 1000))) ## float , а дальше в int не осень красиво
+                elif _ == 'autoread_temp_Ckwh':
+                    self.assertEqual(int(float(res_text_protocol_dict['dA+3'])),
+                                     int(float(hex_to_double(res_array[_]) * 1000)))  ## float , а дальше в int не осень красиво
+                elif _ == 'autoread_temp_dkwh':
+                    self.assertEqual(int(float(res_text_protocol_dict['dA+4'])),
+                                     int(float(hex_to_double(res_array[_]) * 1000)))  ## float , а дальше в int не осень красиво
+                elif _ == 'autoread_temp_Kwha':
+                    self.assertEqual(int(float(res_text_protocol_dict['dA+0'])),
+                                     int(float(hex_to_double(res_array[_]) * 1000)))  ## float , а дальше в int не осень красиво
             else:
                 # По идеи все остальные параметры должны быть -1
                 self.assertEqual(-1.0, hex_to_double(res_array[_]))
