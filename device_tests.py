@@ -70,8 +70,8 @@ class RTU327(unittest.TestCase):
 
 
         ##Далее мы просто ждем ????
-        # print('!!!GOING TO SLEEP FOR 15 MINUTES!!!\n'*10)
-        # time.sleep(30*60) #30 минут -- ждем когда появятся ?? архивные данные + номер счетчика
+        # print('!!!GOING TO SLEEP FOR 33 MINUTES!!!\n'*10)
+        # time.sleep(33*60) #33 минуты -- ждем когда появятся ?? архивные данные + номер счетчика
         # print('was\\done\n'*10)
 
     @staticmethod
@@ -317,13 +317,13 @@ class RTU327(unittest.TestCase):
         """
         Nsh = work_with_device.uspd_counter_number
         Kanal = b'\x01'
-        Tstart = b'\x00\x00\x00\x00'
+        # Tstart = b'\x00\x00\x00\x00'
+        Tstart = get_previous_day_datetime()
         # Tstart = get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7))) ## Откуда забирать дату данных со счетчика ??
         # Tstart = get_reversed_bytes_string_byte_ver(
         #     get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7)))) ## Откуда забирать дату данных со счетчика ??
         self.assertEqual(4, len(Tstart))
         Kk = b'\x00\x01'
-
         #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
         # result_answer_map = send_command_and_get_answer(111, command_params=Nsh+Kanal+get_reversed_bytes_string_byte_ver(Tstart))
         result_answer_map = send_command_and_get_answer(111, command_params=Nsh+Kanal+Tstart + Kk)
@@ -546,8 +546,37 @@ class RTU327(unittest.TestCase):
                 self.assertEqual(-1.0, hex_to_double(res_array[_]))
 
     #undone
-    def get_mtrlog(self):
-        pass
+    def test_get_mtrlog(self):
+        """
+        Проверяем коды событий журнала счетчиков + проверяем что возвращается дата.
+        """
+        Nsh = work_with_device.uspd_counter_number
+        # Tstart = get_previous_day_datetime()
+        Tstart = b'\x00\x00\x00\x00'
+        Cnt = b'\x00\x01'
+
+
+        all_evType_arrays = [ 0,1,2,3,4,5,6,9,201,202,203,204,205,206,207,208,209,210,211,212,213,214,
+                              215,216,255,128,192,129,193,130,194,131,195,132,196, 133,197,134, 198,
+                              135,199, 200,137,217, 138, 218,139, 219]
+
+        result_answer_map = send_command_and_get_answer(116, command_params=Nsh + Tstart + Cnt)
+        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
+        answer_data = result_answer_map['answer_data']
+        self.assertTrue(len(answer_data) >= 19)
+
+        for _ in range(int(len(answer_data) / 6)) :
+            cur_temp_answer = answer_data[_*6:_*6 + 6]
+            cur_evTime = date_from_seconds(hex_array_to_dec(cur_temp_answer[:4][::-1]))
+            evType = hex_array_to_dec(cur_temp_answer[4:][::-1])
+            print('evTime  :: ',cur_evTime ,'evType ::', evType)
+            self.assertTrue(evType in all_evType_arrays)
+            self.assertTrue(isinstance(cur_evTime, datetime.datetime))
+
+
+        # print(result_answer_map)
+        # print(answer_data)
+        # pass
     #undone
 
 if __name__ == "__main__":
