@@ -22,9 +22,6 @@ class RTU327(unittest.TestCase):
     # uspd_password = temp_config_parser.get('RTU-327','uspd_password')
 
     def commands_send_helper(self, command):
-        # print(command)
-        # print(command)
-        # print(command)
         print(uspd_password,uspd_tcp_ip,uspd_tcp_port,command)
         if type(command) is list:
             all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
@@ -180,7 +177,7 @@ class RTU327(unittest.TestCase):
         self.assertEqual('00',
                          result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
 
-    def helper_test_get_maxlogid(self):
+    def _helper_test_get_maxlogid(self):
         result_answer_map = send_command_and_get_answer(101, command_params=b'\x01')
         self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         self.assertEqual(4, len(result_answer_map['answer_data']))
@@ -189,13 +186,13 @@ class RTU327(unittest.TestCase):
 
     def test_get_maxlogid(self):  ##
         """ Просто проверяем количество ответа - 4 байта. """
-        max_log_id_before = self.helper_test_get_maxlogid()
+        max_log_id_before = self._helper_test_get_maxlogid()
         ## Сгенерить событие -->> проверить, что увеличился
         ## Уввеличиваем время
         result_answer_map = send_command_and_get_answer(115, command_params=b'\x10\x0e\x00\x00')  # 3600 + добавляем 1 час на успд
         # print(result_answer_map)
         self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
-        max_log_id_after = self.helper_test_get_maxlogid()
+        max_log_id_after = self._helper_test_get_maxlogid()
         print(max_log_id_before, max_log_id_after)
 
         if max_log_id_before > 60000 and max_log_id_after < 5000: ##случай с обнулением: -- 65535
@@ -209,7 +206,7 @@ class RTU327(unittest.TestCase):
     def test_get_log(self):
         Nsect = b'\x00\x00\x00\x01'
         # Id = b'\x00\x00\x00\x01' ## id события - вот тут надо доставать последнее событие из журнала --> test_get_maxlogid()
-        Id = dec_to_hex(self.helper_test_get_maxlogid()) ## id события - вот тут надо доставать последнее событие из журнала --> test_get_maxlogid()
+        Id = dec_to_hex(self._helper_test_get_maxlogid()) ## id события - вот тут надо доставать последнее событие из журнала --> test_get_maxlogid()
         Id = add_empty_bytes(Id, 4-len(Id)) ## Доставляем до 4-х байтов
         Num = b'\x00\x01'
         result_answer_map = send_command_and_get_answer(117, command_params=Nsect + Id + Num)
@@ -548,6 +545,10 @@ class RTU327(unittest.TestCase):
                 # По идеи все остальные параметры должны быть -1
                 self.assertEqual(-1.0, hex_to_double(res_array[_]))
 
+    #undone
+    def get_mtrlog(self):
+        pass
+    #undone
 
 if __name__ == "__main__":
     unittest.main()
