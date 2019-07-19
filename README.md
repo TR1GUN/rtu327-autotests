@@ -1,4 +1,4 @@
-#Проект автотестов для RTU-327:: 
+# Проект автотестов для RTU-327:: 
  
  
  `test_preparation_stage` -- Подготовка основы для тестов.<br>
@@ -17,13 +17,14 @@
  `test_get_shortlp` -- Запрос оперативного ПН<br>
  `test_get_tests` -- Запрос параметров эл-сети<br>
  `test_get_autoread` --Запрос таблицы авточтений<br>
-  -- 116 GETMTRLOG Запрос журнала событий по счетчику -- Забыл сделать
+ `test_get_mtrlog` -- Запрос журнала событий по счетчику
 
 ## Файлы: 
 `communication_engineering_serialport_helper` - Папка для работы с текстовым протоколом. <br>
 `requirements.txt` - Библиотеки необходимые для работы. <br>
           
-       Скачивается с помощью команды :: py -m pip install -r requirements.txt <br>
+       Скачивается с помощью команды :: py -m pip install -r requirements.txt
+       
 `uspd_settings.ini` -- Настройка УСПД-ек. Из этого файла забираются настройки. <br>
 `work_with_device.py` -- Метод, для работы с устройством. <br>
 `device_tests.py` -- Автотесты. <br>
@@ -31,7 +32,7 @@
 
 
 
-##TODO:
+## TODO:
     <br> communication_engineering_serialport_helper - надо выделить все таки в отдельный проект,
     залить на githab\bitbucket и т.д., вообщем на git, и тянуть как библиотеку.
         

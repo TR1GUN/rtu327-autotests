@@ -21,7 +21,7 @@ class RTU327(unittest.TestCase):
     # uspd_tcp_port = int(temp_config_parser.get('RTU-327','uspd_tcp_port'))
     # uspd_password = temp_config_parser.get('RTU-327','uspd_password')
 
-    def commands_send_helper(self, command):
+    def commands_send_helper(self, command): ## --> private
         print(uspd_password,uspd_tcp_ip,uspd_tcp_port,command)
         if type(command) is list:
             all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
@@ -97,8 +97,7 @@ class RTU327(unittest.TestCase):
         print(answer_data)
         self.assertEqual(6, len(answer_data))
 
-        ## Ожидаемый ответ железки
-        ## ['0x30','0x32','0x30','0x31','0x30','0x32']
+        ## Ожидаемый ответ железки -- ['0x30','0x32','0x30','0x31','0x30','0x32']
         self.assertEqual(['30', '32', '30', '31', '30', '32'], result_answer_map['answer_data'])
 
 
@@ -310,46 +309,118 @@ class RTU327(unittest.TestCase):
                 self.assertEqual(32, len(answer_data))
                 self.assertEqual(int(float(res_text_protocol_dict['dR-0'])), int(hex_to_double(answer_data[:8])*1000))
 
+    def _check_if_hex_array_is_zero(self,array_byte):
+        """
+        Хз почему, но struct.unpack здесь ругается. Быстрый костыль.
+        :param array_byte:
+        :return:
+        """
+        if array_byte == ['00','00','00','00','00','00','00','00']:
+            return 0
+        else: return array_byte
 
     def test_get_lp(self):  ##
-        """ Просто проверяем количество ответа - ?? байта.
-        Номер счетчика - b'\x00\x10\x18\x47\x60'
-        """
-        Nsh = work_with_device.uspd_counter_number
-        Kanal = b'\x01'
-        # Tstart = b'\x00\x00\x00\x00'
-        Tstart = get_previous_day_datetime()
-        # Tstart = get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7))) ## Откуда забирать дату данных со счетчика ??
-        # Tstart = get_reversed_bytes_string_byte_ver(
-        #     get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7)))) ## Откуда забирать дату данных со счетчика ??
-        self.assertEqual(4, len(Tstart))
-        Kk = b'\x00\x01'
-        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
-        # result_answer_map = send_command_and_get_answer(111, command_params=Nsh+Kanal+get_reversed_bytes_string_byte_ver(Tstart))
-        result_answer_map = send_command_and_get_answer(111, command_params=Nsh+Kanal+Tstart + Kk)
-        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
-        answer_data = result_answer_map['answer_data'][::-1]
-        print(answer_data)
-        self.assertEqual(15, len(answer_data))
 
-    def test_get_shortlp(self):        ## undone
-        ## undone
-        """ Просто проверяем количество ответа - ?? байта.
-        Номер счетчика - b'\x00\x10\x18\x47\x60'
-        """
+        """ Текстовый протокол """
+        res_text_protocol_dict = {}
+
+        """ RTU-327 протокол """
         Nsh = work_with_device.uspd_counter_number
-        Kanal = b'\x01'
-        Interval = b'\x00'
-        # Tstart = b'\x00\x00\x00\x00'
-        Tstart = get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7)))
-        Kk = b'\x00\x01'
-        #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
-        result_answer_map = send_command_and_get_answer(105, command_params=Nsh+Kanal+Interval+Tstart+Kk)
-        self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
-        answer_data = result_answer_map['answer_data'][::-1]
-        print(answer_data)
-        self.assertEqual(15, len(answer_data))
-        ## undone
+        Tstart = b'\x00\x00\x00\x00'
+        Kk = b'\x01\x00' ## ==> 1 (так пишется единица, меньшие биты впереди ?)
+        for _ in [1,3,7,15]: ## 1,3,7,15 --> постепенное заполнение битами , т.е. 0001 / 0011 / 0111 / 1111 ### 1111 -- > (R-)/(R+)/(A-)/(A+)
+            Kanal = dec_to_hex(_)
+            result_answer_map = send_command_and_get_answer(111, command_params=Nsh+Kanal+Tstart + Kk)
+            self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
+            answer_data = result_answer_map['answer_data']
+            lp_temp_Cnt = answer_data[:2][::-1]
+            lp_temp_Status = answer_data[2] ## Проверять ???
+            lp_temp_date_to_uspd = answer_data[3:7][::-1] ##TLast
+            lp_temp_date_to_uspd_as_datetime = date_from_seconds(hex_array_to_dec(lp_temp_date_to_uspd)) + datetime.timedelta(hours=3) ## Прибавить 3 часа , почему-то по UTC .. CNT*30 отнимается.
+            lp_temp_date_from = get_str_date_from_datetime(lp_temp_date_to_uspd_as_datetime - datetime.timedelta(minutes=30*hex_array_to_dec([lp_temp_Cnt[1]]))) ## Cnt скорее всего не правильно считаю
+            lp_temp_date_to = get_str_date_from_datetime(lp_temp_date_to_uspd_as_datetime)
+
+            # date_from_uspd_with_utc = answer_data[3:7][::-1] + datetime.timedelta(hours=3) ## Прибавить 3 часа , почему-то по UTC .. CNT*30 отнимается.
+            lp_temp_Val = answer_data[7:-1]
+
+
+            lp_temp_Stat = answer_data[-1] ## Проверять ???
+
+
+            temp_vars = vars().copy()  ## Делаем копию переменных, т.к. список ?почему-то? изменяется в реальном времени.
+            res_array = {}
+            for temp_var in temp_vars:
+                if temp_var.startswith('lp_temp_'):
+                    res_array[_] = temp_vars[temp_var]
+            #         print(temp_var, temp_vars[temp_var])
+            if _ == 1: ## DPAp
+                """Запрашиваем один раз"""
+                """ Текстовый протокол """
+                command = ['READSTATE', [ str(lp_temp_date_from) + ' 0 ' + str(lp_temp_date_to) + ' 0']] ## 0 вроде состояние зима/лето. Вроде лето?
+                all_strings = self.commands_send_helper(command)
+                array_of_string = get_normal_text(all_strings.split('\n')).split('\n')
+                # res_text_protocol_dict = {}
+                for line in array_of_string:
+                    line_array = line.split()
+                    if len(line_array) <= 1:
+                        pass
+                    else:
+                        res_text_protocol_dict[line_array[0]] = line_array[1]
+
+                answer_data_for_1 = answer_data[:-1] ## Последний байт -- Stat
+                self.assertEqual(8, len(lp_temp_Val))
+                self.assertEqual((res_text_protocol_dict['DPAp']), str(hex_to_double(lp_temp_Val[::-1])))
+            elif _ == 3: ## DPAm
+                answer_data_for_3 = answer_data[:-1] ## Последний байт -- Stat
+                lp_temp_val_cur = self._check_if_hex_array_is_zero(lp_temp_Val[-8:][::-1])
+                lp_temp_val_cur = str(0 if lp_temp_val_cur == 0 else hex_to_double(lp_temp_val_cur))
+                self.assertEqual(str(res_text_protocol_dict['DPAm']), lp_temp_val_cur)
+                print(answer_data_for_1)
+                print(answer_data_for_3[:-8])
+                self.assertTrue(answer_data_for_1 == answer_data_for_3[:-8])
+                self.assertEqual(16, len(lp_temp_Val))
+            elif _ == 7: ## DPRp
+                answer_data_for_7 = answer_data[:-1]  ## Последний байт -- Stat
+                self.assertTrue(answer_data_for_3 == answer_data_for_7[:-8])
+                self.assertEqual(24, len(lp_temp_Val))
+                lp_temp_val_cur = self._check_if_hex_array_is_zero(lp_temp_Val[-8:][::-1])
+                lp_temp_val_cur = str(0 if lp_temp_val_cur == 0 else hex_to_double(lp_temp_val_cur))
+                self.assertEqual(str(res_text_protocol_dict['DPRp']), lp_temp_val_cur)
+
+            elif _ == 15: ## DPRm
+                answer_data_for_15 = answer_data[:-1]
+                self.assertTrue(answer_data_for_7 == answer_data_for_15[:-8]) ## Как тут правильно сравнивать - т.к. + 1 байт на конце ??
+                self.assertEqual(32, len(lp_temp_Val))
+                lp_temp_val_cur = self._check_if_hex_array_is_zero(lp_temp_Val[-8:][::-1])
+                lp_temp_val_cur = str(0 if lp_temp_val_cur == 0 else hex_to_double(lp_temp_val_cur))
+                self.assertEqual(str(res_text_protocol_dict['DPRm']), lp_temp_val_cur)
+
+
+
+    ## undone
+
+    # TODO:
+    # !!! Оставил заготовку                          !!!
+    # !!! На данный момент, команда не используется. !!!
+    # def test_get_shortlp(self):
+    #     ## undone
+    #     """ Просто проверяем количество ответа - ?? байта.
+    #     Номер счетчика - b'\x00\x10\x18\x47\x60'
+    #     """
+    #     Nsh = work_with_device.uspd_counter_number
+    #     Kanal = b'\x01'
+    #     Interval = b'\x00'
+    #     # Tstart = b'\x00\x00\x00\x00'
+    #     Tstart = get_reversed_time_bytes(date_to_seconds(datetime.datetime(day=8, month=7, year=2019, hour=16, minute=7)))
+    #     Kk = b'\x00\x01'
+    #     #Какое время задать -- ? Пока что -- b'\x00\x00\x00\x00'
+    #     result_answer_map = send_command_and_get_answer(105, command_params=Nsh+Kanal+Interval+Tstart+Kk)
+    #     self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
+    #     answer_data = result_answer_map['answer_data'][::-1]
+    #     print(answer_data)
+    #     self.assertEqual(15, len(answer_data))
+
+    ## undone
 
     def test_get_tests(self):  ## undone
         """ Просто проверяем количество ответа - ?? байта.
@@ -545,7 +616,7 @@ class RTU327(unittest.TestCase):
                 # По идеи все остальные параметры должны быть -1
                 self.assertEqual(-1.0, hex_to_double(res_array[_]))
 
-    #undone
+    #???? undone ????
     def test_get_mtrlog(self):
         """
         Проверяем коды событий журнала счетчиков + проверяем что возвращается дата.
@@ -572,12 +643,7 @@ class RTU327(unittest.TestCase):
             print('evTime  :: ',cur_evTime ,'evType ::', evType)
             self.assertTrue(evType in all_evType_arrays)
             self.assertTrue(isinstance(cur_evTime, datetime.datetime))
-
-
-        # print(result_answer_map)
-        # print(answer_data)
-        # pass
-    #undone
+    #???? undone ????
 
 if __name__ == "__main__":
     unittest.main()
