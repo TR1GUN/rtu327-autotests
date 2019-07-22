@@ -5,7 +5,6 @@ import re
 import unittest
 
 from communication_engineering_serialport_helper.Utils.helpActions import get_normal_text
-from communication_engineering_serialport_helper.main_methods.methods import send_read
 from work_with_device import *
 import work_with_device
 
@@ -148,6 +147,17 @@ class RTU327(unittest.TestCase):
         self.assertEqual('00',
                          result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
 
+    def _helper_text_protocol_answer_to_dict(self,all_strings):
+        res_text_protocol_dict = {}
+        array_of_string = get_normal_text(all_strings.split('\n')).split('\n')
+        for line in array_of_string:
+            line_array = line.split()
+            if len(line_array) <= 1:
+                pass
+            else:
+                res_text_protocol_dict[line_array[0]] = line_array[1]
+        return res_text_protocol_dict
+
     def _helper_test_get_maxlogid(self):
         result_answer_map = send_command_and_get_answer(101, command_params=b'\x01')
         self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
@@ -222,14 +232,7 @@ class RTU327(unittest.TestCase):
                str(cur_date.day) if cur_date.day > 9 else '0' + str(cur_date.day)]
         command = ['READDAY',[''.join(temp_date_array)]]
         all_strings = self.commands_send_helper(command)
-        array_of_string = get_normal_text(all_strings.split('\n')).split('\n')
-        res_text_protocol_dict = {}
-        for line in array_of_string:
-            line_array = line.split()
-            if len(line_array) <= 1:
-                pass
-            else:
-                res_text_protocol_dict[line_array[0]] = line_array[1]
+        res_text_protocol_dict = self._helper_text_protocol_answer_to_dict(all_strings)
 
         # Вторая реализация -- проверяем все Chnl
         for _ in [1,3,7,15]: ## 1,3,7,15 --> постепенное заполнение битами , т.е. 0001 / 0011 / 0111 / 1111 ### 1111 -- > (R-)/(R+)/(A-)/(A+)
@@ -267,8 +270,6 @@ class RTU327(unittest.TestCase):
     def _check_if_hex_array_is_zero(self,array_byte):
         """
         Хз почему, но struct.unpack здесь ругается. Быстрый костыль.
-        :param array_byte:
-        :return:
         """
         if array_byte == ['00','00','00','00','00','00','00','00']:
             return 0
@@ -311,14 +312,7 @@ class RTU327(unittest.TestCase):
                 """ Текстовый протокол """
                 command = ['READSTATE', [ str(lp_temp_date_from) + ' 0 ' + str(lp_temp_date_to) + ' 0']] ## 0 вроде состояние зима/лето. Вроде лето?
                 all_strings = self.commands_send_helper(command)
-                array_of_string = get_normal_text(all_strings.split('\n')).split('\n')
-                # res_text_protocol_dict = {}
-                for line in array_of_string:
-                    line_array = line.split()
-                    if len(line_array) <= 1:
-                        pass
-                    else:
-                        res_text_protocol_dict[line_array[0]] = line_array[1]
+                res_text_protocol_dict = self._helper_text_protocol_answer_to_dict(all_strings)
 
                 answer_data_for_1 = answer_data[:-1] ## Последний байт -- Stat
                 self.assertEqual(8, len(lp_temp_Val))
@@ -384,14 +378,8 @@ class RTU327(unittest.TestCase):
                     [get_str_date_from_datetime(datetime.datetime.now() - datetime.timedelta(minutes=32)) + ' 0 ' +
                      get_str_date_from_datetime(datetime.datetime.now()) + ' 0']]
         all_strings = self.commands_send_helper(commands)
-        array_of_string = get_normal_text(all_strings.split('\n')).split('\n')
-        res_text_protocol_dict = {}
-        for line in array_of_string:
-            line_array = line.split()
-            if len(line_array) <= 1:
-                pass
-            else:
-                res_text_protocol_dict[line_array[0]] = line_array[1]
+        res_text_protocol_dict = self._helper_text_protocol_answer_to_dict(all_strings)
+
 
         ## Работаем с RTU327
         Nsh = work_with_device.uspd_counter_number
@@ -421,7 +409,7 @@ class RTU327(unittest.TestCase):
         for key in aqual_vars_from_rtu_protocol.keys():
             if key in ['P0','P1','P2','S0','S1','S2']:
                 ## Обнуление до двух знаков после запятой -- float???
-                self.assertEqual(float(aqual_vars_from_rtu_protocol[key]),float(res_text_protocol_dict[key]))
+                self.assertEqual(round(float(aqual_vars_from_rtu_protocol[key]),2),round(float(res_text_protocol_dict[key]),2))
             elif key in ['F','I0','I1','I2','U0','U1','U2','Ang0','Ang2']:
                 if key in ['U2','Ang0','Ang2']:
                     ## 'U2','Ang0','Ang2' имеют много знаков после запятой
@@ -429,7 +417,7 @@ class RTU327(unittest.TestCase):
                     self.assertEqual(int(float((aqual_vars_from_rtu_protocol[key] / round_number))),
                                      int(float(res_text_protocol_dict[key])))
                 else:
-                   self.assertEqual(float( (aqual_vars_from_rtu_protocol[key] / round_number) ),float(res_text_protocol_dict[key]))
+                   self.assertEqual(round(float( (aqual_vars_from_rtu_protocol[key] / round_number) ),2),round(float(res_text_protocol_dict[key]),2))
 
 
 
@@ -446,14 +434,7 @@ class RTU327(unittest.TestCase):
                str(cur_date.day) if cur_date.day > 9 else '0' + str(cur_date.day)]
         command = ['READDAY',[''.join(temp_date_array)]]
         all_strings = self.commands_send_helper(command)
-        array_of_string = get_normal_text(all_strings.split('\n')).split('\n')
-        res_text_protocol_dict = {}
-        for line in array_of_string:
-            line_array = line.split()
-            if len(line_array) <= 1:
-                pass
-            else:
-                res_text_protocol_dict[line_array[0]] = line_array[1]
+        res_text_protocol_dict = self._helper_text_protocol_answer_to_dict(all_strings)
 
         N_SH = work_with_device.uspd_counter_number
         Tday = get_previous_day_datetime() ## !!! Смотрит на текущую дату, а не минус день. !!!!

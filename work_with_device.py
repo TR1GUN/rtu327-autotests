@@ -411,8 +411,6 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     """
     res = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     res.connect(('192.168.205.10', 14101))  ##тестовая
-    # res.connect(('192.168.202.81', 12345))  ##Серегина
-    # res.connect(('85.115.238.160', 12345))  ##Серегина
     res.settimeout(5)  ## Пока такое решение, на отключение ожидания ответа.
     # Но надо сделать отключение через цикл со временм. Например 20 сек с последнего байта - отключаемся.
     if command_number:
@@ -459,7 +457,8 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     for _ in answer_bytes[3:-2]: result += _
     # print([result + _ for _ in answer_bytes[3:-2]])
     # Проверяем crc, который пришл в ответ.
-    assert hex_bytes_to_string(get_crc(result)) == hex(crc16_calc_tab_rtu(result))[2:] ## убираем префикс 0x
+
+    assert get_right_hex(hex_bytes_to_string(get_crc(result))) == get_right_hex(hex(crc16_calc_tab_rtu(result))[2:]) ## убираем префикс 0x
     return parse_answer(hex_normal_view_answer_array)
 
 def date_to_seconds(date):
@@ -571,6 +570,8 @@ def get_previous_day_datetime():
 def get_uspd_count_number():
     ## TODO
     ## Возможно следует READQUAL следует заменить на другую -- чтобы меньше грузилась успд.
+    ## commands_send_helper -- change to this command
+
     all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
                             command='READAQUAL', tcp_timeout=5)
     return all_strings.split('\n')[3].split(';')[-1].replace('<','')
@@ -628,3 +629,67 @@ def commands_send_helper(uspd_password,uspd_tcp_ip,uspd_tcp_port, command):
     else:
         raise Exception('Неизвестный тип')
     return all_strings
+
+
+
+#########
+#########
+#########
+
+def send_read_text_rtu327_protocol(tcp_ip, tcp_port, command_number=None, command_params=b'', send_command_raw=None):
+    """
+    Главный метод работы с успд - коннектимся к успд, отсылаем строку, получаем ответ.
+    """
+    res = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    res.connect((tcp_ip, tcp_port))  ##тестовая
+    res.settimeout(5)  ## Пока такое решение, на отключение ожидания ответа.
+    # Но надо сделать отключение через цикл со временм. Например 20 сек с последнего байта - отключаемся.
+    if command_number:
+        result_command = send_command(command_number=command_number, command_params=command_params)
+    elif send_command_raw:  ## Не работает корректно ?
+        result_command = send_command_raw  ##не работает правильно
+    answer_bytes = []
+
+    for i in range(3):  # Успд не вседа отвечает сразу #Работает ?
+        print(res.sendall(result_command))
+        # Сначала читаем первые 3 байта.
+        # Второй и третий байт - это длина пакета.
+        for _ in range(3):
+            temp_char = res.recv(1)
+            answer_bytes.append(temp_char)
+
+        result_byte_str = b''
+        for _ in answer_bytes[1:]:
+            result_byte_str += _
+        answer_length_without_crc = hex_to_dec(result_byte_str)
+        for _ in range(answer_length_without_crc + 2):  ##Длина тела пакета + 2 байта на crc
+            temp_char = res.recv(1)
+            answer_bytes.append(temp_char)
+
+        if answer_bytes != []:
+            break
+        elif answer_bytes == []:
+            print(str(i), 'try to get answer')
+            continue
+        elif answer_bytes == [] and i == 3:
+            res.close()
+            raise Exception("USPD didn't answer")
+    res.close()
+
+    hex_normal_view_answer_array = hex_bytes_array_to_string(answer_bytes)
+    result = b''
+    for _ in answer_bytes[3:-2]: result += _
+    return parse_answer(hex_normal_view_answer_array)
+#
+
+def send_read_text_protocol(uspd_password,uspd_tcp_ip,uspd_tcp_port,command): ## --> private
+        print('result_command ::: ', command)
+        if isinstance(command,list):
+            all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+                                    command=command[0], args_list=command[1], tcp_timeout=5)
+        elif isinstance(command, str):
+            all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+                                    command=command, tcp_timeout=5)
+        else:
+            raise Exception('Неизвестный тип')
+        return all_strings

@@ -1,3 +1,5 @@
+import socket
+
 from communication_engineering_serialport_helper.Drivers import serialPort
 from communication_engineering_serialport_helper.Drivers.port import settings
 from communication_engineering_serialport_helper.Utils import helpActions
@@ -52,21 +54,20 @@ def send_read(password=None, command=None, serial_port=None, tcp_ip=None, tcp_po
                                     result_command=result_command, tcp_timeout=tcp_timeout)
 
 
+## Все это дело надо правильно перенести, без конфликтов имен.
 
-# def send_read_text_rtu327_protocol(command_number=None, command_params=b'', send_command_raw=None):
+# def send_read_text_rtu327_protocol(tcp_ip, tcp_port, command_number=None, command_params=b'', send_command_raw=None):
 #     """
 #     Главный метод работы с успд - коннектимся к успд, отсылаем строку, получаем ответ.
 #     """
 #     res = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#     res.connect(('192.168.205.10', 14101))  ##тестовая
+#     res.connect((tcp_ip, tcp_port))  ##тестовая
 #     res.settimeout(5)  ## Пока такое решение, на отключение ожидания ответа.
 #     # Но надо сделать отключение через цикл со временм. Например 20 сек с последнего байта - отключаемся.
 #     if command_number:
 #         result_command = send_command(command_number=command_number, command_params=command_params)
 #     elif send_command_raw:  ## Не работает корректно ?
 #         result_command = send_command_raw  ##не работает правильно
-#
-#     print(result_command, 'to_send')
 #     answer_bytes = []
 #
 #     for i in range(3):  # Успд не вседа отвечает сразу #Работает ?
@@ -96,20 +97,13 @@ def send_read(password=None, command=None, serial_port=None, tcp_ip=None, tcp_po
 #     res.close()
 #
 #     hex_normal_view_answer_array = hex_bytes_array_to_string(answer_bytes)
-#     print(hex_normal_view_answer_array, 'parsed_answer')
 #     result = b''
 #     for _ in answer_bytes[3:-2]: result += _
 #     return parse_answer(hex_normal_view_answer_array)
+# #
 #
-
-
-
-#  ## add serialport
-#  ## add serialport
-#  ## add serialport
-# def send_read_text_protocol(self, command): ## --> private
-#         print(uspd_password,uspd_tcp_ip,uspd_tcp_port,command)
-#         # if type(command) is list:
+# def send_read_text_protocol(uspd_password,uspd_tcp_ip,uspd_tcp_port,command): ## --> private
+#         print('result_command ::: ', command)
 #         if isinstance(command,list):
 #             all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
 #                                     command=command[0], args_list=command[1], tcp_timeout=5)
