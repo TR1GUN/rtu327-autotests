@@ -225,6 +225,13 @@ class RTU327(unittest.TestCase):
         return text_protocol_value == '?' and rtu_protocol_value == -1
 
 
+    def _help_get_pok_assert_equal(self,res_text_protocol_dict_value, answer_data):
+        """Вынес отдельно метод сравнения, т.к. повторяется"""
+        if self._help_check_if_not_prevent_values(res_text_protocol_dict_value, hex_to_double(answer_data)):
+            pass
+        else:
+            self.assertEqual(int(float(res_text_protocol_dict_value)), int(hex_to_double(answer_data) * 1000))
+
     def test_get_pok(self):  ##
         """ Просто проверяем количество ответа - 8 байта.
         Номер счетчика - b'\x00\x10\x18\x47\x60'
@@ -270,38 +277,23 @@ class RTU327(unittest.TestCase):
                 if _ == 1:
                     answer_data_for_1 = answer_data
                     self.assertEqual(8, len(answer_data))
-
-
-                    if self._help_check_if_not_prevent_values(res_text_protocol_dict['dA+0'], hex_to_double(answer_data)):
-                        pass
-                    else:
-                        self.assertEqual(int(float(res_text_protocol_dict['dA+0'])), int(hex_to_double(answer_data)*1000))
+                    self._help_get_pok_assert_equal(res_text_protocol_dict['dA+0'], answer_data)
                 elif _ == 3:
                     answer_data_for_3 = answer_data
                     self.assertTrue(answer_data_for_1 == answer_data_for_3[8:])  ## ?? Спереди или сзади проверять ответ ??
                     self.assertEqual(16, len(answer_data))
-                    if self._help_check_if_not_prevent_values(res_text_protocol_dict['dA-0'], hex_to_double(answer_data[:8])):
-                        pass
-                    else:
-                        self.assertEqual(int(float(res_text_protocol_dict['dA-0'])), int(hex_to_double(answer_data[:8])*1000)) ## float , а дальше в int не осень красиво
+                    self._help_get_pok_assert_equal(res_text_protocol_dict['dA-0'], answer_data[:8])
                 elif _ == 7:
                     answer_data_for_7 = answer_data
                     self.assertTrue(answer_data_for_3 == answer_data_for_7[8:])  ## ?? Спереди или сзади проверять ответ ??
                     self.assertEqual(24, len(answer_data))
-
-                    if self._help_check_if_not_prevent_values(res_text_protocol_dict['dR+0'], hex_to_double(answer_data[:8])):
-                        pass
-                    else:
-                        self.assertEqual(int(float(res_text_protocol_dict['dR+0'])), int(hex_to_double(answer_data[:8])*1000))
+                    self._help_get_pok_assert_equal(res_text_protocol_dict['dR+0'], answer_data[:8])
                 elif _ == 15:
                     answer_data_for_15 = answer_data
                     self.assertTrue(answer_data_for_7 == answer_data_for_15[8:])  ## ?? Спереди или сзади проверять ответ ??
                     self.assertEqual(32, len(answer_data))
+                    self._help_get_pok_assert_equal(res_text_protocol_dict['dR-0'], answer_data[:8])
 
-                    if self._help_check_if_not_prevent_values(res_text_protocol_dict['dR-0'], hex_to_double(answer_data[:8])):
-                        pass
-                    else:
-                        self.assertEqual(int(float(res_text_protocol_dict['dR-0'])), int(hex_to_double(answer_data[:8])*1000))
 
     def _check_if_hex_array_is_zero(self,array_byte):
         """
