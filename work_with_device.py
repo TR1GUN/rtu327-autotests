@@ -521,9 +521,12 @@ def get_reversed_bytes_string_str_ver(bytes_string):
 def get_reversed_time_bytes(datetime_in_seconds):
    """Дату(в секундах) переводим в hex. Дальше переворачиваем эту конструкцию, и возвращаем в байтах"""
    hex_datetime = get_right_hex(hex(datetime_in_seconds)[2:])
-   # result = [hex_datetime[x * (2): x * (2) + 2] for x in range(int(len(hex_datetime) / 2))]
-   # result.reverse() ## !!! Переворачиваем быйты !!!
-   # res_str = bytes.fromhex(' '.join(result).upper())
+   res_str = get_reversed_bytes_string_str_ver(hex_datetime)
+   return res_str
+
+def get_reversed_time_bytes_by_datetime(datetime):
+   """Дату(в секундах) переводим в hex. Дальше переворачиваем эту конструкцию, и возвращаем в байтах"""
+   hex_datetime = get_right_hex(hex(date_to_seconds(datetime))[2:])
    res_str = get_reversed_bytes_string_str_ver(hex_datetime)
    return res_str
 
@@ -557,14 +560,29 @@ def check_ip_args(method):
     return decorator
 ##unused
 
-def get_previous_day_datetime():
+def get_at_day_start_datetime(amount_of_days=0):
     cur_date = datetime.datetime.now()
+    previous_day = (
+            datetime.datetime.now() - datetime.timedelta(days=amount_of_days, hours=cur_date.hour, minutes=cur_date.minute,
+                                                         seconds=cur_date.second, microseconds=cur_date.microsecond)
+        )
+    return previous_day
+
+
+def get_at_day_start_datetime_bytes(amount_of_days=0):
     previous_day = get_reversed_time_bytes(
         date_to_seconds(
-            datetime.datetime.now() - datetime.timedelta(days=1, hours=cur_date.hour, minutes=cur_date.minute,
-                                                         seconds=cur_date.second, microseconds=cur_date.microsecond)
+            get_at_day_start_datetime(amount_of_days=amount_of_days)
         ))
     return previous_day
+
+# def get_at_day_start_datetime_bytes_from_datetime(amount_of_days=0):
+#     previous_day = get_reversed_time_bytes(
+#         date_to_seconds(
+#             get_at_day_start_datetime(amount_of_days=amount_of_days)
+#         ))
+#     return previous_day
+
 
 ## text_protocol -- в device_test.py я импорчу все из work_with_device.py --> Получается циклическая рекурсия
 def get_uspd_count_number():

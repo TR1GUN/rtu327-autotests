@@ -217,6 +217,13 @@ class RTU327(unittest.TestCase):
         self.assertEqual(1, hex_array_to_dec(n_ob))
         self.assertEqual(1, hex_array_to_dec(n_fid))
 
+    def _help_check_if_not_prevent_values(self, text_protocol_value, rtu_protocol_value):
+        """Если текстовый протокол возращает ? , то сравниваем с RTU327 что он возвращает -1"""
+
+        print(text_protocol_value, rtu_protocol_value)
+
+        return text_protocol_value == '?' and rtu_protocol_value == -1
+
 
     def test_get_pok(self):  ##
         """ Просто проверяем количество ответа - 8 байта.
@@ -226,46 +233,75 @@ class RTU327(unittest.TestCase):
         ## Читаем показания счетчика - по текстовому протоколу
         ## TODO
         ## ? Перенести в Текстовый протокол ?
-        cur_date = datetime.datetime.now() - datetime.timedelta(days=1)
-        temp_date_array = [str(cur_date.year)[2:], '.',
-               str(cur_date.month) if cur_date.month > 9 else '0' + str(cur_date.month), '.',
-               str(cur_date.day) if cur_date.day > 9 else '0' + str(cur_date.day)]
-        command = ['READDAY',[''.join(temp_date_array)]]
-        all_strings = self.commands_send_helper(command)
-        res_text_protocol_dict = self._helper_text_protocol_answer_to_dict(all_strings)
+        cur_datetime = datetime.datetime.now()
 
-        # Вторая реализация -- проверяем все Chnl
-        for _ in [1,3,7,15]: ## 1,3,7,15 --> постепенное заполнение битами , т.е. 0001 / 0011 / 0111 / 1111 ### 1111 -- > (R-)/(R+)/(A-)/(A+)
-            Chnl = dec_to_hex(_)
-            NSH = work_with_device.uspd_counter_number
+        # 1. Начало текущего месяца
+        at_current_month_start = get_at_day_start_datetime(cur_datetime.day - 1)
 
-            # ставим дату - предыдущий день -- 00:00
-            previous_day = get_previous_day_datetime()
+        # 2. Начало текущего дня
+        at_current_day_start = get_at_day_start_datetime()
 
-            # result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+time_minus_month)
-            result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+previous_day)
-            self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
-            answer_data = result_answer_map['answer_data'][::-1]
+        # 3. -6 секунд от текущего времени
+        minus_six_seconds = cur_datetime - datetime.timedelta(seconds=6)
 
-            if _ == 1:
-                answer_data_for_1 = answer_data
-                self.assertEqual(8, len(answer_data))
-                self.assertEqual(int(float(res_text_protocol_dict['dA+0'])), int(hex_to_double(answer_data)*1000))
-            elif _ == 3:
-                answer_data_for_3 = answer_data
-                self.assertTrue(answer_data_for_1 == answer_data_for_3[8:])  ## ?? Спереди или сзади проверять ответ ??
-                self.assertEqual(int(float(res_text_protocol_dict['dA-0'])), int(hex_to_double(answer_data[:8])*1000)) ## float , а дальше в int не осень красиво
-                self.assertEqual(16, len(answer_data))
-            elif _ == 7:
-                answer_data_for_7 = answer_data
-                self.assertTrue(answer_data_for_3 == answer_data_for_7[8:])  ## ?? Спереди или сзади проверять ответ ??
-                self.assertEqual(24, len(answer_data))
-                self.assertEqual(int(float(res_text_protocol_dict['dR+0'])), int(hex_to_double(answer_data[:8])*1000))
-            elif _ == 15:
-                answer_data_for_15 = answer_data
-                self.assertTrue(answer_data_for_7 == answer_data_for_15[8:])  ## ?? Спереди или сзади проверять ответ ??
-                self.assertEqual(32, len(answer_data))
-                self.assertEqual(int(float(res_text_protocol_dict['dR-0'])), int(hex_to_double(answer_data[:8])*1000))
+        # dates = [at_current_day_start,at_current_month_start,minus_six_seconds]
+        # TODO
+        # На данный момент minus_six_seconds не работает, т.к. непонятно как ее(дату) правильно сравнивать.
+
+        dates = [at_current_day_start,at_current_month_start]
+        for cur_date in dates:
+            command = ['READDAY',[datetime.datetime.strftime(cur_date, '%y.%m.%d')]]
+
+            all_strings = self.commands_send_helper(command)
+            res_text_protocol_dict = self._helper_text_protocol_answer_to_dict(all_strings)
+
+            # Вторая реализация -- проверяем все Chnl
+            for _ in [1,3,7,15]: ## 1,3,7,15 --> постепенное заполнение битами , т.е. 0001 / 0011 / 0111 / 1111 ### 1111 -- > (R-)/(R+)/(A-)/(A+)
+                Chnl = dec_to_hex(_)
+                NSH = work_with_device.uspd_counter_number
+
+                cur_day_in_bytes = get_reversed_time_bytes_by_datetime(cur_date)
+
+                # result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+time_minus_month)
+                result_answer_map = send_command_and_get_answer(113, command_params=NSH+Chnl+cur_day_in_bytes)
+                self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
+                answer_data = result_answer_map['answer_data'][::-1]
+
+                if _ == 1:
+                    answer_data_for_1 = answer_data
+                    self.assertEqual(8, len(answer_data))
+
+
+                    if self._help_check_if_not_prevent_values(res_text_protocol_dict['dA+0'], hex_to_double(answer_data)):
+                        pass
+                    else:
+                        self.assertEqual(int(float(res_text_protocol_dict['dA+0'])), int(hex_to_double(answer_data)*1000))
+                elif _ == 3:
+                    answer_data_for_3 = answer_data
+                    self.assertTrue(answer_data_for_1 == answer_data_for_3[8:])  ## ?? Спереди или сзади проверять ответ ??
+                    self.assertEqual(16, len(answer_data))
+                    if self._help_check_if_not_prevent_values(res_text_protocol_dict['dA-0'], hex_to_double(answer_data[:8])):
+                        pass
+                    else:
+                        self.assertEqual(int(float(res_text_protocol_dict['dA-0'])), int(hex_to_double(answer_data[:8])*1000)) ## float , а дальше в int не осень красиво
+                elif _ == 7:
+                    answer_data_for_7 = answer_data
+                    self.assertTrue(answer_data_for_3 == answer_data_for_7[8:])  ## ?? Спереди или сзади проверять ответ ??
+                    self.assertEqual(24, len(answer_data))
+
+                    if self._help_check_if_not_prevent_values(res_text_protocol_dict['dR+0'], hex_to_double(answer_data[:8])):
+                        pass
+                    else:
+                        self.assertEqual(int(float(res_text_protocol_dict['dR+0'])), int(hex_to_double(answer_data[:8])*1000))
+                elif _ == 15:
+                    answer_data_for_15 = answer_data
+                    self.assertTrue(answer_data_for_7 == answer_data_for_15[8:])  ## ?? Спереди или сзади проверять ответ ??
+                    self.assertEqual(32, len(answer_data))
+
+                    if self._help_check_if_not_prevent_values(res_text_protocol_dict['dR-0'], hex_to_double(answer_data[:8])):
+                        pass
+                    else:
+                        self.assertEqual(int(float(res_text_protocol_dict['dR-0'])), int(hex_to_double(answer_data[:8])*1000))
 
     def _check_if_hex_array_is_zero(self,array_byte):
         """
@@ -296,11 +332,7 @@ class RTU327(unittest.TestCase):
             lp_temp_date_from = get_str_date_from_datetime(lp_temp_date_to_uspd_as_datetime - datetime.timedelta(minutes=30*hex_array_to_dec([lp_temp_Cnt[1]]))) ## Cnt скорее всего не правильно считаю
             lp_temp_date_to = get_str_date_from_datetime(lp_temp_date_to_uspd_as_datetime)
             lp_temp_Val = answer_data[7:-1]
-
-
             lp_temp_Stat = answer_data[-1] ## Проверять ???
-
-
             temp_vars = vars().copy()  ## Делаем копию переменных, т.к. список ?почему-то? изменяется в реальном времени.
             res_array = {}
             for temp_var in temp_vars:
@@ -437,7 +469,7 @@ class RTU327(unittest.TestCase):
         res_text_protocol_dict = self._helper_text_protocol_answer_to_dict(all_strings)
 
         N_SH = work_with_device.uspd_counter_number
-        Tday = get_previous_day_datetime() ## !!! Смотрит на текущую дату, а не минус день. !!!!
+        Tday = get_at_day_start_datetime_bytes(amoun_of_days=1) ## !!! Смотрит на текущую дату, а не минус день. !!!!
         Kanal = b'\x01'
         Kk = b'\x01'
         result_answer_map = send_command_and_get_answer(109, command_params=N_SH + Tday + Kanal + Kk)
