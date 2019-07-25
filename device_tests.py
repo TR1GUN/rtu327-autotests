@@ -12,12 +12,12 @@ import work_with_device
 class RTU327(unittest.TestCase):
 
     def commands_send_helper(self, command): ## --> private
-        print(uspd_password,uspd_tcp_ip,uspd_tcp_port,command)
+        print(uspd_password,uspd_tcp_ip,uspd_text_protocol_tcp_port,command)
         if type(command) is list:
-            all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+            all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_text_protocol_tcp_port,
                                     command=command[0], args_list=command[1], tcp_timeout=5)
         elif type(command) is str:
-            all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+            all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_text_protocol_tcp_port,
                                     command=command, tcp_timeout=5)
         else:
             raise Exception('Неизвестный тип')
@@ -63,7 +63,7 @@ class RTU327(unittest.TestCase):
     def get_uspd_count_number(): ## Использовать для проверок
         ## TODO
         ## Возможно следует READQUAL следует заменить на другую -- чтобы меньше грузилась успд.
-        all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+        all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_text_protocol_tcp_port,
                                 command='READAQUAL', tcp_timeout=5)
         return all_strings.split('\n')[3]
 

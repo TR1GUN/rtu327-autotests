@@ -109,7 +109,8 @@ uspd_rtu_dict = get_settings_dictionary_from_ini_file('uspd_settings.ini', 'RTU-
 uspd_counter_number = b''.join(list((bytes.fromhex(uspd_rtu_dict.get('counter_number')[_ * 2:_ * 2 + 2])) for _ in range(int(len(uspd_rtu_dict.get('counter_number')) / 2))))  ## Номер счетчика
 uspd_counter_number_as_int = int(uspd_rtu_dict.get('counter_number'))
 uspd_tcp_ip = uspd_rtu_dict.get('uspd_tcp_ip')
-uspd_tcp_port = int(uspd_rtu_dict.get('uspd_tcp_port'))
+uspd_rtu_protocol_tcp_port = int(uspd_rtu_dict.get('uspd_rtu_protocol_tcp_port'))
+uspd_text_protocol_tcp_port = int(uspd_rtu_dict.get('uspd_text_protocol_tcp_port'))
 uspd_password = uspd_rtu_dict.get('uspd_password')
 
 def hex_to_dec(byte_hex_str):
@@ -410,7 +411,8 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     Главный метод работы с успд - коннектимся к успд, отсылаем строку, получаем ответ.
     """
     res = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    res.connect(('192.168.205.10', 14101))  ##тестовая
+    res.connect((str(uspd_tcp_ip), uspd_rtu_protocol_tcp_port))   ##тестовая
+
     res.settimeout(5)  ## Пока такое решение, на отключение ожидания ответа.
     # Но надо сделать отключение через цикл со временм. Например 20 сек с последнего байта - отключаемся.
     if command_number:
@@ -427,7 +429,6 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
         # Второй и третий байт - это длина пакета.
         for _ in range(3):
             temp_char = res.recv(1)
-            # print(temp_char, '--')
             answer_bytes.append(temp_char)
 
         result_byte_str = b''
@@ -436,7 +437,6 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
         answer_length_without_crc = hex_to_dec(result_byte_str)
         for _ in range(answer_length_without_crc + 2):  ##Длина тела пакета + 2 байта на crc
             temp_char = res.recv(1)
-            # print(temp_char, '--')
             answer_bytes.append(temp_char)
 
         if answer_bytes != []:
@@ -590,7 +590,7 @@ def get_uspd_count_number():
     ## Возможно следует READQUAL следует заменить на другую -- чтобы меньше грузилась успд.
     ## commands_send_helper -- change to this command
 
-    all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+    all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_text_protocol_tcp_port,
                             command='READAQUAL', tcp_timeout=5)
     return all_strings.split('\n')[3].split(';')[-1].replace('<','')
 
