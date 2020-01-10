@@ -42,8 +42,8 @@ import time
 import ctypes
 import numpy as np
 from configparser import ConfigParser
+from USPD_RTU327ProtoFramework.main_methods.methods import send_read
 
-from communication_engineering_serialport_helper.main_methods.methods import send_read
 # from device_tests import RTU327
 
 """

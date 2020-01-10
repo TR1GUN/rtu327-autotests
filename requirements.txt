@@ -1,1 +1,2 @@
 numpy == 1.16.4
+pip install git+https://osr-dev-git.allmonitoring.local/AutoTestHelpers/uspd-rtu327_proto_framework.git#egg=USPD-RTU327_Proto_Framework

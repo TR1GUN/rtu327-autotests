@@ -1,10 +1,9 @@
 """
 py -m pytest device_tests.py::RTU327::test_gettime -s -v
 """
-import re
 import unittest
-
-from communication_engineering_serialport_helper.Utils.helpActions import get_normal_text
+from USPD_RTU327ProtoFramework.main_methods.methods import send_read
+from USPD_RTU327ProtoFramework.Utils.helpActions import get_normal_text
 from work_with_device import *
 import work_with_device
 
@@ -109,6 +108,11 @@ class RTU327(unittest.TestCase):
                                                         ordinal_number=ordinal_number, password=password, reserve=reserve,
                                                         crc=b'\xff\xff', command_number=114)
         result_answer_map = send_command_and_get_answer(send_command_raw=wrong_command)
+
+        # print(get_crc(b'\x01\x00\x00\x00\x00\x00\x00\x00\x3c'))
+        # print(get_crc(ordinal_number+password + reserve + decode_hex_to_str_hex(hex(114))))
+
+        print(result_answer_map)
         self.assertEqual(['a0', '2f'],result_answer_map['crc'])
 
 
