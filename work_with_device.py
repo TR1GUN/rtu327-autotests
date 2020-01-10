@@ -38,9 +38,6 @@ b'\x02\x00\r\x01\x00\x00\x00\x00\x00\x00\x00\x00E\x97\xf6\\\x1aq'
 import datetime
 import socket
 import struct
-import subprocess
-import sys
-import threading
 import time
 import ctypes
 import numpy as np
@@ -456,9 +453,9 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     result = b''
     for _ in answer_bytes[3:-2]: result += _
     # print([result + _ for _ in answer_bytes[3:-2]])
-    # Проверяем crc, который пришл в ответ.
-
-    assert get_right_hex(hex_bytes_to_string(get_crc(result))) == get_right_hex(hex(crc16_calc_tab_rtu(result))[2:]) ## убираем префикс 0x
+    # Проверяем crc, который пришел в ответ.
+    # assert get_right_hex(hex_bytes_to_string(get_crc(result))) == get_right_hex(hex(crc16_calc_tab_rtu(result))[2:]) ## убираем префикс 0x
+    assert get_right_hex(hex_bytes_to_string(get_crc(result))).strip() == get_right_hex(''.join(bytes_string_to_upper_hex_array(b''.join(answer_bytes[-2:]))).lower()).strip()
     return parse_answer(hex_normal_view_answer_array)
 
 def date_to_seconds(date):
