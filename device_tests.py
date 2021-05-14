@@ -74,7 +74,7 @@ class RTU327(unittest.TestCase):
                 2 байта – средний номер версии
                 2 байта – младший номер версии
         """
-
+        print()
         result_answer_map = send_command_and_get_answer(3)
         self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         answer_data = result_answer_map['answer_data']
@@ -130,6 +130,9 @@ class RTU327(unittest.TestCase):
         result_hex_time += res_hex_time.encode()
         result_answer_map = send_command_and_get_answer(115,
                                                         command_params=b'\x10\x0e\x00\x00')  # 3600 + добавляем 1 час на успд
+
+        print('lol')
+        print(result_answer_map)
         self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
 
 
@@ -162,7 +165,7 @@ class RTU327(unittest.TestCase):
                 res_text_protocol_dict[line_array[0]] = line_array[1]
         return res_text_protocol_dict
 
-    def _helper_test_get_maxlogid(self):
+    def test_helper_test_get_maxlogid(self):
         result_answer_map = send_command_and_get_answer(101, command_params=b'\x01')
         self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         self.assertEqual(4, len(result_answer_map['answer_data']))
@@ -201,6 +204,8 @@ class RTU327(unittest.TestCase):
         ##RTU327 протокол
         Nsh = work_with_device.uspd_counter_number ## Номер счетчика
         result_answer_map = send_command_and_get_answer(112, command_params=Nsh)
+
+        print(result_answer_map)
         self.assertEqual('00',result_answer_map['result_code'])  ##Проверка правильного выполнения команды -- result_answer_map
         answer_data = result_answer_map['answer_data']
         vers = answer_data[:2]

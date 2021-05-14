@@ -52,6 +52,8 @@ TODO:
 Возможно все операции по переводу чисел в hex и обратно, надо переписать
 черезе struct.pack()/struct.unpack() - для простоты работы.
 """
+
+
 ##helpers
 def save_settings_in_ini_file(section_name, dictionary):
     """ Создает/ дописывает в конец файла новую настройку.
@@ -68,15 +70,16 @@ def save_settings_in_ini_file(section_name, dictionary):
     temp_config_parser.add_section(section_name)
     for key in dictionary:
         temp_config_parser.set(section_name, key, dictionary[key])
-    with open('uspd_settings.ini','a') as config_file:
+    with open('uspd_settings.ini', 'a') as config_file:
         temp_config_parser.write(config_file)
+
 
 def get_settings_dictionary_from_ini_file(file_path, uspd_name):
     temp_config_parser = ConfigParser()
     temp_config_parser.read(file_path)
+    print(temp_config_parser.__dict__)
     dict_schema = temp_config_parser.__dict__['_sections'][uspd_name]
-    return dict(dict_schema) ## Кастим OrderDict в обычный
-
+    return dict(dict_schema)  ## Кастим OrderDict в обычный
 
 
 TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c,
@@ -102,19 +105,33 @@ TableCRC = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x81
 
 # temp_config_parser = ConfigParser()
 # temp_config_parser.read('uspd_settings.ini')
-uspd_rtu_dict = get_settings_dictionary_from_ini_file('uspd_settings.ini', 'RTU-327')
-uspd_counter_number = b''.join(list((bytes.fromhex(uspd_rtu_dict.get('counter_number')[_ * 2:_ * 2 + 2])) for _ in range(int(len(uspd_rtu_dict.get('counter_number')) / 2))))  ## Номер счетчика
-uspd_counter_number_as_int = int(uspd_rtu_dict.get('counter_number'))
-uspd_tcp_ip = uspd_rtu_dict.get('uspd_tcp_ip')
-uspd_rtu_protocol_tcp_port = int(uspd_rtu_dict.get('uspd_rtu_protocol_tcp_port'))
-uspd_text_protocol_tcp_port = int(uspd_rtu_dict.get('uspd_text_protocol_tcp_port'))
-uspd_password = uspd_rtu_dict.get('uspd_password')
+
+# Старое - Перенес в другой файл
+# uspd_rtu_dict = get_settings_dictionary_from_ini_file('uspd_settings.ini', 'RTU-327')
+# uspd_counter_number = b''.join(list((bytes.fromhex(uspd_rtu_dict.get('counter_number')[_ * 2:_ * 2 + 2])) for _ in range(int(len(uspd_rtu_dict.get('counter_number')) / 2))))  ## Номер счетчика
+# uspd_counter_number_as_int = int(uspd_rtu_dict.get('counter_number'))
+# uspd_tcp_ip = uspd_rtu_dict.get('uspd_tcp_ip')
+# uspd_rtu_protocol_tcp_port = int(uspd_rtu_dict.get('uspd_rtu_protocol_tcp_port'))
+# uspd_text_protocol_tcp_port = int(uspd_rtu_dict.get('uspd_text_protocol_tcp_port'))
+# uspd_password = uspd_rtu_dict.get('uspd_password')
+
+from Service import Config_Parser
+
+## Номер счетчика
+uspd_counter_number = Config_Parser.uspd_counter_number
+uspd_counter_number_as_int = Config_Parser.uspd_counter_number_as_int
+uspd_tcp_ip = Config_Parser.uspd_tcp_ip
+uspd_rtu_protocol_tcp_port = Config_Parser.uspd_rtu_protocol_tcp_port
+uspd_text_protocol_tcp_port = Config_Parser.uspd_text_protocol_tcp_port
+uspd_password = Config_Parser.uspd_password
+
 
 def hex_to_dec(byte_hex_str):
     """Из байтовой hex(Например b'\x01\x00') строки возвращает dec представление/ """
     hex_str_array = byte_request_to_hex_array(byte_hex_str)
     hex_str = hex_str_array[0] + hex_str_array[1]
     return int(hex_str, 16)
+
 
 def hex_array_to_dec(hex_array):
     """
@@ -126,9 +143,11 @@ def hex_array_to_dec(hex_array):
     """
     return int(''.join(hex_array), 16)
 
+
 def char_bytes_str_to_array(request):
     # print(parse_bytes_str_to_array(request))
     return hex_bytes_array_to_string([bytes.hex(_) for _ in parse_bytes_str_to_array(request)])
+
 
 def add_empty_bytes(byte_str, add_number, at_start=True):
     """
@@ -144,7 +163,8 @@ def add_empty_bytes(byte_str, add_number, at_start=True):
             byte_str += b'\x00'
     return byte_str
 
-def dec_from_bytes_array(bytes_array): ## hex_array_to_dec
+
+def dec_from_bytes_array(bytes_array):  ## hex_array_to_dec
     """
     Из получаемого ответа(паршеный ответ в виде массива байт) можно кидать прямо сюда куски, чтобы получить число.
     Например:
@@ -155,6 +175,7 @@ def dec_from_bytes_array(bytes_array): ## hex_array_to_dec
     print(bytes.fromhex((' '.join(bytes_array).strip()).upper()))
     print(hex_to_dec(bytes.fromhex((' '.join(bytes_array).strip()).upper())))
     return hex_to_dec(bytes.fromhex((' '.join(bytes_array).strip()).upper()))
+
 
 def dec_to_hex(number):
     """
@@ -173,7 +194,7 @@ def hex_to_double(hex_array):
     Из hex делаем double.
     Минус - много лишних действий.
     """
-    return struct.unpack('>d', dec_to_hex(hex_array_to_dec(hex_array)))[0] ##> - прямой порядок , < - обратный порядок
+    return struct.unpack('>d', dec_to_hex(hex_array_to_dec(hex_array)))[0]  ##> - прямой порядок , < - обратный порядок
 
 
 def byte_request_to_int_array(request):
@@ -248,7 +269,8 @@ def crc16_calc_tab_rtu(buf):
     for x in buf:
         # print(crc, x)
         # crc = np.uint16(np.uint16(TableCRC[crc >> 8]) ^ (crc << 8) ^ np.uint16(np.uint8(x)))
-        crc = np.uint16(np.uint16(TableCRC[crc >> 8]) ^ (crc << 8) ^ np.int16(np.int8(x))) ## !!! В конце стоят int, вместо uint !!!
+        crc = np.uint16(np.uint16(TableCRC[crc >> 8]) ^ (crc << 8) ^ np.int16(
+            np.int8(x)))  ## !!! В конце стоят int, вместо uint !!!
     return crc
 
 
@@ -306,16 +328,34 @@ def get_number_of_request(request):
     """
     Подсчет количества байт(символов) из request.
     """
+
+    print(request, len(request))
     number_of_bytes = hex(len(parse_bytes_str_to_array(request)))[2:]
-    if len(number_of_bytes) == 1: number_of_bytes = '0' + number_of_bytes  # Если меньше 10, то нужен 0 - т.к. должно отражаться 2 символа , т.е. 09,10,01,00,99
+    if len(
+        number_of_bytes) == 1: number_of_bytes = '0' + number_of_bytes  # Если меньше 10, то нужен 0 - т.к. должно отражаться 2 символа , т.е. 09,10,01,00,99
     return bytes.fromhex(number_of_bytes)
 
 
 def hex_bytes_to_string(hex_bytes):
     return bytes.hex(hex_bytes)
 
+def bytes_list_to_string_hex(bytes_list):
+    """
+    Здесь Берем массив байтов и переводим его в  HEX строку
+    """
+    hex_bytes = ''
+    for i in range(len(bytes_list)):
+        print()
+        hex_bytes = hex_bytes + bytes.hex(bytes_list[i])
+    return hex_bytes
+
 
 def hex_bytes_array_to_string(hex_bytes_array):
+    '''
+    Данная функция переводит массив из БАЙТОВ
+    в МАССИВ HEX значений которые записанны str без префикса 0x
+    '''
+
     return [hex_bytes_to_string(_) for _ in hex_bytes_array]
 
 
@@ -348,7 +388,8 @@ def get_result_request(request):
     prefix = b'\x02'  ## префикс
     first_part_of_package_size = b'\x00'  ## \x00 ++ <тут мы подсчитываем \\x > - Длина пакета \
     # print('---get_result_request---','\n',get_crc(request),'\n',get_crc_ctype(request),'\n', calculate_crcex(request) ,'\n', '---get_result_request---' ,'\n','\n')
-    print('request',request)
+    print('request', request)
+    print(get_number_of_request(request))
     return prefix + first_part_of_package_size + get_number_of_request(request) + request + get_crc(request)
 
 
@@ -371,6 +412,7 @@ def create_command(prefix, first_part_of_package_size, ordinal_number, password,
 
 def send_command(command_number, command_params=b''):
     """ Отправка команды. """
+
     ordinal_number = b'\x01\x00'  ## порядковый номер
     password = b'\x00\x00\x00\x00'  ## пароль
     reserve = b'\x00\x00'  ## резерв
@@ -407,13 +449,15 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     """
     Главный метод работы с успд - коннектимся к успд, отсылаем строку, получаем ответ.
     """
+
     res = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    res.connect((str(uspd_tcp_ip), uspd_rtu_protocol_tcp_port))   ##тестовая
+    res.connect((str(uspd_tcp_ip), uspd_rtu_protocol_tcp_port))  ##тестовая
 
     res.settimeout(5)  ## Пока такое решение, на отключение ожидания ответа.
     # Но надо сделать отключение через цикл со временм. Например 20 сек с последнего байта - отключаемся.
     if command_number:
         result_command = send_command(command_number=command_number, command_params=command_params)
+
     elif send_command_raw:  ## Не работает корректно ?
         result_command = send_command_raw  ##не работает правильно
 
@@ -455,8 +499,10 @@ def send_command_and_get_answer(command_number=None, command_params=b'', send_co
     # print([result + _ for _ in answer_bytes[3:-2]])
     # Проверяем crc, который пришел в ответ.
     # assert get_right_hex(hex_bytes_to_string(get_crc(result))) == get_right_hex(hex(crc16_calc_tab_rtu(result))[2:]) ## убираем префикс 0x
-    assert get_right_hex(hex_bytes_to_string(get_crc(result))).strip() == get_right_hex(''.join(bytes_string_to_upper_hex_array(b''.join(answer_bytes[-2:]))).lower()).strip()
+    assert get_right_hex(hex_bytes_to_string(get_crc(result))).strip() == get_right_hex(
+        ''.join(bytes_string_to_upper_hex_array(b''.join(answer_bytes[-2:]))).lower()).strip()
     return parse_answer(hex_normal_view_answer_array)
+
 
 def date_to_seconds(date):
     """
@@ -464,11 +510,13 @@ def date_to_seconds(date):
     """
     return int(time.mktime(date.timetuple()))
 
+
 def date_from_seconds(seconds):
     """
     Возвращаем дату из секунд(Отсчет с 01.01.1970)
     """
     return datetime.datetime.utcfromtimestamp(seconds)
+
 
 def hex_datetime(date_time):
     """
@@ -477,6 +525,7 @@ def hex_datetime(date_time):
     Пример:
     """
     return get_right_hex(hex(date_to_seconds(date_time))[2:])
+
 
 def bytes_string_to_upper_hex(bytes_string):
     """ Берет байтовую строку, и превращает в строку с hex значениями.
@@ -489,6 +538,7 @@ def bytes_string_to_upper_hex(bytes_string):
         result += (hex(_)[2:] + ' ').upper()
     return result.strip()
 
+
 def bytes_string_to_upper_hex_array(bytes_string):
     """ Берет байтовую строку, и превращает в строку с hex значениями.
     Пример:
@@ -497,16 +547,20 @@ def bytes_string_to_upper_hex_array(bytes_string):
     """
     return bytes_string_to_upper_hex(bytes_string).split()
 
+
 def get_reversed_bytes_string_byte_ver(bytes_string):
     """ Переворачиваем BYTE!!! строку"""
     result = bytes_string_to_upper_hex_array(bytes_string)
     result.reverse()  ## !!! Переворачиваем быйты !!!
-    result = [get_right_hex(_) for _ in result] ## Надо проверять что возвращается, бывает ['5D', '23', 'F', '50'] и надо дописывать до 'правильного' HEX.
+    result = [get_right_hex(_) for _ in
+              result]  ## Надо проверять что возвращается, бывает ['5D', '23', 'F', '50'] и надо дописывать до 'правильного' HEX.
     res_str = bytes.fromhex(' '.join(result).upper())
     return res_str
 
+
 def str_to_byte_symbol_array(string):
     return [string[x * (2): x * (2) + 2] for x in range(int(len(string) / 2))]
+
 
 def get_reversed_bytes_string_str_ver(bytes_string):
     """ Переворачиваем STR!!!(Строку) """
@@ -515,17 +569,20 @@ def get_reversed_bytes_string_str_ver(bytes_string):
     res_str = bytes.fromhex(' '.join(result).upper())
     return res_str
 
+
 def get_reversed_time_bytes(datetime_in_seconds):
-   """Дату(в секундах) переводим в hex. Дальше переворачиваем эту конструкцию, и возвращаем в байтах"""
-   hex_datetime = get_right_hex(hex(datetime_in_seconds)[2:])
-   res_str = get_reversed_bytes_string_str_ver(hex_datetime)
-   return res_str
+    """Дату(в секундах) переводим в hex. Дальше переворачиваем эту конструкцию, и возвращаем в байтах"""
+    hex_datetime = get_right_hex(hex(datetime_in_seconds)[2:])
+    res_str = get_reversed_bytes_string_str_ver(hex_datetime)
+    return res_str
+
 
 def get_reversed_time_bytes_by_datetime(datetime):
-   """Дату(в секундах) переводим в hex. Дальше переворачиваем эту конструкцию, и возвращаем в байтах"""
-   hex_datetime = get_right_hex(hex(date_to_seconds(datetime))[2:])
-   res_str = get_reversed_bytes_string_str_ver(hex_datetime)
-   return res_str
+    """Дату(в секундах) переводим в hex. Дальше переворачиваем эту конструкцию, и возвращаем в байтах"""
+    hex_datetime = get_right_hex(hex(date_to_seconds(datetime))[2:])
+    res_str = get_reversed_bytes_string_str_ver(hex_datetime)
+    return res_str
+
 
 # print(byte_request_to_int_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
 # print(byte_request_to_char_array(b'\x01\x00\x00\x00\x00\x00\x00\x00s\x00\x00\x00\x39'))
@@ -554,15 +611,19 @@ def get_reversed_time_bytes_by_datetime(datetime):
 def check_ip_args(method):
     def decorator(*args, **kwargs):
         method(*args, **kwargs)
+
     return decorator
+
+
 ##unused
 
 def get_at_day_start_datetime(amount_of_days=0):
     cur_date = datetime.datetime.now()
     previous_day = (
-            datetime.datetime.now() - datetime.timedelta(days=amount_of_days, hours=cur_date.hour, minutes=cur_date.minute,
+            datetime.datetime.now() - datetime.timedelta(days=amount_of_days, hours=cur_date.hour,
+                                                         minutes=cur_date.minute,
                                                          seconds=cur_date.second, microseconds=cur_date.microsecond)
-        )
+    )
     return previous_day
 
 
@@ -572,6 +633,7 @@ def get_at_day_start_datetime_bytes(amount_of_days=0):
             get_at_day_start_datetime(amount_of_days=amount_of_days)
         ))
     return previous_day
+
 
 # def get_at_day_start_datetime_bytes_from_datetime(amount_of_days=0):
 #     previous_day = get_reversed_time_bytes(
@@ -589,15 +651,17 @@ def get_uspd_count_number():
 
     all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_text_protocol_tcp_port,
                             command='READAQUAL', tcp_timeout=5)
-    return all_strings.split('\n')[3].split(';')[-1].replace('<','')
+    return all_strings.split('\n')[3].split(';')[-1].replace('<', '')
 
-def get_str_date_from_datetime(datetime_to_str, format = '%y.%m.%d %H:%M:%S'): ## %y -- последние 2 цифры года
+
+def get_str_date_from_datetime(datetime_to_str, format='%y.%m.%d %H:%M:%S'):  ## %y -- последние 2 цифры года
     """
     Возвращает из строки(дата в виде строки) объект datetime.
     """
     return datetime.datetime.strftime(datetime_to_str, format)
 
-def get_datetime_from_string(str_datetime, date_parse_format = '%Y.%m.%d %H:%M:%S'):
+
+def get_datetime_from_string(str_datetime, date_parse_format='%Y.%m.%d %H:%M:%S'):
     """
     Возвравщает из строки объект datetime.
     :param str_datetime: Сюда передаем str дату --> Пример : '19.07.16 13:00:05'
@@ -605,6 +669,7 @@ def get_datetime_from_string(str_datetime, date_parse_format = '%Y.%m.%d %H:%M:%
     :return: Возвращает объект datetime
     """
     return datetime.datetime.strptime(str_datetime, date_parse_format)
+
 
 ##helpers
 # def save_settings_in_ini_file(section_name, dictionary):
@@ -633,18 +698,18 @@ def get_datetime_from_string(str_datetime, date_parse_format = '%Y.%m.%d %H:%M:%
 #     return dict(dict_schema) ## Кастим OrderDict в обычный
 
 
-def commands_send_helper(uspd_password,uspd_tcp_ip,uspd_tcp_port, command):
+def commands_send_helper(uspd_password, uspd_tcp_ip, uspd_tcp_port, command):
     ## В некоторых местах неправильно прокидывает.
     if type(command) is list:
         all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
-                                command=command[0], args_list=command[1], tcp_timeout=5) ## ## Как command правильно записать?
+                                command=command[0], args_list=command[1],
+                                tcp_timeout=5)  ## ## Как command правильно записать?
     elif type(command) is str:
         all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
                                 command=command, tcp_timeout=5)
     else:
         raise Exception('Неизвестный тип')
     return all_strings
-
 
 
 #########
@@ -695,16 +760,18 @@ def send_read_text_rtu327_protocol(tcp_ip, tcp_port, command_number=None, comman
     result = b''
     for _ in answer_bytes[3:-2]: result += _
     return parse_answer(hex_normal_view_answer_array)
+
+
 #
 
-def send_read_text_protocol(uspd_password,uspd_tcp_ip,uspd_tcp_port,command): ## --> private
-        print('result_command ::: ', command)
-        if isinstance(command,list):
-            all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
-                                    command=command[0], args_list=command[1], tcp_timeout=5)
-        elif isinstance(command, str):
-            all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
-                                    command=command, tcp_timeout=5)
-        else:
-            raise Exception('Неизвестный тип')
-        return all_strings
+def send_read_text_protocol(uspd_password, uspd_tcp_ip, uspd_tcp_port, command):  ## --> private
+    print('result_command ::: ', command)
+    if isinstance(command, list):
+        all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+                                command=command[0], args_list=command[1], tcp_timeout=5)
+    elif isinstance(command, str):
+        all_strings = send_read(password=uspd_password, tcp_ip=uspd_tcp_ip, tcp_port=uspd_tcp_port,
+                                command=command, tcp_timeout=5)
+    else:
+        raise Exception('Неизвестный тип')
+    return all_strings
