@@ -164,6 +164,9 @@ def decode_data_to_GETSHPRM(answer_data):
     answer_data = answer_data[4:]
     N_Fid = int.from_bytes(N_Fid, byteorder='little')
 
+
+    print('ПОЛУЧСИЛИ',Typ_Sh)
+
     GETSHPRM = {
 
         'Vers': Vers,
@@ -175,7 +178,7 @@ def decode_data_to_GETSHPRM(answer_data):
         'Syb_Rnk': Syb_Rnk,
         'N_Ob': N_Ob,
         'N_Fid': N_Fid,
-    }
+                }
 
     # ТЕПЕРЬ ПРОХОДИМСЯ ПО КАЖДОМУ ЭЛЕМЕНТУ
     for key in GETSHPRM:
@@ -184,6 +187,22 @@ def decode_data_to_GETSHPRM(answer_data):
             GETSHPRM[key] = list(GETSHPRM[key]).pop()
 
     return GETSHPRM
+
+#Вспомомгательная функция для проведения соответсвия МЕЖДУ ИНДЕКСАМИ RTU и нашими индексами
+def MeterId_from_USPD_to_RTU(MeterId):
+    """
+    Вспомомгательная функция для проведения соответсвия МЕЖДУ ИНДЕКСАМИ RTU и нашими индексами
+    """
+    from Service.Constant_Value_Bank import MeterId_To_RTU327_dict, MeterId_conformity_RTU_to_RTU , MeterId_To_USPD_dict
+
+    MeterId = MeterId_To_RTU327_dict.get(MeterId_conformity_RTU_to_RTU.get(MeterId_To_USPD_dict.get(MeterId)))
+    # MeterId = MeterId_To_USPD_dict.get(MeterId_conformity_RTU_to_RTU.get(MeterId_To_RTU327_dict.get(MeterId)))
+
+    return MeterId
+
+# //-----------------------------------------------------------------------------------------------------------------
+#                       # Функция для Кодирования Данных счетчика
+# //-----------------------------------------------------------------------------------------------------------------
 
 
 def code_data_to_GETSHPRM(data_SHPRM_dict: dict):
@@ -221,7 +240,7 @@ def code_data_to_GETSHPRM(data_SHPRM_dict: dict):
 
 
 # //-----------------------------------------------------------------------------------------------------------------
-#                       # Функция для формирования нужнйо команды запроса по серийнику
+#                       # Функция для формирования нужной команды запроса по серийнику
 # //-----------------------------------------------------------------------------------------------------------------
 
 
@@ -388,6 +407,9 @@ def extract_value_from_tuple(value_tuple):
 
     return value
 
+# //-----------------------------------------------------------------------------------------------------------------
+#                       # Функция для кодирвоки  данных Энергии
+# //-----------------------------------------------------------------------------------------------------------------
 
 def code_data_to_GETPOK(answer_data_expected: dict = {}):
     """
@@ -455,7 +477,7 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30):
         Cnt = Cnt + bytes.fromhex(answer_data[i])
     answer_data = answer_data[2:]
     Cnt = int.from_bytes(Cnt, byteorder='little')
-
+    print(Cnt)
     # КОЛИЧЕТВО ИНТЕРВАЛОВ - НАМ НУЖОНО - для определенения дальнейшей длины
     # сначала переводим в двоичную систему, обрезаем 15 байт и кодирвоку , переводим обратно
     from copy import deepcopy
@@ -646,6 +668,8 @@ def form_data_to_GETLP(answer_data, Kanal):
 
     # Количество передаваемых интервалов UINT16,биты 0-14 –количество интервалов,15 установлен в 1
     Cnt = int(('1' + bin(len(answer_data))[2:])[2:], 2)
+
+    print(Cnt)
     # Cnt = int.to_bytes(Cnt, length=2, byteorder='little')
     #  Статус передаваемых данных , бит 0 – признак  отсутствия показаний счетчика ,
     # бит 1- переход  показаний через 0 INT8

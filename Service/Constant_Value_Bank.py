@@ -129,3 +129,147 @@ error_code_dict = \
         11: 'Нет прав на проведение операции',
         60: 'Ошибка CRC приемного пакета',
     }
+
+# //----------------------------------------------------------------------------------------------------------------
+#                       ИТАК ЗДЕСЬ ВЫВОДИМ СООТВЕТСИЯ между RTU ID счетчиками и ID нашими :
+# //----------------------------------------------------------------------------------------------------------------
+
+MeterId_To_RTU327_dict = {
+    1: 'RTU_METER_ALPHA',
+    2: 'RTU_METER_EUROALPHA11',
+    3: 'RTU_METER_EUROALPHA10',
+    4: 'RTU_METER_ALPHAPLUS',
+    5: 'RTU_METER_A1170',
+    6: 'RTU_METER_PSCHxTM',
+    7: 'RTU_METER_SET4TM',
+    8: 'RTU_METER_A3',
+    9: 'RTU_METER_CC300',
+    10: 'RTU_METER_A1800',
+    11: 'RTU_METER_A1140',
+    12: 'RTU_METER_SL7x',
+    13: 'RTU_METER_CE303',
+    14: 'RTU_METER_EPQS',
+    15: 'RTU_METER_MERCURY230',
+    16: 'RTU_METER_LZQM',
+    17: 'RTU_METER_MERCURY200',
+    18: 'RTU_METER_ZMD',
+    19: 'RTU_METER_EMH',
+    20: 'RTU_METER_ZMG',
+    22: 'RTU_METER_HAMMA32',
+    23: 'RTU_METER_DTSD546',
+    24: 'RTU_METER_NIK2303',
+    100: 'RTU_METER_NO_TYPE',
+
+    # И ОБРАТНО
+    'RTU_METER_ALPHA': 1,
+    'RTU_METER_EUROALPHA11': 2,
+    'RTU_METER_EUROALPHA10': 3,
+    'RTU_METER_ALPHAPLUS': 4,
+    'RTU_METER_A1170': 5,
+    'RTU_METER_PSCHxTM': 6,
+    'RTU_METER_SET4TM': 7,
+    'RTU_METER_A3': 8,
+    'RTU_METER_CC300': 9,
+    'RTU_METER_A1800': 10,
+    'RTU_METER_A1140': 11,
+    'RTU_METER_SL7x': 12,
+    'RTU_METER_CE303': 13,
+    'RTU_METER_EPQS': 14,
+    'RTU_METER_MERCURY230': 15,
+    'RTU_METER_LZQM': 16,
+    'RTU_METER_MERCURY200': 17,
+    'RTU_METER_ZMD': 18,
+    'RTU_METER_EMH': 19,
+    'RTU_METER_ZMG': 20,
+    'RTU_METER_HAMMA32': 22,
+    'RTU_METER_DTSD546': 23,
+    'RTU_METER_NIK2303': 24,
+    'RTU_METER_NO_TYPE': 100,
+
+}
+
+MeterId_conformity_RTU_to_RTU = \
+    {
+        'RTU_METER_MERCURY230': "Mercury23x",
+        'RTU_METER_MERCURY200': "Mercury200",
+        'RTU_METER_SET4TM': "SETxTM",
+        'RTU_METER_CE303': "SE303",
+        'RTU_METER_PSCHxTM': "PSCHxTM",
+        'RTU_METER_A1140': "A1140",
+
+        # В КАЧЕСТВЕ ВСЕГО ОСТАЛЬНОГО СТАВИМ ЭНЕРГОМЕРУ 301
+        'RTU_METER_NO_TYPE': "SE301",
+
+        # И ОБРАТНО
+        "Mercury23x": 'RTU_METER_MERCURY230',
+        "Mercury200": 'RTU_METER_MERCURY200',
+        "SETxTM": 'RTU_METER_SET4TM',
+        "SE303": 'RTU_METER_CE303',
+        "PSCHxTM": 'RTU_METER_PSCHxTM',
+        "A1140": 'RTU_METER_A1140',
+
+        # В КАЧЕСТВЕ ВСЕГО ОСТАЛЬНОГО СТАВИМ ЭНЕРГОМЕРУ 301
+        "SE301": 'RTU_METER_NO_TYPE'
+
+    }
+
+MeterId_To_USPD_dict = {
+    'Mercury200': 1,
+    'SEB2a': 2,
+    'Mercury23x': 3,
+    'SETxTM': 4,
+    'SE303': 5,
+    'SE301': 6,
+    'SE102': 8,
+    'UMTV10': 9,
+    'PSCHxTM': 10,
+    'SE102M': 11,
+    'SOE55_217': 22,
+    'STE561': 23,
+    'SOE55_215': 24,
+    'A1140': 25,
+    'NEVA1xx': 26,
+    'NEVA3xx': 27,
+    'MILUR10x': 28,
+    'MILUR30x': 29,
+    'SOE55_415': 30,
+    'Mercury203': 31,
+    'Mercury206': 32,
+    'TOPAZ': 33,
+    'CASCAD': 34,
+    'INTEGRA10x': 35,
+    'SPODES': 36,
+    'Pulsar': 93,
+    'MILUR IC': 94,
+    'ST410': 192,
+
+    # И ОБРАТНО
+    1: "Mercury200",
+    2: "SEB2a",
+    3: "Mercury23x",
+    4: "SETxTM",
+    5: "SE303",
+    6: "SE301",
+    8: "SE102",
+    9: "UMTV10",
+    10: "PSCHxTM",
+    11: "SE102M",
+    22: "SOE55_217",
+    23: "STE561",
+    24: "SOE55_215",
+    25: "A1140",
+    26: "NEVA1xx",
+    27: "NEVA3xx",
+    28: "MILUR10x",
+    29: "MILUR30x",
+    30: "SOE55_415",
+    31: "Mercury203",
+    32: "Mercury206",
+    33: "TOPAZ",
+    34: "CASCAD",
+    35: "INTEGRA10x",
+    36: "SPODES",
+    93: "Pulsar",
+    94: "MILUR IC",
+    192: "ST410",
+}

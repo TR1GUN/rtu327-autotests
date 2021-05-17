@@ -61,12 +61,14 @@ class GeneratorDataConfig:
         self.Serial = RecordData['Serial']
         # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
 
+        from Service.Service_function import MeterId_from_USPD_to_RTU
+
         GETSHPRM = \
             {
                 # Vers Версия параметров ( текущее значение 1) INT16
                 'Vers': 1,
                 # Typ_Sh Тип счетчика INT8
-                'Typ_Sh': RecordData['TypeId'],
+                'Typ_Sh': MeterId_from_USPD_to_RTU(RecordData['TypeId']),
                 # Kt Коэффициент трансформации по току FLOAT8
                 'Kt': RecordData['CurrentCoeff'],
                 # Kn Коэффициент трансформации по напряжению FLOAT8
@@ -395,7 +397,7 @@ class GenerateTest:
                                                            Count_timestamp=self.Count_timestamp).ElectricPowerValues
 
         # Теперь возвращаем в зад ЭТО
-        print('---->', ElectricPowerValues)
+        # print('---->', ElectricPowerValues)
         return ElectricPowerValues
 
     def _generate_ElectricQualityValues(self):
@@ -415,7 +417,7 @@ class GenerateTest:
                                                                Count_timestamp=self.Count_timestamp).ElectricQualityValues
 
         # Теперь возвращаем в зад ЭТО
-        print('---->', ElectricQualityValues)
+        # print('---->', ElectricQualityValues)
 
         return ElectricQualityValues
 

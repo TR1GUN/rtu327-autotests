@@ -68,7 +68,8 @@ class GeneratorMeterTable:
         else:
             MeterId = self.MeterId_max + 1
 
-        Meter_TypeId_list = [1, 2, 3, 4, 5, 6, 8, 10, 11, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
+        # Meter_TypeId_list = [1, 2, 3, 4, 5, 6, 8, 10, 11, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
+        Meter_TypeId_list = [25, 3, 1, 4, 5, 10]
         Record_MeterTable = \
             {
                 # 'DeviceIdx': self.DeviceIdx_max + 1
@@ -79,9 +80,9 @@ class GeneratorMeterTable:
                 'ParentId': 0,
                 #   ТИП СЧЕТЧИКА  INTEGER NOT NULL
                 # Ставим Энергомеру 303
-                # 'TypeId': 5,
+                'TypeId': 5,
                 # Генерим случайное
-                'TypeId': Meter_TypeId_list[random.randint(0, (len(Meter_TypeId_list) - 1))],
+                # 'TypeId': Meter_TypeId_list[random.randint(0, (len(Meter_TypeId_list) - 1))],
                 # АДРЕСС TEXT NOT NULL - Ставим заметку что это наши тесты
                 'Address': 'ТЕСТ RTU327',
                 # ПАРОЛЬ ДЛЯ ЧТЕНИЯ TEXT
