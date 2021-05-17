@@ -174,7 +174,7 @@ def test_set_time(time_correct: int = 60):
                                                            str(datetime.fromtimestamp(unix_time_expected))
 
 
-test_set_time(600)
+test_set_time(601)
 
 
 

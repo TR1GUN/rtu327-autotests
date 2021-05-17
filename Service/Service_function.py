@@ -296,7 +296,6 @@ def decode_data_to_GETPOK(answer_data, Chnl):
 
     # Теперь что делаем - Парсим байты относительно наших битовых флагов
 
-
     Val_Rm = None
     Val_Rp = None
     Val_Am = None
@@ -425,9 +424,17 @@ def normalize_data_float_from_kWh_to_W(value, cTime):
     return Val
 
 
+def normalize_data_float_from_W_to_kWh(value, cTime):
+    """
+    ПЕРЕВОД из ВАТТОВ В КИЛЛОВАТ ЧАС - ЭТО ВАЖНО
+    """
+    # Val = value * cTime * 1000.0
+    Val = value / 1000.0
+    Val = Val * cTime
+    return Val
 
 
-def decode_data_to_GETLP(answer_data, Kanal, cTime=30 ):
+def decode_data_to_GETLP(answer_data, Kanal, cTime=30):
     """
     Здесь Дешифруем данные команды GETLP - запрос конфига
     """
@@ -442,14 +449,6 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30 ):
     Status = b''
 
     TLast = b''
-
-    # Далее повторяется в соответствии с количеством передаваемых интервалов Значение расхода (кВтч) на интервале по одному типу измерений FLOAT8
-    Val = b''
-
-    # Значения VAL повторяются по количеству запрошенных каналов профиля
-    # Статус интервала ПН INT8
-
-    Stat = b''
 
     # Количество передаваемых интервалов - UINT16,биты 0-14 –количество интервалов,15 установлен в 1
     for i in range(2):
@@ -474,13 +473,22 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30 ):
     answer_data = answer_data[4:]
     TLast = int.from_bytes(TLast, byteorder='little')
 
+    # Пока составляем наш словарь
+    GETLP = {
+        'Cnt': Cnt,
+        'Status': Status,
+        'TLast': TLast,
+    }
 
+    # Теперь что делаем - мы указанное количество раз парсим данные
     for x in range(Cnt_element):
 
         Val_Qp = None
-        Val_Rp = None
+        Val_Qm = None
         Val_Pm = None
         Val_Pp = None
+        # Далее повторяется в соответствии с количеством передаваемых интервалов
+        # Значение расхода (кВтч) на интервале по одному типу измерений FLOAT8
 
         # ТЕПЕРЬ ЕСЛИ ЕСТЬ ЭТОТ ФЛАГ ТО ЕГО ПАРСИМ
         if Kanal.get('Pp'):
@@ -489,7 +497,7 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30 ):
                 Val_Pp = Val_Pp + answer_data[i]
             Val_Pp = struct.unpack('<d', bytes.fromhex(Val_Pp))
             answer_data = answer_data[8:]
-            Val_Pp = normalize_data_float_from_kWh_to_W(value = extract_value_from_tuple(Val_Pp), cTime=cTime)
+            Val_Pp = normalize_data_float_from_kWh_to_W(value=extract_value_from_tuple(Val_Pp), cTime=cTime)
             print(Val_Pp)
 
         if Kanal.get('Pm'):
@@ -499,7 +507,7 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30 ):
             Val_Pm = struct.unpack('<d', bytes.fromhex(Val_Pm))
             answer_data = answer_data[8:]
 
-            Val_Pm = normalize_data_float_from_kWh_to_W(value = extract_value_from_tuple(Val_Pm), cTime=cTime)
+            Val_Pm = normalize_data_float_from_kWh_to_W(value=extract_value_from_tuple(Val_Pm), cTime=cTime)
             print(Val_Pm)
 
         if Kanal.get('Qp'):
@@ -508,7 +516,7 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30 ):
                 Val_Qp = Val_Qp + answer_data[i]
             Val_Qp = struct.unpack('<d', bytes.fromhex(Val_Qp))
             answer_data = answer_data[8:]
-            Val_Qp = normalize_data_float_from_kWh_to_W(value = extract_value_from_tuple(Val_Qp), cTime=cTime)
+            Val_Qp = normalize_data_float_from_kWh_to_W(value=extract_value_from_tuple(Val_Qp), cTime=cTime)
             print(Val_Qp)
 
         if Kanal.get('Qm'):
@@ -518,9 +526,11 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30 ):
             Val_Qm = struct.unpack('<d', bytes.fromhex(Val_Qm))
             answer_data = answer_data[8:]
 
-            Val_Qm = normalize_data_float_from_kWh_to_W(value = extract_value_from_tuple(Val_Qm), cTime=cTime)
+            Val_Qm = normalize_data_float_from_kWh_to_W(value=extract_value_from_tuple(Val_Qm), cTime=cTime)
             print(Val_Qm)
 
+        # Значения VAL повторяются по количеству запрошенных каналов профиля
+        # Статус интервала ПН INT8
         Stat = b''
         for i in range(1):
             Stat = Stat + bytes.fromhex(answer_data[i])
@@ -529,52 +539,163 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30 ):
 
         print(Stat)
 
+        # Теперь что делаем - создаем словарь из значений - ЦЕ ВАЖНО
+        GETLP_element_dict = {
+            'Qp': Val_Qp,
+            'Qm': Val_Qm,
+            'Pm': Val_Pm,
+            'Pp': Val_Pp,
+            'Stat': Stat
+        }
 
-        Теперь
+        # И ЭТИМ ОБНОВЛЯЕМ СЛОВАРЬ
+
+        GETLP[x] = GETLP_element_dict
+
+    return GETLP
 
 
+def code_data_to_GETLP(answer_data, Kanal, cTime=30):
+    """
+    Здесь формируем байтовую строку для того чтоб сформировать предпологаемую команду , чо
+    """
 
-        # Val = ''
-        # for i in range(8):
-        #     Val = Val + answer_data[i]
-        # Val = struct.unpack('<d', bytes.fromhex(Val))
-        # answer_data = answer_data[8:]
-        # # ТЕПЕРЬ ПЕРЕВОДИМ КИЛЛОВАТЫ ЧАСЫ В ВАТТЫ
-        # Val = list(Val).pop()
-        # Val = Val * cTime * 1000.0
-        # print(Val)
-        #
-        # Stat = b''
-        # for i in range(1):
-        #     Stat = Stat + bytes.fromhex(answer_data[i])
-        # answer_data = answer_data[1:]
-        # Stat = int.from_bytes(Stat, byteorder='little')
-        # print(bin(Stat)[2:])
+    # Сначала переводим CTime в ЧАСЫ
+    cTime = float(60 / cTime)
 
-    print('--->', answer_data)
+    from copy import deepcopy
+    import struct
 
-    # for i in range(8):
-    #     M = M + answer_data[i]
-    # M = struct.unpack('<d', bytes.fromhex(M))
-    # answer_data = answer_data[8:]
-    #
-    # for i in range(1):
-    #     Interv = Interv + bytes.fromhex(answer_data[i])
-    # answer_data = answer_data[1:]
-    # Interv = int.from_bytes(Interv, byteorder='little')
+    answer_data = deepcopy(answer_data)
 
-    # GETLP = {
-    #     'Cnt_int': Cnt_element,
-    #     'Cnt': Cnt,
-    #     'Status': Status,
-    #     'TLast': TLast,
-    #
-    # }
+    data = b''
+    # ИТАК - с самого начала -  вытаскиваем первые клчюи в команде
 
-    # # ТЕПЕРЬ ПРОХОДИМСЯ ПО КАЖДОМУ ЭЛЕМЕНТУ
-    # for key in GETLP:
-    #     # Если у нас это список - вытаскиваем данные из него
-    #     if type(GETLP[key]) == tuple:
-    #         GETLP[key] = list(GETLP[key]).pop()
+    Cnt = answer_data.pop('Cnt')
+    Status = answer_data.pop('Status')
+    TLast = answer_data.pop('TLast')
+
+    # Количество передаваемых интервалов UINT16,биты 0-14 –количество интервалов,15 установлен в 1
+    Cnt = int.to_bytes(Cnt, length=2, byteorder='little')
+
+    #  Статус передаваемых данных , бит 0 – признак  отсутствия показаний счетчика ,
+    # бит 1- переход  показаний через 0 INT8
+    Status = int.to_bytes(Status, length=1, byteorder='little')
+
+    #  Время окончания последнего переданного интервала TIME_T
+
+    TLast = int.to_bytes(TLast, length=4, byteorder='little')
+
+    # ТЕПЕРЬ - Перебираем все таймштампы
+
+    data = data + Cnt + Status + TLast
+
+    answer_data_list = sorted(answer_data.keys())
+
+    for timestamp in range(len(answer_data_list)):
+        Val_Pp = b''
+        Val_Pm = b''
+        Val_Qp = b''
+        Val_Qm = b''
+        # Далее повторяется в соответствии с количеством передаваемых интервалов
+        # Значение расхода (кВтч) на интервале по одному типу измерений FLOAT8
+
+        # ТЕПЕРЬ ЕСЛИ ЕСТЬ ЭТОТ ФЛАГ ТО ЕГО ПАРСИМ
+        if Kanal.get('Pp'):
+            Val_Pp = answer_data.get(answer_data_list[timestamp]).get('Pp')
+            # ПЕРЕВОДИм из ваттов в киловатт часы
+            Val_Pp = normalize_data_float_from_W_to_kWh(value=Val_Pp, cTime=cTime)
+            # Теперь упаковываем в байты
+            Val_Pp = struct.pack("<d", Val_Pp)
+
+        if Kanal.get('Pm'):
+            Val_Pm = answer_data.get(answer_data_list[timestamp]).get('Pm')
+            # ПЕРЕВОДИм из ваттов в киловатт часы
+            Val_Pm = normalize_data_float_from_W_to_kWh(value=Val_Pm, cTime=cTime)
+            # Теперь упаковываем в байты
+            Val_Pm = struct.pack("<d", Val_Pm)
+
+        if Kanal.get('Qp'):
+            Val_Qp = answer_data.get(answer_data_list[timestamp]).get('Qp')
+            # ПЕРЕВОДИм из ваттов в киловатт часы
+            Val_Qp = normalize_data_float_from_W_to_kWh(value=Val_Qp, cTime=cTime)
+            # Теперь упаковываем в байты
+            Val_Qp = struct.pack("<d", Val_Qp)
+
+        if Kanal.get('Qm'):
+            Val_Qm = answer_data.get(answer_data_list[timestamp]).get('Qm')
+            # ПЕРЕВОДИм из ваттов в киловатт часы
+            Val_Qm = normalize_data_float_from_W_to_kWh(value=Val_Qm, cTime=cTime)
+            # Теперь упаковываем в байты
+            Val_Qm = struct.pack("<d", Val_Qm)
+
+        Stat = 0
+        Stat = int.to_bytes(Stat, length=1, byteorder='little')
+
+        # ТЕПЕРЬ СОБИАРЕМ ЭТО ВОЕДИНО
+
+        data = data + Val_Pp + Val_Pm +Val_Qp +Val_Qm + Stat
+
+    return data
+
+
+def form_data_to_GETLP(answer_data, Kanal):
+    """
+    Итак - ТУТ очень важно - формируем словарь из значений для сравнивания декодирвоанных элементов
+    """
+
+    # Количество передаваемых интервалов UINT16,биты 0-14 –количество интервалов,15 установлен в 1
+    Cnt = int(('1' + bin(len(answer_data))[2:])[2:], 2)
+    # Cnt = int.to_bytes(Cnt, length=2, byteorder='little')
+    #  Статус передаваемых данных , бит 0 – признак  отсутствия показаний счетчика ,
+    # бит 1- переход  показаний через 0 INT8
+    Status = 0
+    # Status = int.to_bytes(Status, length=1, byteorder='little')
+    #  Время окончания последнего переданного интервала TIME_T
+    TLast = int(max(answer_data.keys()))
+    # TLast = int.to_bytes(TLast, length=4, byteorder='little')
+    # Пока составляем наш словарь
+    GETLP = {
+        'Cnt': Cnt,
+        'Status': Status,
+        'TLast': TLast,
+    }
+
+    # ТЕПЕРЬ СОРТИРУЕМ НАШ СЛОВАРЬ ПО УБЫВАНИЮ
+
+    answer_data_list = sorted(answer_data.keys())
+
+    for timestamp in range(len(answer_data_list)):
+        GETLP_element_dict = {}
+        # Далее повторяется в соответствии с количеством передаваемых интервалов
+        # Значение расхода (кВтч) на интервале по одному типу измерений FLOAT8
+
+        # ТЕПЕРЬ ЕСЛИ ЕСТЬ ЭТОТ ФЛАГ ТО ЕГО ПАРСИМ
+        if Kanal.get('Pp'):
+            Val_Pp = answer_data.get(answer_data_list[timestamp]).get('Pp')
+            # Добаеляем
+            GETLP_element_dict['Pp'] = Val_Pp
+
+        if Kanal.get('Pm'):
+            Val_Pm = answer_data.get(answer_data_list[timestamp]).get('Pm')
+            # Добаеляем
+            GETLP_element_dict['Pm'] = Val_Pm
+
+        if Kanal.get('Qp'):
+            Val_Qp = answer_data.get(answer_data_list[timestamp]).get('Qp')
+            # Добаеляем
+            GETLP_element_dict['Qp'] = Val_Qp
+
+        if Kanal.get('Qm'):
+            Val_Qm = answer_data.get(answer_data_list[timestamp]).get('Qm')
+            # Добаеляем
+            GETLP_element_dict['Qm'] = Val_Qm
+
+        Stat = 0
+        # Добаеляем
+        GETLP_element_dict['Stat'] = Stat
+
+        # И ЭТИМ ОБНОВЛЯЕМ СЛОВАРЬ
+        GETLP[timestamp] = GETLP_element_dict
 
     return GETLP
