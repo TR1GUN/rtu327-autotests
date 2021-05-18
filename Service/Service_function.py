@@ -164,9 +164,6 @@ def decode_data_to_GETSHPRM(answer_data):
     answer_data = answer_data[4:]
     N_Fid = int.from_bytes(N_Fid, byteorder='little')
 
-
-    print('ПОЛУЧСИЛИ',Typ_Sh)
-
     GETSHPRM = {
 
         'Vers': Vers,
@@ -178,7 +175,7 @@ def decode_data_to_GETSHPRM(answer_data):
         'Syb_Rnk': Syb_Rnk,
         'N_Ob': N_Ob,
         'N_Fid': N_Fid,
-                }
+    }
 
     # ТЕПЕРЬ ПРОХОДИМСЯ ПО КАЖДОМУ ЭЛЕМЕНТУ
     for key in GETSHPRM:
@@ -188,17 +185,19 @@ def decode_data_to_GETSHPRM(answer_data):
 
     return GETSHPRM
 
-#Вспомомгательная функция для проведения соответсвия МЕЖДУ ИНДЕКСАМИ RTU и нашими индексами
+
+# Вспомомгательная функция для проведения соответсвия МЕЖДУ ИНДЕКСАМИ RTU и нашими индексами
 def MeterId_from_USPD_to_RTU(MeterId):
     """
     Вспомомгательная функция для проведения соответсвия МЕЖДУ ИНДЕКСАМИ RTU и нашими индексами
     """
-    from Service.Constant_Value_Bank import MeterId_To_RTU327_dict, MeterId_conformity_RTU_to_RTU , MeterId_To_USPD_dict
+    from Service.Constant_Value_Bank import MeterId_To_RTU327_dict, MeterId_conformity_RTU_to_RTU, MeterId_To_USPD_dict
 
     MeterId = MeterId_To_RTU327_dict.get(MeterId_conformity_RTU_to_RTU.get(MeterId_To_USPD_dict.get(MeterId)))
     # MeterId = MeterId_To_USPD_dict.get(MeterId_conformity_RTU_to_RTU.get(MeterId_To_RTU327_dict.get(MeterId)))
 
     return MeterId
+
 
 # //-----------------------------------------------------------------------------------------------------------------
 #                       # Функция для Кодирования Данных счетчика
@@ -211,7 +210,6 @@ def code_data_to_GETSHPRM(data_SHPRM_dict: dict):
     """
     import struct
 
-    # print('--------->', data_SHPRM_dict)
     # Версия параметров ( текущее значение 1) INT16
     Vers = data_SHPRM_dict['Vers'].to_bytes(2, byteorder='little', signed=True)
     # Тип счетчика INT8
@@ -328,7 +326,7 @@ def decode_data_to_GETPOK(answer_data, Chnl):
         answer_data = answer_data[8:]
 
         Val_Ap = normalize_data_float_from_kW_to_W(extract_value_from_tuple(Val_Ap))
-        # print(Val_Rm)
+
     if Chnl.get('Am'):
         Val_Am = ''
         for i in range(8):
@@ -337,7 +335,7 @@ def decode_data_to_GETPOK(answer_data, Chnl):
         answer_data = answer_data[8:]
 
         Val_Am = normalize_data_float_from_kW_to_W(extract_value_from_tuple(Val_Am))
-        # print(Val_Rp)
+
     if Chnl.get('Rp'):
         Val_Rp = ''
         for i in range(8):
@@ -345,7 +343,7 @@ def decode_data_to_GETPOK(answer_data, Chnl):
         Val_Rp = struct.unpack('<d', bytes.fromhex(Val_Rp))
         answer_data = answer_data[8:]
         Val_Rp = normalize_data_float_from_kW_to_W(extract_value_from_tuple(Val_Rp))
-        # print(Val_Am)
+
     if Chnl.get('Rm'):
         Val_Rm = ''
         for i in range(8):
@@ -354,7 +352,6 @@ def decode_data_to_GETPOK(answer_data, Chnl):
         answer_data = answer_data[8:]
 
         Val_Rm = normalize_data_float_from_kW_to_W(extract_value_from_tuple(Val_Rm))
-        # print(Val_Ap)
 
     # ТЕПЕРЬ СОСТАВЛЯЕМ СЛОВАРЬ ИЗ НОРМАЛЬНЫХ КРАССИВЫХ ЗНАЧЕНИЙ И ВОЗВРАЩАЕМ ЕГО
 
@@ -406,6 +403,7 @@ def extract_value_from_tuple(value_tuple):
     value = list(value_tuple).pop()
 
     return value
+
 
 # //-----------------------------------------------------------------------------------------------------------------
 #                       # Функция для кодирвоки  данных Энергии
@@ -477,7 +475,7 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30):
         Cnt = Cnt + bytes.fromhex(answer_data[i])
     answer_data = answer_data[2:]
     Cnt = int.from_bytes(Cnt, byteorder='little')
-    print(Cnt)
+
     # КОЛИЧЕТВО ИНТЕРВАЛОВ - НАМ НУЖОНО - для определенения дальнейшей длины
     # сначала переводим в двоичную систему, обрезаем 15 байт и кодирвоку , переводим обратно
     from copy import deepcopy
@@ -520,7 +518,6 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30):
             Val_Pp = struct.unpack('<d', bytes.fromhex(Val_Pp))
             answer_data = answer_data[8:]
             Val_Pp = normalize_data_float_from_kWh_to_W(value=extract_value_from_tuple(Val_Pp), cTime=cTime)
-            print(Val_Pp)
 
         if Kanal.get('Pm'):
             Val_Pm = ''
@@ -530,7 +527,6 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30):
             answer_data = answer_data[8:]
 
             Val_Pm = normalize_data_float_from_kWh_to_W(value=extract_value_from_tuple(Val_Pm), cTime=cTime)
-            print(Val_Pm)
 
         if Kanal.get('Qp'):
             Val_Qp = ''
@@ -539,7 +535,6 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30):
             Val_Qp = struct.unpack('<d', bytes.fromhex(Val_Qp))
             answer_data = answer_data[8:]
             Val_Qp = normalize_data_float_from_kWh_to_W(value=extract_value_from_tuple(Val_Qp), cTime=cTime)
-            print(Val_Qp)
 
         if Kanal.get('Qm'):
             Val_Qm = ''
@@ -549,7 +544,6 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30):
             answer_data = answer_data[8:]
 
             Val_Qm = normalize_data_float_from_kWh_to_W(value=extract_value_from_tuple(Val_Qm), cTime=cTime)
-            print(Val_Qm)
 
         # Значения VAL повторяются по количеству запрошенных каналов профиля
         # Статус интервала ПН INT8
@@ -558,8 +552,6 @@ def decode_data_to_GETLP(answer_data, Kanal, cTime=30):
             Stat = Stat + bytes.fromhex(answer_data[i])
         answer_data = answer_data[1:]
         Stat = int.from_bytes(Stat, byteorder='little')
-
-        print(Stat)
 
         # Теперь что делаем - создаем словарь из значений - ЦЕ ВАЖНО
         GETLP_element_dict = {
@@ -656,7 +648,7 @@ def code_data_to_GETLP(answer_data, Kanal, cTime=30):
 
         # ТЕПЕРЬ СОБИАРЕМ ЭТО ВОЕДИНО
 
-        data = data + Val_Pp + Val_Pm +Val_Qp +Val_Qm + Stat
+        data = data + Val_Pp + Val_Pm + Val_Qp + Val_Qm + Stat
 
     return data
 
@@ -667,10 +659,14 @@ def form_data_to_GETLP(answer_data, Kanal):
     """
 
     # Количество передаваемых интервалов UINT16,биты 0-14 –количество интервалов,15 установлен в 1
-    Cnt = int(('1' + bin(len(answer_data))[2:])[2:], 2)
+    Cnt = len(answer_data)
 
-    print(Cnt)
-    # Cnt = int.to_bytes(Cnt, length=2, byteorder='little')
+    Cnt = bin(Cnt)[2:]
+    # Добавляем 15 бит
+    Cnt = '1' + str('0' * (15 - len(Cnt))) + Cnt
+
+    Cnt = int(Cnt, 2)
+
     #  Статус передаваемых данных , бит 0 – признак  отсутствия показаний счетчика ,
     # бит 1- переход  показаний через 0 INT8
     Status = 0
@@ -723,3 +719,513 @@ def form_data_to_GETLP(answer_data, Kanal):
         GETLP[timestamp] = GETLP_element_dict
 
     return GETLP
+
+
+# //-----------------------------------------------------------------------------------------------------------------
+#                       # Функция для подготовки данных  замеров параметров электросети.
+# //-----------------------------------------------------------------------------------------------------------------
+
+def decode_data_to_GETTESTS(answer_data):
+    """
+    Функция для подготовки данных  замеров параметров электросети.
+    """
+    from copy import deepcopy
+    import struct
+    BITSTATS = b''
+    Realint = b''
+    Elm = b''
+
+    Vals_dict_bit_mask = \
+        {
+            # 0: None
+            1: 'Wa',
+            2: 'Wb',
+            3: 'Wc',
+            4: 'VAa',
+            5: 'VAb',
+            6: 'VAc',
+            7: 'FREQ',
+            8: 'Ia',
+            9: 'Ib',
+            10: 'Ic',
+            11: 'Ua',
+            12: 'Ub',
+            13: 'Uc',
+            14: 'PFangA',
+            15: 'PFangB',
+            16: 'PFangC',
+            17: 'PHangB',
+            18: 'PhangC',
+
+        }
+
+    Vals_by_BITSTATS = \
+        {
+            # 0 Не задействован
+            # 1 Активная мощность фазы A, кВт (если установлен 1)
+            'Wa': False,
+            # 2 Активная мощность фазы B, кВт. Wb
+            'Wb': False,
+            # 3 Активная мощность фазы C, кВт Wc
+            'Wc': False,
+            # 4 Полная мощность фазы A, кВA. VAa
+            'VAa': False,
+            # 5 Полная мощность фазы B, кВA VAb
+            'VAb': False,
+            # 6 Полная мощность фазы C, кВA VAc
+            'VAc': False,
+            # 7 Частота сети, Гц FREQ
+            'FREQ': False,
+            # 8 Ток фазы A, A Ia
+            'Ia': False,
+            # 9 Ток фазы B, A Ib
+            'Ib': False,
+            # 10 Ток фазы C, A Ic
+            'Ic': False,
+            # 11 Напряжение фазы A, В. Ua
+            'Ua': False,
+            # 12 Напряжение фазы B, В. Ub
+            'Ub': False,
+            # 13 Напряжение фазы C, В. Uc
+            'Uc': False,
+            # 14 Угол между векторами U I, фазы A, Град. PFangA
+            'PFangA': False,
+            # 15 Угол между векторами U I, фазы B, Град. PFangB
+            'PFangB': False,
+            # 16 Угол между векторами U I, фазы C, Град. PFangC
+            'PFangC': False,
+            # 17 Угол между векторами напряжений фаз A B PHangB
+            'PHangB': False,
+            # 18 Угол между векторами напряжений фаз A С PhangC
+            'PhangC': False,
+        }
+
+    # BITSTATS Массив битовых признаков измеряемых величин (см. ниже) INT32
+    for i in range(4):
+        BITSTATS = BITSTATS + bytes.fromhex(answer_data[i])
+    answer_data = answer_data[4:]
+    BITSTATS = int.from_bytes(BITSTATS, byteorder='little')
+    # Теперь смотрим битовые маски - ЭТО ВАЖНО
+    BITSTATS_bin = bin(BITSTATS)[2:]
+    # ПЕРЕВОРАЧИВАЕМ
+    BITSTATS_bin = BITSTATS_bin[::-1]
+
+    # ТЕПЕРЬ ПЕРЕОПРЕДЕЛЯЕМ БИТОВЫЕ МАСКИ
+    for i in range(len(BITSTATS_bin)):
+        Vals_by_BITSTATS[Vals_dict_bit_mask.get(i)] = bool(int(BITSTATS_bin[i]))
+
+    # Realint Количество возвращаемых измерений INT8
+    for i in range(1):
+        Realint = Realint + bytes.fromhex(answer_data[i])
+    answer_data = answer_data[1:]
+    Realint = int.from_bytes(Realint, byteorder='little')
+
+    # Elm Количество элементов напряжения счетчика(cм. Ниже) INT8
+    for i in range(1):
+        Elm = Elm + bytes.fromhex(answer_data[i])
+    answer_data = answer_data[1:]
+    Elm = int.from_bytes(Elm, byteorder='little')
+
+    GETTESTS = {
+        'BITSTATS': BITSTATS,
+        'Realint': Realint,
+        'Elm': Elm,
+    }
+
+    # ТЕПЕРЬ ПОЙДЕТ ЖАРИШКА - БУДЕИ ДЕЛАТЬ ДЕШЕВРАЦИЮ НАГРУЗОЧНЫХ БАЙТОВ
+    for i in range(Realint):
+        Vals_element = deepcopy(Vals_by_BITSTATS)
+        Vals_element.pop(None)
+
+        # Сначала декодируем таймштамп
+        Time = b''
+        if BITSTATS > 0:
+            for i in range(4):
+                Time = Time + bytes.fromhex(answer_data[i])
+            answer_data = answer_data[4:]
+            Time = int.from_bytes(Time, byteorder='little')
+            Vals_element['Time'] = Time
+        # ТЕПЕРЬ ПЕРЕБИРАЕМ ФЛОАТ
+        if Vals_by_BITSTATS['Wa']:
+            Wa = ''
+            for i in range(8):
+                Wa = Wa + answer_data[i]
+            Wa = struct.unpack('<d', bytes.fromhex(Wa))
+            answer_data = answer_data[8:]
+            Wa = extract_value_from_tuple(Wa)
+
+            Vals_element['Wa'] = Wa / 1000.0
+
+        if Vals_by_BITSTATS['Wb']:
+            Wb = ''
+            for i in range(8):
+                Wb = Wb + answer_data[i]
+            Wb = struct.unpack('<d', bytes.fromhex(Wb))
+            answer_data = answer_data[8:]
+            Wb = extract_value_from_tuple(Wb)
+
+            Vals_element['Wb'] = Wb / 1000.0
+
+        if Vals_by_BITSTATS['Wc']:
+            Wc = ''
+            for i in range(8):
+                Wc = Wc + answer_data[i]
+            Wc = struct.unpack('<d', bytes.fromhex(Wc))
+            answer_data = answer_data[8:]
+            Wc = extract_value_from_tuple(Wc)
+
+            Vals_element['Wc'] = Wc / 1000.0
+
+        if Vals_by_BITSTATS['VAa']:
+            VAa = ''
+            for i in range(8):
+                VAa = VAa + answer_data[i]
+            VAa = struct.unpack('<d', bytes.fromhex(VAa))
+            answer_data = answer_data[8:]
+            VAa = extract_value_from_tuple(VAa)
+
+            Vals_element['VAa'] = VAa / 1000.0
+
+        if Vals_by_BITSTATS['VAb']:
+            VAb = ''
+            for i in range(8):
+                VAb = VAb + answer_data[i]
+            VAb = struct.unpack('<d', bytes.fromhex(VAb))
+            answer_data = answer_data[8:]
+            VAb = extract_value_from_tuple(VAb)
+
+            Vals_element['VAb'] = VAb / 1000.0
+
+        if Vals_by_BITSTATS['VAc']:
+            VAc = ''
+            for i in range(8):
+                VAc = VAc + answer_data[i]
+            VAc = struct.unpack('<d', bytes.fromhex(VAc))
+            answer_data = answer_data[8:]
+            VAc = extract_value_from_tuple(VAc)
+
+            Vals_element['VAc'] = VAc / 1000.0
+
+        if Vals_by_BITSTATS['FREQ']:
+            FREQ = ''
+            for i in range(8):
+                FREQ = FREQ + answer_data[i]
+            FREQ = struct.unpack('<d', bytes.fromhex(FREQ))
+            answer_data = answer_data[8:]
+            FREQ = extract_value_from_tuple(FREQ)
+
+            Vals_element['FREQ'] = FREQ
+
+        if Vals_by_BITSTATS['Ia']:
+            Ia = ''
+            for i in range(8):
+                Ia = Ia + answer_data[i]
+            Ia = struct.unpack('<d', bytes.fromhex(Ia))
+            answer_data = answer_data[8:]
+            Ia = extract_value_from_tuple(Ia)
+
+            Vals_element['Ia'] = Ia
+
+        if Vals_by_BITSTATS['Ib']:
+            Ib = ''
+            for i in range(8):
+                Ib = Ib + answer_data[i]
+            Ib = struct.unpack('<d', bytes.fromhex(Ib))
+            answer_data = answer_data[8:]
+            Ib = extract_value_from_tuple(Ib)
+
+            Vals_element['Ib'] = Ib
+
+        if Vals_by_BITSTATS['Ic']:
+            Ic = ''
+            for i in range(8):
+                Ic = Ic + answer_data[i]
+            Ic = struct.unpack('<d', bytes.fromhex(Ic))
+            answer_data = answer_data[8:]
+            Ic = extract_value_from_tuple(Ic)
+
+            Vals_element['Ic'] = Ic
+
+        if Vals_by_BITSTATS['Ua']:
+            Ua = ''
+            for i in range(8):
+                Ua = Ua + answer_data[i]
+            Ua = struct.unpack('<d', bytes.fromhex(Ua))
+            answer_data = answer_data[8:]
+            Ua = extract_value_from_tuple(Ua)
+
+            Vals_element['Ua'] = Ua
+
+        if Vals_by_BITSTATS['Ub']:
+            Ub = ''
+            for i in range(8):
+                Ub = Ub + answer_data[i]
+            Ub = struct.unpack('<d', bytes.fromhex(Ub))
+            answer_data = answer_data[8:]
+            Ub = extract_value_from_tuple(Ub)
+
+            Vals_element['Ub'] = Ub
+
+        if Vals_by_BITSTATS['Uc']:
+            Uc = ''
+            for i in range(8):
+                Uc = Uc + answer_data[i]
+            Uc = struct.unpack('<d', bytes.fromhex(Uc))
+            answer_data = answer_data[8:]
+            Uc = extract_value_from_tuple(Uc)
+
+            Vals_element['Uc'] = Uc
+
+        if Vals_by_BITSTATS['PFangA']:
+            PFangA = ''
+            for i in range(8):
+                PFangA = PFangA + answer_data[i]
+            PFangA = struct.unpack('<d', bytes.fromhex(PFangA))
+            answer_data = answer_data[8:]
+            PFangA = extract_value_from_tuple(PFangA)
+
+            Vals_element['PFangA'] = PFangA
+
+        if Vals_by_BITSTATS['PFangB']:
+            PFangB = ''
+            for i in range(8):
+                PFangB = PFangB + answer_data[i]
+            PFangB = struct.unpack('<d', bytes.fromhex(PFangB))
+            answer_data = answer_data[8:]
+            PFangB = extract_value_from_tuple(PFangB)
+
+            Vals_element['PFangB'] = PFangB
+
+        if Vals_by_BITSTATS['PFangC']:
+            PFangC = ''
+            for i in range(8):
+                PFangC = PFangC + answer_data[i]
+            PFangC = struct.unpack('<d', bytes.fromhex(PFangC))
+            answer_data = answer_data[8:]
+            PFangC = extract_value_from_tuple(PFangC)
+
+            Vals_element['PFangC'] = PFangC
+
+        if Vals_by_BITSTATS['PHangB']:
+            PHangB = ''
+            for i in range(8):
+                PHangB = PHangB + answer_data[i]
+            PHangB = struct.unpack('<d', bytes.fromhex(PHangB))
+            answer_data = answer_data[8:]
+            PHangB = extract_value_from_tuple(PHangB)
+
+            Vals_element['PHangB'] = PHangB
+
+        if Vals_by_BITSTATS['PhangC']:
+            PhangC = ''
+            for i in range(8):
+                PhangC = PhangC + answer_data[i]
+            PhangC = struct.unpack('<d', bytes.fromhex(PhangC))
+            answer_data = answer_data[8:]
+            PhangC = extract_value_from_tuple(PhangC)
+
+            Vals_element['PhangC'] = PhangC
+
+        # ТЕПЕРЬ ЧТО ДЕЛАЕМ - ОЧИЩАЕМ ОТ БУДЕВЫХ ЗНАЧЕНИЙ
+        keys_to_delete = []
+
+        for keys in Vals_element:
+            if type(Vals_element[keys]) == bool:
+                keys_to_delete.append(keys)
+
+        for x in keys_to_delete:
+            Vals_element.pop(x)
+
+        # И помещаем в общий список
+        GETTESTS[i] = Vals_element
+
+    return GETTESTS
+
+
+def form_data_to_GETTESTS(answer_data):
+    """
+    Итак - ТУТ очень важно - формируем словарь из значений для сравнивания декодирвоанных элементов
+    """
+
+    # ТЕПЕРЬ ОЧЕНЬ ВАЖНЫЙ МОМЕНТ - ФОРМИРУЕМ ДЕКОДИРОВАННЫЙ ВАРИАНТ ОТВЕТА
+
+    Vals_dict_bit_mask = {
+        0: None,
+        1: 'Wa',
+        2: 'Wb',
+        3: 'Wc',
+        4: 'VAa',
+        5: 'VAb',
+        6: 'VAc',
+        7: 'FREQ',
+        8: 'Ia',
+        9: 'Ib',
+        10: 'Ic',
+        11: 'Ua',
+        12: 'Ub',
+        13: 'Uc',
+        14: 'PFangA',
+        15: 'PFangB',
+        16: 'PFangC',
+        17: 'PHangB',
+        18: 'PhangC',
+
+    }
+
+    Vals_by_BITSTATS = \
+        {
+            # 0 Не задействован
+            None: False,
+            # 1 Активная мощность фазы A, кВт (если установлен 1)
+            'Wa': True,
+            # 2 Активная мощность фазы B, кВт. Wb
+            'Wb': True,
+            # 3 Активная мощность фазы C, кВт Wc
+            'Wc': True,
+            # 4 Полная мощность фазы A, кВA. VAa
+            'VAa': True,
+            # 5 Полная мощность фазы B, кВA VAb
+            'VAb': True,
+            # 6 Полная мощность фазы C, кВA VAc
+            'VAc': True,
+            # 7 Частота сети, Гц FREQ
+            'FREQ': True,
+            # 8 Ток фазы A, A Ia
+            'Ia': True,
+            # 9 Ток фазы B, A Ib
+            'Ib': True,
+            # 10 Ток фазы C, A Ic
+            'Ic': True,
+            # 11 Напряжение фазы A, В. Ua
+            'Ua': True,
+            # 12 Напряжение фазы B, В. Ub
+            'Ub': True,
+            # 13 Напряжение фазы C, В. Uc
+            'Uc': True,
+            # 14 Угол между векторами U I, фазы A, Град. PFangA
+            'PFangA': False,
+            # 15 Угол между векторами U I, фазы B, Град. PFangB
+            'PFangB': False,
+            # 16 Угол между векторами U I, фазы C, Град. PFangC
+            'PFangC': False,
+            # 17 Угол между векторами напряжений фаз A B PHangB
+            'PHangB': True,
+            # 18 Угол между векторами напряжений фаз A С PhangC
+            'PhangC': True,
+        }
+
+    # ФОРМИРУЕМ БИТОВЫЕ МАСКИ
+    BITSTATS_bin = ''
+    for keys in Vals_dict_bit_mask:
+        BITSTATS_bin = BITSTATS_bin + str(int(Vals_by_BITSTATS[Vals_dict_bit_mask[keys]]))
+    # ПЕРЕВОРАЧИВАЕМ
+    BITSTATS_bin = BITSTATS_bin[::-1]
+    # Массив битовых признаков измеряемых величин (см. ниже)
+    BITSTATS = int(BITSTATS_bin, 2)
+
+    answer_data_key_list = sorted(answer_data.keys())
+
+    # Количество возвращаемых измерений INT8
+    Realint = len(answer_data_key_list)
+    # Количество элементов напряжения счетчика(cм. Ниже) INT8
+
+    Elm = 2
+
+    answer_data_dict = \
+        {
+            'BITSTATS': BITSTATS,
+            'Realint': Realint,
+            'Elm': Elm,
+        }
+
+    # ТЕПЕРЬ ПЕРЕБИРАЕМ НУЖНЫЕ НАМ В СПИСКЕ ВЕЩИ
+    for timestamp in range(len(answer_data_key_list)):
+        # сначала  формируем общий словарь -
+        answer_data_dict_eliment = {}
+        # Если длина не нулевая - то ставим время
+        if BITSTATS > 0:
+            answer_data_dict_eliment['Time'] = answer_data[answer_data_key_list[timestamp]]['Timestamp']
+
+        # дальше проходимся по всем тегам
+        for tag in Vals_by_BITSTATS:
+            if Vals_by_BITSTATS[tag]:
+                answer_data_dict_eliment[tag] = answer_data[answer_data_key_list[timestamp]][tag]
+
+        answer_data_dict[timestamp] = answer_data_dict_eliment
+
+    return answer_data_dict
+
+
+def code_data_to_GETTESTS(answer_data):
+    """
+    Здесь формируем байтовую строку для того чтоб сформировать предпологаемую команду , чо
+    """
+
+    from copy import deepcopy
+    import struct
+
+    # ТЕПЕРЬ формируем строку
+
+    answer_data_dict = deepcopy(answer_data)
+    # ТЕПЕРЬ формируем байтовую строку
+
+    data = b''
+    # ИТАК - с самого начала -  вытаскиваем первые клчюи в команде
+
+    BITSTATS = answer_data_dict.pop('BITSTATS')
+    Realint = answer_data_dict.pop('Realint')
+    Elm = answer_data_dict.pop('Elm')
+
+    # Массив битовых признаков измеряемых величин (см. ниже) INT32
+    BITSTATS = int.to_bytes(BITSTATS, length=4, byteorder='little')
+    # Количество возвращаемых измерений INT8
+    Realint = int.to_bytes(Realint, length=1, byteorder='little')
+    # Количество элементов напряжения счетчика(cм. Ниже) INT8
+    Elm = int.to_bytes(Elm, length=1, byteorder='little')
+
+    # ТЕПЕРЬ ПЕРЕБИРАЕМ ВСЕ ЧТО ЕСТЬ
+    data = BITSTATS + Realint + Elm
+
+    for element in answer_data_dict:
+        Time = answer_data_dict[element].pop('Time')
+        Time = int.to_bytes(Time, length=4, byteorder='little')
+
+        data = data + Time
+        # ТЕПЕРЬ ПЕРЕБИРАЕМ ФЛОАТ
+
+        Vals_dict_bit_mask = \
+            {
+                # 0: None
+                1: 'Wa',
+                2: 'Wb',
+                3: 'Wc',
+                4: 'VAa',
+                5: 'VAb',
+                6: 'VAc',
+                7: 'FREQ',
+                8: 'Ia',
+                9: 'Ib',
+                10: 'Ic',
+                11: 'Ua',
+                12: 'Ub',
+                13: 'Uc',
+                14: 'PFangA',
+                15: 'PFangB',
+                16: 'PFangC',
+                17: 'PHangB',
+                18: 'PhangC',
+            }
+        for tag in Vals_dict_bit_mask:
+
+            value = answer_data_dict[element].get(Vals_dict_bit_mask[tag])
+            if value is not None:
+                # ТЕПЕРЬ - СМОТРИМ НАДО ЛИ ПЕРЕВОДИТЬ
+                if Vals_dict_bit_mask[tag] in ['Wa', 'Wb', 'Wc', 'VAa', 'VAb', 'VAc']:
+                    value = struct.pack("<d", value * 1000.0)
+                else:
+                    value = struct.pack("<d", value)
+
+                data = data + value
+
+    return data
+

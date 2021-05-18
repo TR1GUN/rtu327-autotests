@@ -58,7 +58,7 @@ class FormCommand:
         # self.command = binascii.hexlify(self.command)
 
         print('COMMAND , bytes --->', self.command)
-
+        print('COMMAND , bytes --->', ' '.join(hex(x) for x in self.command))
 
 
         # command_number = struct.pack("<h",self._find_command_id())

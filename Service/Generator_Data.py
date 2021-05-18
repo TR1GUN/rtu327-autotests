@@ -434,3 +434,123 @@ class GenerateTest:
 #
 # a = GenerateTest(Count_timestamp=3)
 #
+
+
+# //--------------------------------------------------------------------------------------------------------------
+# //                      Генерация для команды - GETTESTS - Запрос замеров параметров электросети.
+# //--------------------------------------------------------------------------------------------------------------
+
+
+class GenerateGETTESTS:
+    """Класс Генерации данных для запроса GETLP """
+
+    RecordTypeId = ['ElMomentQuality']
+
+    Count_timestamp = 1
+
+    MeterTable_tag = {}
+    Redefine_tag = {}
+    MeterId = 0
+    Serial = 0
+    DeviceIdx = 0
+    Timestamp = 0
+    GETTESTS = {}
+    cTime = 30
+
+    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1):
+        self.Count_timestamp = 1
+        self.MeterId = 0
+        self.Serial = 0
+        self.DeviceIdx = 0
+        self.Timestamp = 0
+        self.MeterTable_tag = {}
+        self.Redefine_tag = {}
+        self.GETTESTS = {}
+
+        # Итак - Теперь переопределяем данные
+
+        self.Count_timestamp = Count_timestamp
+
+        self.MeterTable_tag = MeterTable_tag
+        self.Redefine_tag = Redefine_tag
+
+        self.GETTESTS = self._generate_data_for_GETTESTS()
+
+    def _generate_Config(self):
+        """
+        Метод для генерации конфига
+        """
+        from Service.Generate.Generate_Config import GeneratorElectricConfig
+        # СНАЧАЛА - ГЕНЕРИРУЕМ КОНФИГ и МЕТЕР ДАТА
+        Config = GeneratorElectricConfig(MeterTable_tag=self.MeterTable_tag, Config_tag={})
+
+        RecordData = {}
+        RecordData.update(Config.MeterTable)
+
+        RecordData.update(Config.Config)
+        return RecordData
+
+    def _generate_ElectricQualityValues(self):
+        """
+        Метод для генерации Энергии чо так , да вот так
+        """
+        # начала генерируем наш конфиг
+        RecordData_Config = self._generate_Config()
+
+        # Перезаписываем наши поля которые нам нужны
+        self.Serial = RecordData_Config.get('Serial')
+
+        # Теперь когда получиили конфиг можно сгенерировать Энергию. ШО уж там
+
+        from Service.Generate.Generate_ElectricQualityValues import GeneratorElectricQualityValues
+
+        ElectricQualityValues_dict = {}
+        for i in range(len(self.RecordTypeId)):
+            ElectricQualityValues = GeneratorElectricQualityValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
+                                                               RecordTypeId=self.RecordTypeId[i],
+                                                               Redefine_tag={},
+                                                               Count_timestamp=self.Count_timestamp
+                                                               ).ElectricQualityValues
+
+            ElectricQualityValues_dict.update(ElectricQualityValues)
+
+        # Теперь возвращаем в зад ЭТО
+
+        return ElectricQualityValues_dict
+
+    def _generate_data_for_GETTESTS(self):
+        """
+        Здесь генерируем наши данные для нашей команды
+        """
+        # сначала записываем все нужные данные в БД
+        RecordData = self._generate_ElectricQualityValues()
+        print(RecordData)
+        # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
+        GETTESTS = {}
+        for key in RecordData:
+            GETTESTS_element_dict = {
+                'Id': RecordData[key].get('Id'),
+                'Wa': RecordData[key].get('PA'),
+                'Wb': RecordData[key].get('PB'),
+                'Wc': RecordData[key].get('PC'),
+                'VAa': RecordData[key].get('SA'),
+                'VAb': RecordData[key].get('SB'),
+                'VAc': RecordData[key].get('SC'),
+                'FREQ': RecordData[key].get('Freq'),
+                'Ia': RecordData[key].get('IA'),
+                'Ib': RecordData[key].get('IB'),
+                'Ic': RecordData[key].get('IC'),
+                'Ua': RecordData[key].get('UA'),
+                'Ub': RecordData[key].get('UB'),
+                'Uc': RecordData[key].get('UC'),
+                'PFangA': RecordData[key].get('LOL'),
+                'PFangB': RecordData[key].get('LOL'),
+                'PFangC': RecordData[key].get('LOL'),
+                'PHangB': RecordData[key].get('AngAB'),
+                'PhangC': RecordData[key].get('AngAC'),
+                'Timestamp': RecordData[key].get('Timestamp')
+            }
+
+            GETTESTS[RecordData[key].get('Timestamp')] = GETTESTS_element_dict
+
+        return GETTESTS
