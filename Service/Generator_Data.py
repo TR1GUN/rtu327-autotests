@@ -107,7 +107,8 @@ class GenerateGETPOK:
     Timestamp = 0
     GETPOK = {}
 
-    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1 , RecordTypeId:list= ['ElMomentEnergy']):
+    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1,
+                 RecordTypeId: list = ['ElMomentEnergy']):
 
         self.RecordTypeId = RecordTypeId
         self.Count_timestamp = 1
@@ -216,7 +217,7 @@ class GenerateGETLP:
     GETLP = {}
     cTime = 30
 
-    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1, cTime:int = 30):
+    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1, cTime: int = 30):
         self.Count_timestamp = 1
         self.MeterId = 0
         self.Serial = 0
@@ -225,7 +226,6 @@ class GenerateGETLP:
         self.MeterTable_tag = {}
         self.Redefine_tag = {}
         self.GETLP = {}
-
 
         # Итак - Теперь переопределяем данные
         self.cTime = cTime
@@ -431,6 +431,7 @@ class GenerateTest:
         RecordData = self._generate_ElectricQualityValues()
         return RecordData
 
+
 #
 # a = GenerateTest(Count_timestamp=3)
 #
@@ -507,10 +508,10 @@ class GenerateGETTESTS:
         ElectricQualityValues_dict = {}
         for i in range(len(self.RecordTypeId)):
             ElectricQualityValues = GeneratorElectricQualityValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
-                                                               RecordTypeId=self.RecordTypeId[i],
-                                                               Redefine_tag={},
-                                                               Count_timestamp=self.Count_timestamp
-                                                               ).ElectricQualityValues
+                                                                   RecordTypeId=self.RecordTypeId[i],
+                                                                   Redefine_tag={},
+                                                                   Count_timestamp=self.Count_timestamp
+                                                                   ).ElectricQualityValues
 
             ElectricQualityValues_dict.update(ElectricQualityValues)
 
@@ -554,3 +555,148 @@ class GenerateGETTESTS:
             GETTESTS[RecordData[key].get('Timestamp')] = GETTESTS_element_dict
 
         return GETTESTS
+
+
+# //--------------------------------------------------------------------------------------------------------------
+# //                      Генерация для команды - GETMTRLOG - Запрос журнала событий по счетчикам
+# //--------------------------------------------------------------------------------------------------------------
+
+
+class GenerateGETMTRLOG:
+    """Класс Генерации данных для запроса GETMTRLOG """
+
+    RecordTypeId = ["ElJrnlPwr", "ElJrnlTimeCorr", "ElJrnlReset", "ElJrnlOpen", "ElJrnlPwrA", "ElJrnlPwrB",
+                    "ElJrnlPwrC"]
+
+    Count_timestamp = 1
+
+    MeterTable_tag = {}
+    Redefine_tag = {}
+    MeterId = 0
+    Serial = 0
+    DeviceIdx = 0
+    Timestamp = 0
+    GETMTRLOG = {}
+
+    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1,
+                 RecordTypeId: list = ["ElJrnlPwr", "ElJrnlTimeCorr", "ElJrnlReset", "ElJrnlOpen", "ElJrnlPwrA",
+                                       "ElJrnlPwrB", "ElJrnlPwrC"]):
+
+        self.RecordTypeId = RecordTypeId
+        self.Count_timestamp = 1
+        self.MeterId = 0
+        self.Serial = 0
+        self.DeviceIdx = 0
+        self.Timestamp = 0
+        self.MeterTable_tag = {}
+        self.Redefine_tag = {}
+        self.GETMTRLOG = {}
+
+        # Итак - Теперь переопределяем данные
+
+        self.Count_timestamp = Count_timestamp
+
+        self.MeterTable_tag = MeterTable_tag
+        self.Redefine_tag = Redefine_tag
+
+        self.GETMTRLOG = self._generate_data_for_GETMTRLOG()
+
+    def _generate_Config(self):
+        """
+        Метод для генерации конфига
+        """
+        from Service.Generate.Generate_Config import GeneratorElectricConfig
+        # СНАЧАЛА - ГЕНЕРИРУЕМ КОНФИГ и МЕТЕР ДАТА
+        Config = GeneratorElectricConfig(MeterTable_tag=self.MeterTable_tag, Config_tag={})
+
+        RecordData = {}
+        RecordData.update(Config.MeterTable)
+
+        RecordData.update(Config.Config)
+        return RecordData
+
+    def _generate_JournalValues(self):
+        """
+        Метод для генерации Энергии чо так , да вот так
+        """
+        # начала генерируем наш конфиг
+        RecordData_Config = self._generate_Config()
+
+        # Перезаписываем наши поля которые нам нужны
+        self.Serial = RecordData_Config.get('Serial')
+
+        # Теперь когда получиили конфиг можно сгенерировать Энергию. ШО уж там
+
+        from Service.Generate.Generate_JournalValues import GeneratorJournalValues
+
+
+        JournalValues_dict = {}
+        for i in range(len(self.RecordTypeId)):
+            print('пошли')
+            JournalValues = GeneratorJournalValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
+                                                   RecordTypeId=self.RecordTypeId[i],
+                                                   Redefine_tag={},
+                                                   Count_timestamp=self.Count_timestamp
+                                                   ).JournalValues
+
+            JournalValues_dict.update(JournalValues)
+
+        # Теперь возвращаем в зад ЭТО
+
+        return JournalValues_dict
+
+    def _generate_data_for_GETMTRLOG(self):
+        """
+        Здесь генерируем наши данные для нашей команды
+        """
+        print('dfdfdf')
+        # сначала записываем все нужные данные в БД
+        RecordData = self._generate_JournalValues()
+
+        # print('----->', RecordData)
+        # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
+        GETMTRLOG = {}
+        for key in RecordData:
+            GETMTRLOG_element_dict = {
+                'Id': RecordData[key].get('Id'),
+                'evTime': RecordData[key].get('Timestamp'),
+                'evType': RecordData[key].get('EventId'),
+                'Event': RecordData[key].get('Event'),
+                'DeviceIdx': RecordData[key].get('DeviceIdx'),
+                'Timestamp': RecordData[key].get('Timestamp')
+            }
+
+            GETMTRLOG[RecordData[key].get('Id')] = GETMTRLOG_element_dict
+
+        return GETMTRLOG
+
+
+def define_count_measure(count: int, measure_list: list):
+    """
+    Здесь определяем рандомное количество элементов из нужного нм списка
+
+    """
+
+    from random import randint
+    define_measure_list = set
+
+    i = 0
+    while i == count:
+
+        len_measure_list = len(define_measure_list)
+        # генерирум число
+        generate = randint(0, len(measure_list) - 1)
+        define_measure_list.update(generate)
+        if len(define_measure_list) > len_measure_list:
+            i = i + 1
+
+    # ПОСЛЕ ТОГО КАК ИМЕЕТ СЕТ ИЗ УНИКАЛЫХ ЗНАЧЕНИЙ ЧТО СОПОСТАВЛЯЮТСЯ АЙДИЩНИКАМИ - ПРЕОЬРАЗУЕМ
+
+    define_measure_list = list(define_measure_list)
+
+    # НАШ КОНЕЧНЫЙ МАССИВ
+    measure = []
+    for i in define_measure_list:
+        measure.append(measure_list[i])
+
+    return measure

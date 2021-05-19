@@ -106,6 +106,62 @@ class GeneratorMeterData:
         MeterData = self._redefine_tag(MeterData)
         return MeterData
 
+    # def _Record_value_to_Table(self, MeterData):
+    #
+    #     """ НАША ФУНКЦИЯ ЗАПИСИ наших записей в БД """
+    #
+    #     from copy import deepcopy
+    #     # Получаем наш список
+    #
+    #     MeterData = deepcopy(MeterData)
+    #     # начинаем формировать команду
+    #
+    #     columns_list = \
+    #         [
+    #             'DeviceIdx',
+    #             'RecordTypeId',
+    #             'Timestamp',
+    #             'Valid',
+    #         ]
+    #
+    #     columns = ''
+    #     values = ''
+    #
+    #     # ТЕПЕРЬ ПЕРЕБИРАЕМ ВСЕ КОЛОНКИ
+    #
+    #     for i in range(len(columns_list)):
+    #         columns = columns + columns_list[i] + ' , '
+    #
+    #         # если это стринг - то экранируем его
+    #         if type(MeterData[columns_list[i]]) == str:
+    #             MeterData[columns_list[i]] = '\"' + MeterData[columns_list[i]] + '\"'
+    #
+    #         values = values + str(MeterData[columns_list[i]]) + ' , '
+    #
+    #     # Обрезаем последнюю запятую
+    #     columns = columns[:-2]
+    #     values = values[:-2]
+    #
+    #     command = 'INSERT INTO MeterData ( ' + columns + ') VALUES  ( ' + values + ' ) ;'
+    #
+    #     # ТЕПЕРЬ ОТПРАВЛЯЕМ КОМАНДУ НА ЗАПИСЬ
+    #     from Service.Work_With_Database import SQL
+    #
+    #     result = SQL(command=command)
+    #
+    #     # Теперь после записи селектор нашу запись
+    #     command_where = ''
+    #     for i in range(len(columns_list)):
+    #         command_where = command_where + ' ' + columns_list[i] + ' == ' + str(MeterData[columns_list[i]]) + ' AND '
+    #
+    #     # Теперь обрезаем
+    #     command_where = command_where[:-4]
+    #
+    #     command = 'SELECT id FROM MeterData WHERE ' + command_where + ' ; '
+    #
+    #     result = SQL(command=command)
+    #
+    #     return int(result)
     def _Record_value_to_Table(self, MeterData):
 
         """ НАША ФУНКЦИЯ ЗАПИСИ наших записей в БД """
@@ -132,36 +188,67 @@ class GeneratorMeterData:
         for i in range(len(columns_list)):
             columns = columns + columns_list[i] + ' , '
 
-            # если это стринг - то экранируем его
-            if type(MeterData[columns_list[i]]) == str:
-                MeterData[columns_list[i]] = '\"' + MeterData[columns_list[i]] + '\"'
+        # ТЕПЕРЬ ФОРМИРУЕМ ВСЕ ЗНАЧЕНИЯ
+        for i in MeterData:
+            values_element = ''
+            for x in range(len(columns_list)):
+                # если это стринг - то экранируем его
+                if type(MeterData[i].get(columns_list[x])) == str:
+                    MeterData[i][columns_list[x]] = '\"' + MeterData[i].get(
+                        columns_list[x]) + '\"'
 
-            values = values + str(MeterData[columns_list[i]]) + ' , '
+                values_element = values_element + str(MeterData[i].get(columns_list[x])) + ' , '
+            # Обрезаем последнюю запятую
+            values_element = values_element[:-2]
+            values = values + ' ( ' + values_element + ' ) , '
 
         # Обрезаем последнюю запятую
         columns = columns[:-2]
         values = values[:-2]
 
-        command = 'INSERT INTO MeterData ( ' + columns + ') VALUES  ( ' + values + ' ) ;'
-
+        command = 'INSERT INTO MeterData ( ' + columns + ') VALUES  ' + values + ' ;'
+        print(command)
         # ТЕПЕРЬ ОТПРАВЛЯЕМ КОМАНДУ НА ЗАПИСЬ
         from Service.Work_With_Database import SQL
 
         result = SQL(command=command)
 
+        print(result)
         # Теперь после записи селектор нашу запись
         command_where = ''
-        for i in range(len(columns_list)):
-            command_where = command_where + ' ' + columns_list[i] + ' == ' + str(MeterData[columns_list[i]]) + ' AND '
+        columns_select_list = [
+            'DeviceIdx',
+            'RecordTypeId'
+        ]
+
+        for i in range(len(columns_select_list)):
+            for x in MeterData:
+                command_where = command_where + ' ' + columns_select_list[i] + ' == ' + str(
+                    MeterData[x][columns_select_list[i]]) + ' AND '
 
         # Теперь обрезаем
         command_where = command_where[:-4]
 
-        command = 'SELECT id FROM MeterData WHERE ' + command_where + ' ; '
-
+        command = 'SELECT Id ,' + columns + ' FROM MeterData WHERE ' + command_where + ' ; '
+        print(command)
         result = SQL(command=command)
 
-        return int(result)
+        print(result)
+        # ТЕПЕРЬ ПОЛУЧИВШУЮСЯ КАШУ РАСКЛАДЫВАЕМ
+        result = result.split('\n')
+        # КАЖДЫЙ ЭЛЕМЕНТ СПИСКА СОДЕРЖИТ ровно один столбец
+        result_list = []
+        for i in range(len(result)):
+            if len(result[i]) > 0:
+
+                # ТЕПЕРЬ ИЗ ЭТОГО ФОРМИРУЕМ СЛОВАРЬ ЗНАЧЕНИЙ
+                result_line = result[i].split('|')
+                result_line_key = ['Id'] + columns_list
+                result_line_dict = {}
+                for x in range(len(result_line_key)):
+                    result_line_dict[result_line_key[x]] = result_line[x]
+                result_list.append(result_line_dict)
+        return result_list
 
     def _generate_and_record_MeterData(self):
 
@@ -173,18 +260,34 @@ class GeneratorMeterData:
         from copy import deepcopy
         # ТЕПЕРЬ БЕРЕМ НАШИ ТАЙМШТАМПЫ
         Timestamp = deepcopy(self.Timestamp)
-
+        MeterData = {}
         for i in range(len(Timestamp)):
-            MeterData = {}
+            MeterData_element = {}
             # ТЕПЕРЬ НАЧИНАЕМ ГЕНЕРИРОВАТЬ ЗАПИСИ ДЛЯ НАШЕЙ ЗАПИСИ
-            MeterData = self._Generate_MeterData_dict(Timestamp=Timestamp[i])
+            MeterData_element = self._Generate_MeterData_dict(Timestamp=Timestamp[i])
             # Теперь это записываем
+            MeterData[i] = MeterData_element
 
-            MeterData['Id'] = self._Record_value_to_Table(MeterData=MeterData)
-            # И по айдишнику добавляем в именованный список
-            self.MeterData[MeterData['Id']] = MeterData
+        print(MeterData)
+        # ТЕПЕРЬ ВСЕ ЭТО ОТПРАВЛЯЕМ НА ЗАПИСЬ
+        MeterData_to_record_list = self._Record_value_to_Table(MeterData=MeterData)
+        # MeterData['Id'] = self._Record_value_to_Table(MeterData=MeterData)
+    #         # И по айдишнику добавляем в именованный список
+    #         self.MeterData[MeterData['Id']] = MeterData
+    #     ТЕПЕРЬ - ВАЖНО
+    #     ищим соответсвия
 
+        # for i in MeterData:
+        #     for x in range(len())
+    # СЛИШКОМ ДОЛГО искать соответсия и запутано - возвращаем так есть
+        MeterData = {}
+        for x in range(len(MeterData_to_record_list)):
+            for i in MeterData_to_record_list[x]:
+                MeterData_to_record_list[x][i] = int(MeterData_to_record_list[x][i])
 
+            MeterData[MeterData_to_record_list[x]['Id']] = MeterData_to_record_list[x]
+
+        self.MeterData = MeterData
 # //------------------------------------------------------------------------------------------------------------------
 # //                                  РОДИТЕЛЬСКИЙ КЛАСС ГЕНЕРАЦИИ ВМЕСТЕ С METERDATA
 # //------------------------------------------------------------------------------------------------------------------

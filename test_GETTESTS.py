@@ -10,7 +10,7 @@ from copy import deepcopy
 #
 #                   Запрос на передачу профиля расходов коммерческого интервала.
 # -------------------------------------------------------------------------------------------------------------------
-def test_GETTESTS( NumTests: int = 1):
+def test_GETTESTS(NumTests: int = 1):
     """
     Получение Профиля мощности?
     """
@@ -28,7 +28,8 @@ def test_GETTESTS( NumTests: int = 1):
     Serial = deepcopy(ElectricPowerValues.Serial)
 
     # ---------- ФОРМИРУЕМ ДАННЫЕ ДЛЯ КОМАНДЫ ЗАПРОСА ----------
-    from Service.Service_function import get_form_NSH, decode_data_to_GETTESTS, code_data_to_GETTESTS , form_data_to_GETTESTS
+    from Service.Service_function import get_form_NSH, decode_data_to_GETTESTS, code_data_to_GETTESTS, \
+        form_data_to_GETTESTS
     Timestamp_list = []
     for i in Generate_data_GETLP_dict:
         Timestamp_list.append(Generate_data_GETLP_dict[i].get('Timestamp'))
@@ -60,19 +61,16 @@ def test_GETTESTS( NumTests: int = 1):
     # ---------- ОТПРАВЛЯЕМ КОМАНДУ ----------
     Answer = Setup(command=command).answer
 
-
-    print('Answer------------>',Answer)
+    print('Answer------------>', Answer)
     # # ---------- ТЕПЕРЬ ДЕКОДИРУЕМ ДАННЫЕ ОТВЕТА ----------
     # # ТЕПЕРЬ ДЕКОДИРУЕМ ДАННЫЕ ОТВЕТА
     Answer['answer_data'] = decode_data_to_GETTESTS(
         answer_data=Answer['answer_data']
-                                                    )
+    )
 
     print(Answer['answer_data'])
     # БЕРЕМ ДАННЫЕ В НОРМАЛЬНОМ ВИДЕ
     Answer_expected['answer_data'] = answer_data_expected
-
-
 
     # ------------------->
     print(Answer_expected['answer_data'])
@@ -84,9 +82,8 @@ def test_GETTESTS( NumTests: int = 1):
     # ТЕПЕРЬ ПРОВОДИМ ТОТАЛЬНОЕ СРАВНИВАНИЕ
     total_assert(answer_uspd=Answer, answer_normal=Answer_expected)
 
+
 # -------------------------------------------------------------------------------------------------------------------
 #                            Запрос замеров параметров электросети.
 # -------------------------------------------------------------------------------------------------------------------
-test_GETTESTS(NumTests = 9)
-
-
+test_GETTESTS(NumTests=1)

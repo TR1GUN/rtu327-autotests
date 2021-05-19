@@ -332,12 +332,13 @@ def get_number_of_request(request):
     print(request, len(request))
     number_of_bytes = hex(len(parse_bytes_str_to_array(request)))[2:]
     if len(
-        number_of_bytes) == 1: number_of_bytes = '0' + number_of_bytes  # Если меньше 10, то нужен 0 - т.к. должно отражаться 2 символа , т.е. 09,10,01,00,99
+            number_of_bytes) == 1: number_of_bytes = '0' + number_of_bytes  # Если меньше 10, то нужен 0 - т.к. должно отражаться 2 символа , т.е. 09,10,01,00,99
     return bytes.fromhex(number_of_bytes)
 
 
 def hex_bytes_to_string(hex_bytes):
     return bytes.hex(hex_bytes)
+
 
 def bytes_list_to_string_hex(bytes_list):
     """
@@ -775,3 +776,18 @@ def send_read_text_protocol(uspd_password, uspd_tcp_ip, uspd_tcp_port, command):
     else:
         raise Exception('Неизвестный тип')
     return all_strings
+
+
+# --- by Belic Nico
+def print_bytes(byte_string=b'', string=''):
+    """
+    Данная функция нужна для лучшего вывода байтовых строчек
+
+    Байтовач строка сразу переводится в hex формат и в таком виде выводится
+
+    чо б нет
+
+
+    """
+
+    print(string, ' '.join(hex(x) for x in byte_string))

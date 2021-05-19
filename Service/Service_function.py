@@ -1012,6 +1012,8 @@ def decode_data_to_GETTESTS(answer_data):
                 PHangB = PHangB + answer_data[i]
             PHangB = struct.unpack('<d', bytes.fromhex(PHangB))
             answer_data = answer_data[8:]
+
+            # print('PHangB', PHangB)
             PHangB = extract_value_from_tuple(PHangB)
 
             Vals_element['PHangB'] = PHangB
@@ -1022,6 +1024,8 @@ def decode_data_to_GETTESTS(answer_data):
                 PhangC = PhangC + answer_data[i]
             PhangC = struct.unpack('<d', bytes.fromhex(PhangC))
             answer_data = answer_data[8:]
+
+            # print('PhangC', PhangC)
             PhangC = extract_value_from_tuple(PhangC)
 
             Vals_element['PhangC'] = PhangC
@@ -1229,3 +1233,48 @@ def code_data_to_GETTESTS(answer_data):
 
     return data
 
+# //-----------------------------------------------------------------------------------------------------------------
+#                       # Функция для декодирования данных команды GETMTRLOG
+# //-----------------------------------------------------------------------------------------------------------------
+
+def decode_data_to_GETMTRLOG(answer_data):
+
+    """
+    ЗДЕСЬ ПРОИСХОДИТ ДЕ КОДИРОВКА В ЧЕЛОВЕЧЕСКИЙ ВИД ЗНАЧЕНИЙ КОМАНДЫ
+    """
+
+    # ПЕРВОЕ ЧТО ДЕЛАЕМ - измеряем длину
+    len_data_answer = len(answer_data)
+    # теперь делим на длину коректного ответа evTime + evType
+    len_data_answer = len_data_answer // (2 + 4)
+
+    # ТЕПЕРЬ ДЕКОДИРУЕМ
+    answer_data_dict = {}
+    for x in range(len_data_answer):
+        evTime = b''
+        evType = b''
+        # evTime Время события TIME_T
+        for i in range(4):
+            evTime = evTime + bytes.fromhex(answer_data[i])
+        answer_data = answer_data[4:]
+        evTime = int.from_bytes(evTime, byteorder='little')
+
+        # evType Тип (код) события INT16
+        for i in range(2):
+            evType = evType + bytes.fromhex(answer_data[i])
+        answer_data = answer_data[2:]
+        evType = int.from_bytes(evType, byteorder='little')
+
+        # формируем словарь
+        answer_data_element_dict = {
+            'evTime': evTime,
+            'evType': evType,
+                                    }
+        # Добавляем
+        answer_data_dict[x] = answer_data_element_dict
+
+    return answer_data_dict
+
+
+def code_data_to_GETMTRLOG(data_answer):
+    pass

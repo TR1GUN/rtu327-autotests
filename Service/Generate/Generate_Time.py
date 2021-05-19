@@ -16,9 +16,9 @@ measure_containin_month_list = \
         'ElMonthConsEnergy',
 
         # добаляем Журнал включения/выключения питания
-        'ElJrnlPwr',
+        # 'ElJrnlPwr',
         # добаляем Журнал отказов в доступе
-        'ElJrnlUnAyth',
+        # 'ElJrnlUnAyth',
     ]
 
 # Группа третья -  Значения показателей на 30 минут

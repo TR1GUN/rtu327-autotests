@@ -57,7 +57,7 @@ class FormCommand:
         # import binascii
         # self.command = binascii.hexlify(self.command)
 
-        print('COMMAND , bytes --->', self.command)
+        # print('COMMAND , bytes --->', self.command)
         print('COMMAND , bytes --->', ' '.join(hex(x) for x in self.command))
 
 

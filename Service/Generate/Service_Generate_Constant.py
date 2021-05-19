@@ -40,3 +40,43 @@ measure_Journal_list = [            'ElJrnlPwr', 'ElJrnlTimeCorr', 'ElJrnlReset'
             'ElJrnlLimIAMax', 'ElJrnlLimIBMax', 'ElJrnlLimICMax', 'ElJrnlLimFreqMax', 'ElJrnlLimFreqMin', 'ElJrnlLimPwr',
             'ElJrnlLimPwrPP', 'ElJrnlLimPwrPM', 'ElJrnlLimPwrQP', 'ElJrnlLimPwrQM', 'ElJrnlReverce', 'PlsJrnlTimeCorr'
                         ]
+
+
+Journal_dict = \
+    {
+        'ElJrnlPwr': 1,
+        'ElJrnlTimeCorr': 2,
+        'ElJrnlReset': 3,
+        'ElJrnlTrfCorr': 6,
+        'ElJrnlOpen': 7,
+        'ElJrnlUnAyth': 8,
+        'ElJrnlPwrA': 9,
+        'ElJrnlPwrB': 10,
+        'ElJrnlPwrC': 11,
+        'ElJrnlLimUAMax': 20,
+        'ElJrnlLimUAMin': 21,
+        'ElJrnlLimUBMax': 22,
+        'ElJrnlLimUBMin': 23,
+        'ElJrnlLimUCMax': 24,
+        'ElJrnlLimUCMin': 25
+    }
+
+
+JournalValues_list = \
+    [
+    'ElJrnlPwr',
+    'ElJrnlTimeCorr',
+    'ElJrnlReset',
+    'ElJrnlTrfCorr',
+    # 'ElJrnlOpen',
+    'ElJrnlUnAyth',
+    'ElJrnlPwrA',
+    'ElJrnlPwrB',
+    'ElJrnlPwrC',
+    'ElJrnlLimUAMax',
+    'ElJrnlLimUAMin',
+    'ElJrnlLimUBMax',
+    'ElJrnlLimUBMin',
+    'ElJrnlLimUCMax',
+    'ElJrnlLimUCMin'
+        ]
