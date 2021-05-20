@@ -30,15 +30,10 @@ class GeneratorJournalValues(GeneratorWithMeterData):
         self.Count_timestamp = Count_timestamp
         # С Переопределяемымыми тэгами - сложнее - отделяем мух от котлет и meter data тэги от остальных
         self.Redefine_tag = self._find_redefine_tag(Redefine_tag)
-
-        import datetime
-        print('sdsdsda')
-        strat = datetime.datetime.now()
         # Генерируем MeterData
         self.MeterData = self._generate_MeterData()
         # Разделяем переопределение тэгов
-        finis = datetime.datetime.now()
-        print(finis-strat)
+
         # ТЕПЕРЬ ЧТО ДЕЛАЕМ - ГЕНЕРИРУЕМ НАШИ ОСНОВНЫЕ ДАННЫЕ
         self.JournalValues = self._Generate_JournalValues()
         # Теперь все записываем
@@ -93,8 +88,8 @@ class GeneratorJournalValues(GeneratorWithMeterData):
             }
 
         if self.RecordTypeId in ['ElJrnlLimUAMax', 'ElJrnlLimUAMin', 'ElJrnlLimUBMax', 'ElJrnlLimUBMin',
-                            'ElJrnlLimUCMax', 'ElJrnlLimUCMin', 'ElJrnlPwrC', 'ElJrnlPwrB', 'ElJrnlPwrA',
-                            "ElJrnlPwr", ]:
+                                'ElJrnlLimUCMax', 'ElJrnlLimUCMin', 'ElJrnlPwrC', 'ElJrnlPwrB', 'ElJrnlPwrA',
+                                "ElJrnlPwr", ]:
             # Если у нас действительно этот тип значений , тогда что делаем - мы ставим либо 1 либо 0
             JournalValues_format_JSON['Event'] = 1
 
@@ -169,7 +164,6 @@ class GeneratorJournalValues(GeneratorWithMeterData):
         values = values[:-2]
 
         command = 'INSERT INTO JournalValues ( ' + columns + ') VALUES  ' + values + ' ;'
-        print(command)
         # ТЕПЕРЬ ОТПРАВЛЯЕМ КОМАНДУ НА ЗАПИСЬ
         from Service.Work_With_Database import SQL
 

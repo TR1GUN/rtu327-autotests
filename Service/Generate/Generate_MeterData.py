@@ -207,13 +207,13 @@ class GeneratorMeterData:
         values = values[:-2]
 
         command = 'INSERT INTO MeterData ( ' + columns + ') VALUES  ' + values + ' ;'
-        print(command)
+
         # ТЕПЕРЬ ОТПРАВЛЯЕМ КОМАНДУ НА ЗАПИСЬ
         from Service.Work_With_Database import SQL
 
         result = SQL(command=command)
 
-        print(result)
+
         # Теперь после записи селектор нашу запись
         command_where = ''
         columns_select_list = [
@@ -230,10 +230,10 @@ class GeneratorMeterData:
         command_where = command_where[:-4]
 
         command = 'SELECT Id ,' + columns + ' FROM MeterData WHERE ' + command_where + ' ; '
-        print(command)
+
         result = SQL(command=command)
 
-        print(result)
+
         # ТЕПЕРЬ ПОЛУЧИВШУЮСЯ КАШУ РАСКЛАДЫВАЕМ
         result = result.split('\n')
         # КАЖДЫЙ ЭЛЕМЕНТ СПИСКА СОДЕРЖИТ ровно один столбец
@@ -268,7 +268,7 @@ class GeneratorMeterData:
             # Теперь это записываем
             MeterData[i] = MeterData_element
 
-        print(MeterData)
+
         # ТЕПЕРЬ ВСЕ ЭТО ОТПРАВЛЯЕМ НА ЗАПИСЬ
         MeterData_to_record_list = self._Record_value_to_Table(MeterData=MeterData)
         # MeterData['Id'] = self._Record_value_to_Table(MeterData=MeterData)

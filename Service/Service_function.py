@@ -285,6 +285,9 @@ def assert_answer_data(answer_data: dict, answer_data_expected: dict):
                     'Значение что ожидали в ответе': value_answer_data_expected,
                     'Значение что получили': value_answer_data,
                 })
+        # ЕСЛИ У НАС СЛОВАРЬ - ВЫЗЫВАЕМ ФУНКЦИЮ САМУ ИЗ СЕБЯ
+        elif type(value_answer_data_expected) == dict:
+            assert_answer_data(answer_data=value_answer_data, answer_data_expected=value_answer_data_expected )
         else:
             if value_answer_data_expected != value_answer_data:
                 error.append({
@@ -1233,12 +1236,12 @@ def code_data_to_GETTESTS(answer_data):
 
     return data
 
+
 # //-----------------------------------------------------------------------------------------------------------------
 #                       # Функция для декодирования данных команды GETMTRLOG
 # //-----------------------------------------------------------------------------------------------------------------
 
 def decode_data_to_GETMTRLOG(answer_data):
-
     """
     ЗДЕСЬ ПРОИСХОДИТ ДЕ КОДИРОВКА В ЧЕЛОВЕЧЕСКИЙ ВИД ЗНАЧЕНИЙ КОМАНДЫ
     """
@@ -1269,12 +1272,102 @@ def decode_data_to_GETMTRLOG(answer_data):
         answer_data_element_dict = {
             'evTime': evTime,
             'evType': evType,
-                                    }
+        }
         # Добавляем
         answer_data_dict[x] = answer_data_element_dict
 
     return answer_data_dict
 
 
+def define_evType_by_RTU_from_measure_Id_event(measure_Id, event):
+    """
+    В Этой функции определяем evType Кодировки RTU
+    """
+
+    RTU_dict = \
+        {
+            # ElJrnlPwr - журнал управление питанием электросчетчика
+            17: {
+                1: 0,
+                # 0 : 1
+            },
+            # ElJrnlTimeCorr - журнал коррекция времени электросчетчика
+            18: {
+                0: 3,
+                # 2: 1
+            },
+            # ElJrnlReset - журнал сброс показаний электросчетчика
+            19: {
+                0: 6,
+                # 2: 1
+            },
+            # ElJrnlOpen - журнал открытие крышки электросчетчика
+            23: {
+                1: 9,
+                0: 9
+            },
+            # ElJrnlPwrA - журнал управление фазой А электросчетчика
+            25: {
+                1: 208,
+                # 2: 1
+            },
+            # ElJrnlPwrB  - журнал управление фазой В электросчетчика
+            26: {
+                1: 210,
+                # 2: 1
+            },
+            # ElJrnlPwrC - журнал управление фазой С электросчетчика
+            27: {
+                1: 212,
+                # 2: 1
+            },
+        }
+
+    evType = RTU_dict.get(measure_Id).get(event)
+    return evType
+
+
+def form_data_to_GETMTRLOG(Generate_data):
+    """
+    Формируем данные для ответа для команды GETMTRLOG
+    """
+
+    data_answer_dict = {}
+    data_answer = []
+    measureId = sorted(Generate_data.keys())
+    for Id in measureId:
+        timestamp = sorted(Generate_data[Id].keys())
+
+        for time in timestamp:
+            # ТЕПЕРЬ ЗАБИРАЕМ НУЖНЫЕ ПОКЕАЗАТЕЛИ
+
+            element = \
+                {
+                    'evTime': Generate_data[Id][time].get('evTime'),
+                    'evType': define_evType_by_RTU_from_measure_Id_event(measure_Id=Id,
+                                                                         event=Generate_data[Id][time].get('Event')),
+                }
+            data_answer.append(element)
+
+    for i in range(len(data_answer)) :
+        data_answer_dict[i] = data_answer[i]
+
+    return data_answer_dict
+
 def code_data_to_GETMTRLOG(data_answer):
-    pass
+    """
+    Здесь кодируем наши данные для предпологаемого ответа для команды GETMTRLOG
+    """
+    data = b''
+    for idx in data_answer :
+        evTime = data_answer[idx].get('evTime')
+
+        evType = data_answer[idx].get('evType')
+
+        evTime = int.to_bytes(evTime, length=4, byteorder='little')
+
+        evType = int.to_bytes(evType, length=2, byteorder='little')
+
+        data  = data + evTime + evType
+
+    return data

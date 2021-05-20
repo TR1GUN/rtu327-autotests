@@ -14,7 +14,6 @@ def test_GETLP(Qp: bool = True, Qm: bool = True, Pp: bool = True, Pm: bool = Tru
     """
     Получение Профиля мощности?
     """
-    import struct
     # Определяем тип команды
     type_command = 'GETLP'
 
@@ -76,11 +75,7 @@ def test_GETLP(Qp: bool = True, Qm: bool = True, Pp: bool = True, Pm: bool = Tru
     )
     # БЕРЕМ ДАННЫЕ В НОРМАЛЬНОМ ВИДЕ
     Answer_expected['answer_data'] = answer_data_expected
-
-
-
     # ------------------->
-
     print(Answer_expected['answer_data'])
     print(Answer['answer_data'])
     # ------------------->

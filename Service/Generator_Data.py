@@ -525,7 +525,7 @@ class GenerateGETTESTS:
         """
         # сначала записываем все нужные данные в БД
         RecordData = self._generate_ElectricQualityValues()
-        print(RecordData)
+
         # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
         GETTESTS = {}
         for key in RecordData:
@@ -632,14 +632,16 @@ class GenerateGETMTRLOG:
 
         JournalValues_dict = {}
         for i in range(len(self.RecordTypeId)):
-            print('пошли')
+
             JournalValues = GeneratorJournalValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
                                                    RecordTypeId=self.RecordTypeId[i],
                                                    Redefine_tag={},
                                                    Count_timestamp=self.Count_timestamp
                                                    ).JournalValues
 
-            JournalValues_dict.update(JournalValues)
+
+
+            JournalValues_dict[self.RecordTypeId[i]] = JournalValues
 
         # Теперь возвращаем в зад ЭТО
 
@@ -649,24 +651,33 @@ class GenerateGETMTRLOG:
         """
         Здесь генерируем наши данные для нашей команды
         """
-        print('dfdfdf')
+
         # сначала записываем все нужные данные в БД
         RecordData = self._generate_JournalValues()
+
 
         # print('----->', RecordData)
         # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
         GETMTRLOG = {}
-        for key in RecordData:
-            GETMTRLOG_element_dict = {
-                'Id': RecordData[key].get('Id'),
-                'evTime': RecordData[key].get('Timestamp'),
-                'evType': RecordData[key].get('EventId'),
-                'Event': RecordData[key].get('Event'),
-                'DeviceIdx': RecordData[key].get('DeviceIdx'),
-                'Timestamp': RecordData[key].get('Timestamp')
-            }
+        for measure in RecordData:
+            RecordData_measure = {}
+            for Idx in RecordData[measure]:
+                RecordData_Idx_element_dict = {
+                    'RecordTypeId': RecordData[measure][Idx].get('RecordTypeId'),
+                    'Id': RecordData[measure][Idx].get('Id'),
+                    'evTime': RecordData[measure][Idx].get('Timestamp'),
+                    'evType': RecordData[measure][Idx].get('EventId'),
+                    'Event': RecordData[measure][Idx].get('Event'),
+                    'DeviceIdx': RecordData[measure][Idx].get('DeviceIdx'),
+                    'Timestamp': RecordData[measure][Idx].get('Timestamp')
+                }
+                RecordTypeId = RecordData[measure][Idx].get('RecordTypeId')
+                # RecordData_measure[Idx] = RecordData_Idx_element_dict
+                RecordData_measure[RecordData[measure][Idx].get('Timestamp')] = RecordData_Idx_element_dict
 
-            GETMTRLOG[RecordData[key].get('Id')] = GETMTRLOG_element_dict
+            # GETMTRLOG[RecordData[measure].get('Id')] = RecordData_Idx_element_dict
+            # GETMTRLOG[measure] = RecordData_measure
+            GETMTRLOG[RecordTypeId] = RecordData_measure
 
         return GETMTRLOG
 

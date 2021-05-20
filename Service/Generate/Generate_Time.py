@@ -139,13 +139,14 @@ class GenerateTimestamp:
         #     self.timestamp_list = self.__generate_correct_timestamp_through_timedelta(range_ts=self.Count_timestamp,
         #                                                                               day=1)
         #
-        # # Группа Шестая   -  ЖУРНАЛЫ
-        # elif self.measure in measure_Journal_list:
-        #     # Число таймштампов равно глубине разницы дней -
-        #     # А теперь генерируем список этих данных
-        #     # Получаем наш список дат , измеряя каждый день
-        #     self.timestamp_list = self.__generate_correct_timestamp_through_timedelta(range_ts=self.Count_timestamp,
-        #                                                                               day=1)
+        # Группа Шестая   -  ЖУРНАЛЫ
+        elif self.measure in measure_Journal_list:
+            from random import randint
+            # Число таймштампов равно глубине разницы дней -
+            # А теперь генерируем список этих данных
+            # Получаем наш список дат , измеряя каждый день
+            timestamp_list = self.__generate_correct_timestamp_through_timedelta(range_ts=self.Count_timestamp,
+                                                                                      day=1, minute=randint(0, 60))
 
         # Иначе - Мы обрабаотываем мгновенные показатели
         else:
