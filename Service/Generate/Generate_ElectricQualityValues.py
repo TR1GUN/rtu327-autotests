@@ -93,11 +93,11 @@ class GeneratorElectricQualityValues(GeneratorWithMeterData):
                 'SB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
                 'SC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
                 # //----
-                'AngAB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'AngBC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'AngAC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                'AngAB': float('{:.4f}'.format(float(random.uniform(-99.99, 99.99)))),
+                'AngBC': float('{:.4f}'.format(float(random.uniform(-99.99, 99.99)))),
+                'AngAC': float('{:.4f}'.format(float(random.uniform(-99.99, 99.99)))),
                 # //----
-                'Freq': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                'Freq': float('{:.2f}'.format(float(random.uniform(11.11, 99.99)))),
             }
         # ТЕПЕРЬ ПЕРЕЗАПИСЫВАЕМ ЗНАЧЕНИЯ
         ElectricQualityValues_format_JSON = self._redefine_tag(ElectricQualityValues_format_JSON)

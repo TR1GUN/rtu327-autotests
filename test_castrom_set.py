@@ -1,125 +1,387 @@
-# from Service.Setup import Setup
-# from Service.Former_Command import FormCommand
-# from Service.Constructor_Answer import Constructor_Answer
-# from Service.Service_function import total_assert, assert_answer_data
-# from copy import deepcopy
+import pytest
+
+
+# -------------------------------------------------------------------------------------------------------------------
+#                                        Сервисные функции
+# -------------------------------------------------------------------------------------------------------------------
+
+def parametrize(parametrize_dict: list):
+    """
+    Функция для прикручивания параметров
+
+    """
+    parametrs = []
+    for i in parametrize_dict:
+        line_parametrs = tuple(i.values())
+        parametrs.append(line_parametrs)
+    return parametrs
+
+
+# //-----------------------------------------------------------------------------------------------------------------
+#                                         GETVERSION
+#                                Тест на команду запроса версии
+# //-----------------------------------------------------------------------------------------------------------------
+
+def test_GETVERSION():
+    """
+    Функция для прогона тестов для команды GETVERSION
+    """
+    from command_service import command_GETVERSION
+    command_GETVERSION()
+
+
+# //-----------------------------------------------------------------------------------------------------------------
+#                                         GETTIME
+#                               # Тест на команду запроса времени
+# //-----------------------------------------------------------------------------------------------------------------
+
+def test_GETTIME():
+    """
+    Функция для прогона тестов для команды GETTIME
+    """
+    from command_service import command_GETTIME
+    command_GETTIME()
+
+
+# -------------------------------------------------------------------------------------------------------------------
+#                                        SETTIME
 #
+#                   Запрос на передачу профиля расходов коммерческого интервала.
+# -------------------------------------------------------------------------------------------------------------------
+
+parametrize_SETTIME = \
+    [
+        {
+            'time_correct': -100,
+        },
+        {
+            'time_correct': 100,
+        },
+        {
+            'time_correct': 600,
+        },
+        {
+            'time_correct': -600,
+        },
+        {
+            'time_correct': 601,
+        },
+        {
+            'time_correct': -601,
+        },
+    ]
+
+
+@pytest.mark.parametrize("time_correct", parametrize(parametrize_SETTIME))
+def test_SETTIME(time_correct):
+    """
+    Функция для прогона тестов для команды SETTIME
+
+    """
+    from command_service import command_SETTIME
+    command_SETTIME(time_correct=int(time_correct))
+
+
+# -------------------------------------------------------------------------------------------------------------------
+#                                       GETSHPRM
 #
+#                     Получение основных параметров точки учета (счетчика).
+# -------------------------------------------------------------------------------------------------------------------
+
+def test_GETSHPRM():
+    """
+    Функция для прогона тестов для команды GETSHPRM
+
+    """
+    from command_GETSHPRM import command_GETSHPRM
+    command_GETSHPRM()
+
+
+# -------------------------------------------------------------------------------------------------------------------
+#                                       GETPOK
 #
-# # -------------------------------------------------------------------------------------------------------------------
-# #                                       GETMTRLOG
-# #
-# #                            Запрос журнала событий по счетчикам
-# # -------------------------------------------------------------------------------------------------------------------
-# def test_GETMTRLOG(count_journal: int = 5, RecordTypeId: str = ['ElJrnlPwr', 'ElJrnlTimeCorr']):
-#     """
-#     Получение значений ЖУРНАЛОВ
+#               Запрос расчетных показаний счетчика по указанным измерениям на указанное время.
+# -------------------------------------------------------------------------------------------------------------------
+
+parametrize_GETPOK = \
+    [
+        {
+            'Ap': True,
+            'Am': True,
+            'Rp': True,
+            'Rm': True,
+            'count_timestamp': 1,
+            'RecordTypeId': ['ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy']
+        },
+        {
+            'Ap': False,
+            'Am': False,
+            'Rp': True,
+            'Rm': True,
+            'count_timestamp': 5,
+            'RecordTypeId': ['ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy']
+        },
+        {
+            'Ap': True,
+            'Am': True,
+            'Rp': False,
+            'Rm': False,
+            'count_timestamp': 10,
+            'RecordTypeId': ['ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy']
+        },
+        {
+            'Ap': False,
+            'Am': True,
+            'Rp': False,
+            'Rm': True,
+            'count_timestamp': 15,
+            'RecordTypeId': ['ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy']
+        },
+        {
+            'Ap': False,
+            'Am': True,
+            'Rp': True,
+            'Rm': False,
+            'count_timestamp': 25,
+            'RecordTypeId': ['ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy']
+        },
+        {
+            'Ap': True,
+            'Am': True,
+            'Rp': True,
+            'Rm': True,
+            'count_timestamp': 48,
+            'RecordTypeId': ['ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy']
+        },
+        {
+            'Ap': True,
+            'Am': True,
+            'Rp': True,
+            'Rm': True,
+            'count_timestamp': 48,
+            'RecordTypeId': ['ElMonthEnergy']
+        },
+        {
+            'Ap': True,
+            'Am': True,
+            'Rp': True,
+            'Rm': True,
+            'count_timestamp': 48,
+            'RecordTypeId': ['ElDayEnergy']
+        },
+        {
+            'Ap': True,
+            'Am': True,
+            'Rp': True,
+            'Rm': True,
+            'count_timestamp': 48,
+            'RecordTypeId': ['ElMomentEnergy']
+        },
+        {
+            'Ap': True,
+            'Am': False,
+            'Rp': True,
+            'Rm': False,
+            'count_timestamp': 5,
+            'RecordTypeId': ['ElMomentEnergy', 'ElDayEnergy']
+        },
+        {
+            'Ap': True,
+            'Am': True,
+            'Rp': True,
+            'Rm': True,
+            'count_timestamp': 48,
+            'RecordTypeId': ['ElDayEnergy', 'ElMonthEnergy']
+        },
+        {
+            'Ap': True,
+            'Am': True,
+            'Rp': True,
+            'Rm': True,
+            'count_timestamp': 5,
+            'RecordTypeId': ['ElMomentEnergy', 'ElMonthEnergy']
+        },
+        {
+            'Ap': True,
+            'Am': True,
+            'Rp': True,
+            'Rm': True,
+            'count_timestamp': 50,
+            'RecordTypeId': ['ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy']
+        },
+    ]
+
+
+@pytest.mark.parametrize("Ap, Am, Rp, Rm, count_timestamp, RecordTypeId", parametrize(parametrize_GETPOK))
+def test_GETPOK(Ap, Am, Rp, Rm, count_timestamp, RecordTypeId):
+    """
+    Функция для прогона тестов для команды GETLP
+
+    """
+    from command_GETPOK import command_GETPOK
+    command_GETPOK(Ap=bool(Ap), Am=bool(Am), Rp=bool(Rp), Rm=bool(Rm),
+                   count_timestamp=int(count_timestamp), RecordTypeId=list(RecordTypeId))
+
+
+# -------------------------------------------------------------------------------------------------------------------
+#                                        GETTESTS
 #
-#     Крайне важная штука
+#                   Запрос на передачу профиля расходов коммерческого интервала.
+# -------------------------------------------------------------------------------------------------------------------
+
+parametrize_GETTESTS = [
+    {
+        'NumTests': 1,
+    },
+    {
+        'NumTests': 2,
+    },
+    {
+        'NumTests': 47,
+    },
+    {
+        'NumTests': 48,
+    },
+]
+
+
+@pytest.mark.parametrize("NumTests", parametrize(parametrize_GETTESTS))
+def test_GETTESTS(NumTests):
+    """
+    Функция для прогона тестов для команды GETTESTS
+
+    """
+    from command_GETTESTS import command_GETTESTS
+    command_GETTESTS(NumTests=int(NumTests))
+
+
+# -------------------------------------------------------------------------------------------------------------------
+#                                        GETLP
 #
-#     НЕОБХОДИМО ЗАДАТЬ ОДИН ЖУРНАЛ
-#     """
-#     import struct
-#     # Определяем тип команды
-#     type_command = 'GETMTRLOG'
-#     Итак - Первое что делаем
+#                   Запрос на передачу профиля расходов коммерческого интервала.
+# -------------------------------------------------------------------------------------------------------------------
+
+parametrize_GETLP = [
+    {
+        'Qp': True,
+        'Qm': True,
+        'Pp': True,
+        'Pm': True,
+        'Kk': 10,
+    },
+    {
+        'Qp': False,
+        'Qm': True,
+        'Pp': True,
+        'Pm': True,
+        'Kk': 1,
+    },
+    {
+        'Qp': True,
+        'Qm': False,
+        'Pp': True,
+        'Pm': True,
+        'Kk': 1,
+    },
+    {
+        'Qp': True,
+        'Qm': True,
+        'Pp': False,
+        'Pm': True,
+        'Kk': 1,
+    },
+    {
+        'Qp': True,
+        'Qm': True,
+        'Pp': True,
+        'Pm': False,
+        'Kk': 1,
+    },
+    {
+        'Qp': True,
+        'Qm': True,
+        'Pp': False,
+        'Pm': False,
+        'Kk': 49,
+    },
+    {
+        'Qp': False,
+        'Qm': False,
+        'Pp': True,
+        'Pm': True,
+        'Kk': 100,
+    },
+]
+
+
+@pytest.mark.parametrize("Qp, Qm, Pp, Pm, Kk", parametrize(parametrize_GETLP))
+def test_GETLP(Qp, Qm, Pp, Pm, Kk):
+    """
+    Функция для прогона тестов для команды GETLP
+
+    """
+    from command_GETLP import command_GETLP
+    command_GETLP(Qp=bool(Qp), Qm=bool(Qm), Pp=bool(Pp), Pm=bool(Pm), Kk=int(Kk))
+
+
+# -------------------------------------------------------------------------------------------------------------------
+#                                       GETAUTOREAD
 #
-#     ["ElJrnlPwr", "ElJrnlTimeCorr", "ElJrnlReset", "ElJrnlOpen", "ElJrnlPwrA", "ElJrnlPwrB", "ElJrnlPwrC"]
+#               Получение зафиксированных показаний счетчика ( показаний авточтения)
+# -------------------------------------------------------------------------------------------------------------------
+def test_GETAUTOREAD():
+    print('ПОКА НЕ ГОТОВА')
+
+
+# -------------------------------------------------------------------------------------------------------------------
+#                                       GETMTRLOG
 #
-#     Kk = count_timestamp
-#
-#     # assert ('ElMomentEnergy' in RecordTypeId) or ('ElDayEnergy' in RecordTypeId) or ('ElMonthEnergy' in RecordTypeId), \
-#     #     'НЕ ВЕРНО ЗАДАН ТИП ДАННЫХ '
-#     # Первое что делаем - генерируем необходимые нам данные
-#     from Service.Generator_Data import GenerateGETMTRLOG
-#
-#     ElectricEnergyValues = GenerateGETMTRLOG(Count_timestamp=count_timestamp, RecordTypeId=RecordTypeId)
-#     # получаем данные
-#     Generate_data_dict = deepcopy(ElectricEnergyValues.GETMTRLOG)
-#     Serial = deepcopy(ElectricEnergyValues.Serial)
-#
-#     # Формируем команду
-#     from Service.Service_function import get_form_NSH, decode_data_to_GETPOK, code_data_to_GETPOK
-#
-#     # ---------- ФОРМИРУЕМ ДАННЫЕ ДЛЯ КОМАНДЫ ЗАПРОСА ----------
-#     # БЕРЕМ ТАЙМШТАМП
-#     Timestamp = 0
-#     for i in Generate_data_dict:
-#         Timestamp = Generate_data_dict[i].get('Timestamp')
-#     print('Timestamp --->', Timestamp)
-#
-#     # NSH Номер счетчика BCD5
-#     NSH = get_form_NSH(Serial=Serial)
-#
-#     # Запросить события с отметками времени  больше Tstart TIME_T
-#     Tstart = int(Timestamp).to_bytes(length=4, byteorder='little')
-#
-#     # Максимальное кол-во запрашиваемых событий INT16
-#     Cnt = int(Kk).to_bytes(length=2, byteorder='little',signed=True)
-#     # ---------- ФОРМИРУЕМ КОМАНДУ ----------
-#     data_request = NSH + Tstart + Cnt
-#     command = FormCommand(type_command=type_command, data=data_request).command
-#
-#     # ---------- ФОРМИРУЕМ ПРЕДПОЛАГАЕМЫЙ ОТВЕТ ----------
-#     # answer_data_expected = {
-#     #     'Rm': None,
-#     #     'Rp': None,
-#     #     'Am': None,
-#     #     'Ap': None,
-#     # }
-#     # if Rm:
-#     #     answer_data_expected['Rm'] = Generate_data_SHPRM_dict.get(Timestamp).get('Rm')
-#     # if Rp:
-#     #     answer_data_expected['Rp'] = Generate_data_SHPRM_dict.get(Timestamp).get('Rp')
-#     # if Am:
-#     #     answer_data_expected['Am'] = Generate_data_SHPRM_dict.get(Timestamp).get('Am')
-#     # if Ap:
-#     #     answer_data_expected['Ap'] = Generate_data_SHPRM_dict.get(Timestamp).get('Ap')
-#     # # Формируем байтовую строку нагрузочных байтов
-#     # data = code_data_to_GETPOK(answer_data_expected)
-#     # # Формируем предполагаемый ответ
-#     # Answer_expected = Constructor_Answer(data)
-#     # ---------- ОТПРАВЛЯЕМ КОМАНДУ ----------
-#     Answer = Setup(command=command).answer
-#
-#     # ---------- ТЕПЕРЬ ДЕКОДИРУЕМ ДАННЫЕ ОТВЕТА ----------
-#     #
-#     # # ДЕКОДИРУЕМ ПОЛЕ ДАТА
-#     # Answer['answer_data'] = decode_data_to_GETPOK(answer_data=Answer['answer_data'],
-#     #                                               Chnl={"Rm": Rm, "Rp": Rp, "Am": Am, "Ap": Ap, })
-#     # # БЕРЕМ ДАННЫЕ В НОРМАЛЬНОМ ВИДЕ
-#     # Answer_expected['answer_data'] = answer_data_expected
-#     #
-#     # # ------------------->
-#     # print(Answer_expected['answer_data'])
-#     # print(Answer['answer_data'])
-#     # # ------------------->
-#     #
-#     # # ТЕПЕРЬ СРАВНИВАЕМ НАШИ ДАННЫЕ - ЦЕ ВАЖНО
-#     # assert_answer_data(answer_data_expected=Answer_expected['answer_data'], answer_data=Answer['answer_data'])
-#     #
-#     # # ТЕПЕРЬ ПРОВОДИМ ТОТАЛЬНОЕ СРАВНИВАНИЕ
-#     # total_assert(answer_uspd=Answer, answer_normal=Answer_expected)
-#
-#
-#
-# # test_GETPOK(count_timestamp=[6], Ap=True, Am=True, Rp=True, Rm=True, RecordTypeId = ['ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy'])
-#
-# test_GETMTRLOG()
-#
-# # lol = {1620964800: {'Id': 8, 'cTime': 60, 'Pp': 1.0, 'Pm': 2.0, 'Qp': 3.0, 'Qm': 4.0, 'isPart': 1, 'isOvfl': 1, 'isSummer': 1, 'DeviceIdx': 6, 'Timestamp': 1620964800}, 1620968400: {'Id': 9, 'cTime': 60, 'Pp': 1.0, 'Pm': 2.0, 'Qp': 3.0, 'Qm': 4.0, 'isPart': 1, 'isOvfl': 1, 'isSummer': 1, 'DeviceIdx': 6, 'Timestamp': 1620968400}, 1620972000: {'Id': 10, 'cTime': 60, 'Pp': 1.0, 'Pm': 2.0, 'Qp': 3.0, 'Qm': 4.0, 'isPart': 1, 'isOvfl': 1, 'isSummer': 1, 'DeviceIdx': 6, 'Timestamp': 1620972000}, 1620975600: {'Id': 11, 'cTime': 60, 'Pp': 1.0, 'Pm': 2.0, 'Qp': 3.0, 'Qm': 4.0, 'isPart': 1, 'isOvfl': 1, 'isSummer': 1, 'DeviceIdx': 6, 'Timestamp': 1620975600}, 1620979200: {'Id': 12, 'cTime': 60, 'Pp': 1.0, 'Pm': 2.0, 'Qp': 3.0, 'Qm': 4.0, 'isPart': 1, 'isOvfl': 1, 'isSummer': 1, 'DeviceIdx': 6, 'Timestamp': 1620979200}, 1620982800: {'Id': 13, 'cTime': 60, 'Pp': 1.0, 'Pm': 2.0, 'Qp': 3.0, 'Qm': 4.0, 'isPart': 1, 'isOvfl': 1, 'isSummer': 1, 'DeviceIdx': 6, 'Timestamp': 1620982800}, 1620986400: {'Id': 14, 'cTime': 60, 'Pp': 1.0, 'Pm': 2.0, 'Qp': 3.0, 'Qm': 4.0, 'isPart': 1, 'isOvfl': 1, 'isSummer': 1, 'DeviceIdx': 6, 'Timestamp': 1620986400}, 1620990000: {'Id': 15, 'cTime': 60, 'Pp': 1.0, 'Pm': 2.0, 'Qp': 3.0, 'Qm': 4.0, 'isPart': 1, 'isOvfl': 1, 'isSummer': 1, 'DeviceIdx': 6, 'Timestamp': 1620990000}, 1620993600: {'Id': 16, 'cTime': 60, 'Pp': 1.0, 'Pm': 2.0, 'Qp': 3.0, 'Qm': 4.0, 'isPart': 1, 'isOvfl': 1, 'isSummer': 1, 'DeviceIdx': 6, 'Timestamp': 1620993600}, 1620997200: {'Id': 17, 'cTime': 60, 'Pp': 1.0, 'Pm': 2.0, 'Qp': 3.0, 'Qm': 4.0, 'isPart': 1, 'isOvfl': 1, 'isSummer': 1, 'DeviceIdx': 6, 'Timestamp': 1620997200}}
-# #
-# # lol_2 = sorted(lol.keys())
-# #
-# # print(lol)
-# # print(lol_2)
-#
-# #
-# # print(min(lol.keys()))
-# #
-# # Timestamp_list = []
-# # for i in lol:
-# #     Timestamp_list.append(lol[i].get('Timestamp'))
-# # Timestamp = min(Timestamp_list)
-# #
-# # print(Timestamp)
+#                            Запрос журнала событий по счетчикам
+# -------------------------------------------------------------------------------------------------------------------
+parametrize_GETMTRLOG = \
+    [
+        {
+            'RecordTypeId': ["ElJrnlPwr", "ElJrnlTimeCorr",
+                             "ElJrnlReset", "ElJrnlOpen",
+                             "ElJrnlPwrA", "ElJrnlPwrB", "ElJrnlPwrC"],
+            'count_timestamp': 11,
+        },
+        {
+            'RecordTypeId': ["ElJrnlPwrC"],
+            'count_timestamp': 11,
+        },
+        {
+            'RecordTypeId': ["ElJrnlPwrB"],
+            'count_timestamp': 11,
+        },
+        {
+            'RecordTypeId': ["ElJrnlPwrA"],
+            'count_timestamp': 11,
+        },
+        {
+            'RecordTypeId': ["ElJrnlOpen"],
+            'count_timestamp': 11,
+        },
+        {
+            'RecordTypeId': ["ElJrnlReset"],
+            'count_timestamp': 11,
+        },
+        {
+            'RecordTypeId': ["ElJrnlTimeCorr"],
+            'count_timestamp': 11,
+        },
+        {
+            'RecordTypeId': ["ElJrnlPwr"],
+            'count_timestamp': 11,
+        },
+    ]
+
+
+@pytest.mark.parametrize("RecordTypeId, count_timestamp", parametrize(parametrize_GETMTRLOG))
+def test_GETMTRLOG(RecordTypeId, count_timestamp):
+    """
+    Функция для прогона тестов для команды GETMTRLOG
+
+    """
+    from command_GETMTRLOG import command_GETMTRLOG
+    command_GETMTRLOG(RecordTypeId=list(RecordTypeId), count_timestamp=int(count_timestamp))

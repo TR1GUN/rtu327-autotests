@@ -10,7 +10,7 @@ from copy import deepcopy
 #
 #                   Запрос на передачу профиля расходов коммерческого интервала.
 # -------------------------------------------------------------------------------------------------------------------
-def test_GETTESTS(NumTests: int = 1):
+def command_GETTESTS(NumTests: int = 1):
     """
     Получение Профиля мощности?
     """
@@ -18,7 +18,6 @@ def test_GETTESTS(NumTests: int = 1):
     # Определяем тип команды
     type_command = 'GETTESTS'
 
-    cTime = 60
     # Первое что делаем - генерируем необходимые нам данные
     from Service.Generator_Data import GenerateGETTESTS
 
@@ -68,13 +67,13 @@ def test_GETTESTS(NumTests: int = 1):
         answer_data=Answer['answer_data']
     )
 
-    print(Answer['answer_data'])
+
     # БЕРЕМ ДАННЫЕ В НОРМАЛЬНОМ ВИДЕ
     Answer_expected['answer_data'] = answer_data_expected
 
     # ------------------->
-    print(Answer_expected['answer_data'])
-    print(Answer['answer_data'])
+    print('Answer_expected ==>',Answer_expected['answer_data'])
+    print('Answer  ==>',Answer['answer_data'])
     # ------------------->
     # ТЕПЕРЬ СРАВНИВАЕМ НАШИ ДАННЫЕ - ЦЕ ВАЖНО
     assert_answer_data(answer_data_expected=Answer_expected['answer_data'], answer_data=Answer['answer_data'])
@@ -86,4 +85,4 @@ def test_GETTESTS(NumTests: int = 1):
 # -------------------------------------------------------------------------------------------------------------------
 #                            Запрос замеров параметров электросети.
 # -------------------------------------------------------------------------------------------------------------------
-test_GETTESTS(NumTests=1)
+# command_GETTESTS(NumTests=2)

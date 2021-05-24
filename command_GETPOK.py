@@ -10,7 +10,9 @@ from copy import deepcopy
 #
 #               Запрос расчетных показаний счетчика по указанным измерениям на указанное время.
 # -------------------------------------------------------------------------------------------------------------------
-def test_GETPOK(Ap: bool = True, Am: bool = True, Rp: bool = True, Rm: bool = True,
+
+
+def command_GETPOK(Ap: bool = True, Am: bool = True, Rp: bool = True, Rm: bool = True,
                 count_timestamp: int = 1, RecordTypeId: list = ['ElDayEnergy']):
     """
     Получение Профиля мощности
@@ -103,3 +105,5 @@ def test_GETPOK(Ap: bool = True, Am: bool = True, Rp: bool = True, Rm: bool = Tr
     # ТЕПЕРЬ ПРОВОДИМ ТОТАЛЬНОЕ СРАВНИВАНИЕ
     total_assert(answer_uspd=Answer, answer_normal=Answer_expected)
 
+
+command_GETPOK()

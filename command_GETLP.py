@@ -10,7 +10,7 @@ from copy import deepcopy
 #
 #                   Запрос на передачу профиля расходов коммерческого интервала.
 # -------------------------------------------------------------------------------------------------------------------
-def test_GETLP(Qp: bool = True, Qm: bool = True, Pp: bool = True, Pm: bool = True, Tstart: int = 1, Kk: int = 1):
+def command_GETLP(Qp: bool = True, Qm: bool = True, Pp: bool = True, Pm: bool = True, Kk: int = 1):
     """
     Получение Профиля мощности?
     """
@@ -88,4 +88,5 @@ def test_GETLP(Qp: bool = True, Qm: bool = True, Pp: bool = True, Pm: bool = Tru
 # -------------------------------------------------------------------------------------------------------------------
 #                            Запрос замеров параметров электросети.
 # -------------------------------------------------------------------------------------------------------------------
-test_GETLP(Kk=10, Qp=True, Qm=True, Pm=True, Pp=True)
+command_GETLP(Kk=10, Qp=True, Qm=True, Pm=True, Pp=True)
+

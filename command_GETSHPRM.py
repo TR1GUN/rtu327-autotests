@@ -10,7 +10,9 @@ from copy import deepcopy
 #
 #                     Получение основных параметров точки учета (счетчика).
 # -------------------------------------------------------------------------------------------------------------------
-def test_GETSHPRM():
+
+
+def command_GETSHPRM():
     """
     Получение основных параметров точки учета (счетчика).
 
@@ -40,8 +42,8 @@ def test_GETSHPRM():
     # Отправляем ее
     Answer = Setup(command=command).answer
 
-    # print('Answer\n', Answer)
-    # print('Answer_expected\n', Answer_expected)
+    print('Answer , bytes\n', Answer)
+    print('Answer_expected, bytes\n', Answer_expected)
 
     # ТЕПЕРЬ ДЕКОДИРУЕМ ДАННЫЕ ОТВЕТА
     Answer['answer_data'] = decode_data_to_GETSHPRM(answer_data=Answer['answer_data'])
@@ -50,8 +52,8 @@ def test_GETSHPRM():
     Answer_expected['answer_data'] = data_SHPRM_dict
 
     # ------------------->
-    print(Answer_expected['answer_data'])
-    print(Answer['answer_data'])
+    print('Answer_expected ==>', Answer_expected['answer_data'])
+    print('Answer          ==>', Answer['answer_data'])
     # ------------------->
 
     # ТЕПЕРЬ СРАВНИВАЕМ НАШИ ДАННЫЕ - ЦЕ ВАЖНО
@@ -61,4 +63,4 @@ def test_GETSHPRM():
     total_assert(answer_uspd=Answer, answer_normal=Answer_expected)
 
 
-test_GETSHPRM()
+# test_GETSHPRM()

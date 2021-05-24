@@ -9,7 +9,7 @@ from work_with_device import print_bytes
 #
 #               Получение зафиксированных показаний счетчика ( показаний авточтения)
 # -------------------------------------------------------------------------------------------------------------------
-def test_GETAUTOREAD(Ap: bool = True, Am: bool = True, Rp: bool = True, Rm: bool = True,
+def command_GETAUTOREAD(Ap: bool = True, Am: bool = True, Rp: bool = True, Rm: bool = True,
                      count_timestamp: int = 1, ):
     """
     Получение Профиля мощности
@@ -112,4 +112,4 @@ def test_GETAUTOREAD(Ap: bool = True, Am: bool = True, Rp: bool = True, Rm: bool
 #                            Запрос замеров параметров электросети.
 # -------------------------------------------------------------------------------------------------------------------
 
-test_GETAUTOREAD()
+command_GETAUTOREAD()

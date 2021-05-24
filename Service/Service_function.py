@@ -277,18 +277,30 @@ def assert_answer_data(answer_data: dict, answer_data_expected: dict):
         value_answer_data_expected = answer_data_expected.get(filed)
         value_answer_data = answer_data.get(filed)
         # Если у нас ожидается float - сравниваем флоат
-        if type(value_answer_data_expected) == float:
+        if (type(value_answer_data_expected) == float) and (type(value_answer_data) == float):
+            # print('chfdybdftv ',value_answer_data_expected, type(value_answer_data_expected), value_answer_data ,type(value_answer_data))
+
             epsilon = 5.96e-08
+            # print(value_answer_data_expected - value_answer_data)
             if abs(value_answer_data_expected - value_answer_data) > epsilon:
                 error.append({
                     "Не верное значение поля ": str(filed),
                     'Значение что ожидали в ответе': value_answer_data_expected,
                     'Значение что получили': value_answer_data,
                 })
+            # nan = float('nan')
+            # print(nan , type(nan))
+            if value_answer_data_expected == value_answer_data_expected - value_answer_data:
+                error.append({
+                    "Не верное значение поля, ЗНАЧЕНИЕ NAN во float ": str(filed),
+                    'Значение что ожидали в ответе': value_answer_data_expected,
+                    'Значение что получили': value_answer_data,
+                })
         # ЕСЛИ У НАС СЛОВАРЬ - ВЫЗЫВАЕМ ФУНКЦИЮ САМУ ИЗ СЕБЯ
         elif type(value_answer_data_expected) == dict:
-            assert_answer_data(answer_data=value_answer_data, answer_data_expected=value_answer_data_expected )
+            assert_answer_data(answer_data=value_answer_data, answer_data_expected=value_answer_data_expected)
         else:
+            # print(value_answer_data_expected,value_answer_data )
             if value_answer_data_expected != value_answer_data:
                 error.append({
                     "Не верное значение поля ": str(filed),
@@ -833,10 +845,10 @@ def decode_data_to_GETTESTS(answer_data):
         'BITSTATS': BITSTATS,
         'Realint': Realint,
         'Elm': Elm,
-    }
+            }
 
     # ТЕПЕРЬ ПОЙДЕТ ЖАРИШКА - БУДЕИ ДЕЛАТЬ ДЕШЕВРАЦИЮ НАГРУЗОЧНЫХ БАЙТОВ
-    for i in range(Realint):
+    for element in range(Realint):
         Vals_element = deepcopy(Vals_by_BITSTATS)
         Vals_element.pop(None)
 
@@ -857,7 +869,7 @@ def decode_data_to_GETTESTS(answer_data):
             answer_data = answer_data[8:]
             Wa = extract_value_from_tuple(Wa)
 
-            Vals_element['Wa'] = Wa / 1000.0
+            Vals_element['Wa'] = Wa * 1000.0
 
         if Vals_by_BITSTATS['Wb']:
             Wb = ''
@@ -867,7 +879,7 @@ def decode_data_to_GETTESTS(answer_data):
             answer_data = answer_data[8:]
             Wb = extract_value_from_tuple(Wb)
 
-            Vals_element['Wb'] = Wb / 1000.0
+            Vals_element['Wb'] = Wb * 1000.0
 
         if Vals_by_BITSTATS['Wc']:
             Wc = ''
@@ -877,7 +889,7 @@ def decode_data_to_GETTESTS(answer_data):
             answer_data = answer_data[8:]
             Wc = extract_value_from_tuple(Wc)
 
-            Vals_element['Wc'] = Wc / 1000.0
+            Vals_element['Wc'] = Wc * 1000.0
 
         if Vals_by_BITSTATS['VAa']:
             VAa = ''
@@ -887,7 +899,7 @@ def decode_data_to_GETTESTS(answer_data):
             answer_data = answer_data[8:]
             VAa = extract_value_from_tuple(VAa)
 
-            Vals_element['VAa'] = VAa / 1000.0
+            Vals_element['VAa'] = VAa * 1000.0
 
         if Vals_by_BITSTATS['VAb']:
             VAb = ''
@@ -897,7 +909,7 @@ def decode_data_to_GETTESTS(answer_data):
             answer_data = answer_data[8:]
             VAb = extract_value_from_tuple(VAb)
 
-            Vals_element['VAb'] = VAb / 1000.0
+            Vals_element['VAb'] = VAb * 1000.0
 
         if Vals_by_BITSTATS['VAc']:
             VAc = ''
@@ -907,7 +919,7 @@ def decode_data_to_GETTESTS(answer_data):
             answer_data = answer_data[8:]
             VAc = extract_value_from_tuple(VAc)
 
-            Vals_element['VAc'] = VAc / 1000.0
+            Vals_element['VAc'] = VAc * 1000.0
 
         if Vals_by_BITSTATS['FREQ']:
             FREQ = ''
@@ -1025,10 +1037,12 @@ def decode_data_to_GETTESTS(answer_data):
             PhangC = ''
             for i in range(8):
                 PhangC = PhangC + answer_data[i]
+            # PhangC = float.fromhex(PhangC)
             PhangC = struct.unpack('<d', bytes.fromhex(PhangC))
             answer_data = answer_data[8:]
 
-            # print('PhangC', PhangC)
+
+            print('PhangC', PhangC)
             PhangC = extract_value_from_tuple(PhangC)
 
             Vals_element['PhangC'] = PhangC
@@ -1044,8 +1058,8 @@ def decode_data_to_GETTESTS(answer_data):
             Vals_element.pop(x)
 
         # И помещаем в общий список
-        GETTESTS[i] = Vals_element
 
+        GETTESTS[element] = Vals_element
     return GETTESTS
 
 
@@ -1146,17 +1160,20 @@ def form_data_to_GETTESTS(answer_data):
         }
 
     # ТЕПЕРЬ ПЕРЕБИРАЕМ НУЖНЫЕ НАМ В СПИСКЕ ВЕЩИ
-    for timestamp in range(len(answer_data_key_list)):
+    for timestamp in range(Realint):
+
+    # for timestamp in range(len(answer_data_key_list)):
         # сначала  формируем общий словарь -
         answer_data_dict_eliment = {}
-        # Если длина не нулевая - то ставим время
-        if BITSTATS > 0:
-            answer_data_dict_eliment['Time'] = answer_data[answer_data_key_list[timestamp]]['Timestamp']
 
         # дальше проходимся по всем тегам
         for tag in Vals_by_BITSTATS:
             if Vals_by_BITSTATS[tag]:
                 answer_data_dict_eliment[tag] = answer_data[answer_data_key_list[timestamp]][tag]
+
+        # Если длина не нулевая - то ставим время
+        if BITSTATS > 0:
+            answer_data_dict_eliment['Time'] = answer_data[answer_data_key_list[timestamp]]['Timestamp']
 
         answer_data_dict[timestamp] = answer_data_dict_eliment
 

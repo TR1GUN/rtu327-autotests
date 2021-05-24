@@ -10,7 +10,7 @@ from copy import deepcopy
 #
 #                            Запрос журнала событий по счетчикам
 # -------------------------------------------------------------------------------------------------------------------
-def test_GETMTRLOG(RecordTypeId: list =
+def command_GETMTRLOG(RecordTypeId: list =
                    ["ElJrnlPwr", "ElJrnlTimeCorr", "ElJrnlReset", "ElJrnlOpen",
                     "ElJrnlPwrA", "ElJrnlPwrB", "ElJrnlPwrC"],
                    count_timestamp: int = 11):
@@ -97,4 +97,4 @@ def test_GETMTRLOG(RecordTypeId: list =
     # ТЕПЕРЬ ПРОВОДИМ ТОТАЛЬНОЕ СРАВНИВАНИЕ
     total_assert(answer_uspd=Answer, answer_normal=Answer_expected)
 # -------------------------------------------------------------------------------------------------------------------
-test_GETMTRLOG(count_timestamp=49 ,RecordTypeId=['ElJrnlTimeCorr'])
+command_GETMTRLOG(count_timestamp=56 ,RecordTypeId=['ElJrnlTimeCorr'])
