@@ -845,7 +845,7 @@ def decode_data_to_GETTESTS(answer_data):
         'BITSTATS': BITSTATS,
         'Realint': Realint,
         'Elm': Elm,
-            }
+    }
 
     # ТЕПЕРЬ ПОЙДЕТ ЖАРИШКА - БУДЕИ ДЕЛАТЬ ДЕШЕВРАЦИЮ НАГРУЗОЧНЫХ БАЙТОВ
     for element in range(Realint):
@@ -1041,7 +1041,6 @@ def decode_data_to_GETTESTS(answer_data):
             PhangC = struct.unpack('<d', bytes.fromhex(PhangC))
             answer_data = answer_data[8:]
 
-
             print('PhangC', PhangC)
             PhangC = extract_value_from_tuple(PhangC)
 
@@ -1162,7 +1161,7 @@ def form_data_to_GETTESTS(answer_data):
     # ТЕПЕРЬ ПЕРЕБИРАЕМ НУЖНЫЕ НАМ В СПИСКЕ ВЕЩИ
     for timestamp in range(Realint):
 
-    # for timestamp in range(len(answer_data_key_list)):
+        # for timestamp in range(len(answer_data_key_list)):
         # сначала  формируем общий словарь -
         answer_data_dict_eliment = {}
 
@@ -1366,17 +1365,18 @@ def form_data_to_GETMTRLOG(Generate_data):
                 }
             data_answer.append(element)
 
-    for i in range(len(data_answer)) :
+    for i in range(len(data_answer)):
         data_answer_dict[i] = data_answer[i]
 
     return data_answer_dict
+
 
 def code_data_to_GETMTRLOG(data_answer):
     """
     Здесь кодируем наши данные для предпологаемого ответа для команды GETMTRLOG
     """
     data = b''
-    for idx in data_answer :
+    for idx in data_answer:
         evTime = data_answer[idx].get('evTime')
 
         evType = data_answer[idx].get('evType')
@@ -1385,6 +1385,578 @@ def code_data_to_GETMTRLOG(data_answer):
 
         evType = int.to_bytes(evType, length=2, byteorder='little')
 
-        data  = data + evTime + evType
+        data = data + evTime + evType
+
+    return data
+
+
+# //-----------------------------------------------------------------------------------------------------------------
+#        Функция для подготовки данных  Получения зафиксированных показаний счетчика ( показаний авточтения).
+# //-----------------------------------------------------------------------------------------------------------------
+
+def decode_data_to_GETAUTOREAD(answer_data, ):
+    """
+    Функция для подготовки данных получения зафиксированных показаний счетчика ( показаний авточтения).
+    """
+    from copy import deepcopy
+    import struct
+
+    print('ДЛИНА', len(answer_data))
+    # Nsh Номер счетчика STR<10>
+    Nsh = b''
+    for i in range(5):
+        Nsh = bytes.fromhex(answer_data[i]) + Nsh
+    Nsh = Nsh.decode()
+    answer_data = answer_data[5:]
+    print('Nsh', Nsh)
+
+    # Dd_mm_yyyy Время авточтения TIME_T
+    Dd_mm_yyyy = b''
+    for i in range(4):
+        Dd_mm_yyyy = Dd_mm_yyyy + bytes.fromhex(answer_data[i])
+    answer_data = answer_data[4:]
+    Dd_mm_yyyy = int.from_bytes(Dd_mm_yyyy, byteorder='little')
+
+    print('Dd_mm_yyyy', Dd_mm_yyyy)
+
+    # Akwh Показание тарифа 1 FLOAT8
+    Akwh = ''
+    for i in range(8):
+        Akwh = Akwh + answer_data[i]
+    Akwh = struct.unpack('<d', bytes.fromhex(Akwh))
+    answer_data = answer_data[8:]
+    Akwh = extract_value_from_tuple(Akwh)
+
+    print('Akwh', Akwh)
+
+    # Akw Максимум мощности тарифа 1 FLOAT8
+    Akw = ''
+    for i in range(8):
+        Akw = Akw + answer_data[i]
+    Akw = struct.unpack('<d', bytes.fromhex(Akw))
+    answer_data = answer_data[8:]
+    Akw = extract_value_from_tuple(Akw)
+
+    print('Akw', Akw)
+
+    # Atd Время максимума тарифа 1 TIME_T
+    Atd = b''
+    for i in range(4):
+        Atd = Atd + bytes.fromhex(answer_data[i])
+    answer_data = answer_data[4:]
+    Atd = int.from_bytes(Atd, byteorder='little')
+
+    print('Atd', Atd)
+
+    # Akwcum Куммулятивный максим тарифа 1 FLOAT8
+    Akwcum = ''
+    for i in range(8):
+        Akwcum = Akwcum + answer_data[i]
+    Akwcum = struct.unpack('<d', bytes.fromhex(Akwcum))
+    answer_data = answer_data[8:]
+    Akwcum = extract_value_from_tuple(Akwcum)
+
+    print('Akwcum', Akwcum)
+
+    # Akwc Совмещенный максимум тарифа 1 FLOAT8
+    Akwc = ''
+    for i in range(8):
+        Akwc = Akwc + answer_data[i]
+    Akwc = struct.unpack('<d', bytes.fromhex(Akwc))
+    answer_data = answer_data[8:]
+    Akwc = extract_value_from_tuple(Akwc)
+
+    print('Akwc', Akwc)
+
+    # Bkwh Показание тарифа 2 FLOAT8
+    Bkwh = ''
+    for i in range(8):
+        Bkwh = Bkwh + answer_data[i]
+    Bkwh = struct.unpack('<d', bytes.fromhex(Bkwh))
+    answer_data = answer_data[8:]
+    Bkwh = extract_value_from_tuple(Bkwh)
+
+    print('Bkwh', Bkwh)
+
+    # Bkw Максимум мощности тарифа 2 FLOAT8
+    Bkw = ''
+    for i in range(8):
+        Bkw = Bkw + answer_data[i]
+    Bkw = struct.unpack('<d', bytes.fromhex(Bkw))
+    answer_data = answer_data[8:]
+    Bkw = extract_value_from_tuple(Bkw)
+
+    print('Bkw', Bkw)
+
+    # Btd Время максимума тарифа 2 TIME_T
+    Btd = b''
+    for i in range(4):
+        Btd = Btd + bytes.fromhex(answer_data[i])
+    answer_data = answer_data[4:]
+    Btd = int.from_bytes(Btd, byteorder='little')
+
+    print('Btd', Btd)
+
+    # Bkwcum Куммулятивный максим тарифа 2 FLOAT8
+    Bkwcum = ''
+    for i in range(8):
+        Bkwcum = Bkwcum + answer_data[i]
+    Bkwcum = struct.unpack('<d', bytes.fromhex(Bkwcum))
+    answer_data = answer_data[8:]
+    Bkwcum = extract_value_from_tuple(Bkwcum)
+
+    print('Bkwcum', Bkwcum)
+
+    # Bkwc Совмещенный максимум тарифа 2 FLOAT8
+    Bkwc = ''
+    for i in range(8):
+        Bkwc = Bkwc + answer_data[i]
+    Bkwc = struct.unpack('<d', bytes.fromhex(Bkwc))
+    answer_data = answer_data[8:]
+    Bkwc = extract_value_from_tuple(Bkwc)
+
+    print('Bkwc', Bkwc)
+
+    # Ckwh Показание тарифа 3 FLOAT8
+    Ckwh = ''
+    for i in range(8):
+        Ckwh = Ckwh + answer_data[i]
+    Ckwh = struct.unpack('<d', bytes.fromhex(Ckwh))
+    answer_data = answer_data[8:]
+    Ckwh = extract_value_from_tuple(Ckwh)
+
+    print('Ckwh', Ckwh)
+
+    # Ckw Максимум мощности тарифа 3 FLOAT8
+    Ckw = ''
+    for i in range(8):
+        Ckw = Ckw + answer_data[i]
+    Ckw = struct.unpack('<d', bytes.fromhex(Ckw))
+    answer_data = answer_data[8:]
+    Ckw = extract_value_from_tuple(Ckw)
+
+    print('Ckw', Ckw)
+
+    # Ctd Время максимума тарифа 3 TIME_T
+    Ctd = b''
+    for i in range(4):
+        Ctd = Ctd + bytes.fromhex(answer_data[i])
+    answer_data = answer_data[4:]
+    Ctd = int.from_bytes(Ctd, byteorder='little')
+
+    print('Ctd', Ctd)
+
+    # Ckwcum Куммулятивный максим тарифа 3 FLOAT8
+    Ckwcum = ''
+    for i in range(8):
+        Ckwcum = Ckwcum + answer_data[i]
+    Ckwcum = struct.unpack('<d', bytes.fromhex(Ckwcum))
+    answer_data = answer_data[8:]
+    Ckwcum = extract_value_from_tuple(Ckwcum)
+
+    print('Ckwcum', Ckwcum)
+
+    # Ckwc Совмещенный максимум тарифа 3 FLOAT8
+    Ckwc = ''
+    for i in range(8):
+        Ckwc = Ckwc + answer_data[i]
+    Ckwc = struct.unpack('<d', bytes.fromhex(Ckwc))
+    answer_data = answer_data[8:]
+    Ckwc = extract_value_from_tuple(Ckwc)
+
+    print('Ckwc', Ckwc)
+
+    # dkwh Показание тарифа 4 FLOAT8
+    dkwh = ''
+    for i in range(8):
+        dkwh = dkwh + answer_data[i]
+    dkwh = struct.unpack('<d', bytes.fromhex(dkwh))
+    answer_data = answer_data[8:]
+    dkwh = extract_value_from_tuple(dkwh)
+
+    print('dkwh', dkwh)
+
+    # dkw Максимум мощности тарифа 4 FLOAT8
+    dkw = ''
+    for i in range(8):
+        dkw = dkw + answer_data[i]
+    dkw = struct.unpack('<d', bytes.fromhex(dkw))
+    answer_data = answer_data[8:]
+    dkw = extract_value_from_tuple(dkw)
+
+    print('dkw', dkw)
+
+    # dtd Время максимума тарифа 4 TIME_T
+    dtd = b''
+    for i in range(4):
+        dtd = dtd + bytes.fromhex(answer_data[i])
+    answer_data = answer_data[4:]
+    dtd = int.from_bytes(dtd, byteorder='little')
+
+    print('dtd', dtd)
+
+    # dkwcum Куммулятивный максим тарифа 4 FLOAT8
+    dkwcum = ''
+    for i in range(8):
+        dkwcum = dkwcum + answer_data[i]
+    dkwcum = struct.unpack('<d', bytes.fromhex(dkwcum))
+    answer_data = answer_data[8:]
+    dkwcum = extract_value_from_tuple(dkwcum)
+
+    print('dkwcum', dkwcum)
+
+    # dkwc Совмещенный максимум тарифа 4 FLOAT8
+    dkwc = ''
+    for i in range(8):
+        dkwc = dkwc + answer_data[i]
+    dkwc = struct.unpack('<d', bytes.fromhex(dkwc))
+    answer_data = answer_data[8:]
+    dkwc = extract_value_from_tuple(dkwc)
+
+    print('dkwc', dkwc)
+
+    # Kwha Общее показание FLOAT8
+    Kwha = ''
+    for i in range(8):
+        Kwha = Kwha + answer_data[i]
+    Kwha = struct.unpack('<d', bytes.fromhex(Kwha))
+    answer_data = answer_data[8:]
+    Kwha = extract_value_from_tuple(Kwha)
+
+    print('Kwha', Kwha)
+
+    # Q1 Показание квадранта 1 FLOAT8
+    Q1 = ''
+    for i in range(8):
+        Q1 = Q1 + answer_data[i]
+    Q1 = struct.unpack('<d', bytes.fromhex(Q1))
+    answer_data = answer_data[8:]
+    Q1 = extract_value_from_tuple(Q1)
+
+    print('Q1', Q1)
+
+    # Q2 Показание квадранта 2 FLOAT8
+    Q2 = ''
+    for i in range(8):
+        Q2 = Q2 + answer_data[i]
+    Q2 = struct.unpack('<d', bytes.fromhex(Q2))
+    answer_data = answer_data[8:]
+    Q2 = extract_value_from_tuple(Q2)
+
+    print('Q2', Q2)
+
+    # Q3 Показание квадранта 3 FLOAT8
+    Q3 = ''
+    for i in range(8):
+        Q3 = Q3 + answer_data[i]
+    Q3 = struct.unpack('<d', bytes.fromhex(Q3))
+    answer_data = answer_data[8:]
+    Q3 = extract_value_from_tuple(Q3)
+
+    print('Q3', Q3)
+
+    # Q4 Показание квадранта 4 FLOAT8
+    Q4 = ''
+    for i in range(8):
+        Q4 = Q4 + answer_data[i]
+    Q4 = struct.unpack('<d', bytes.fromhex(Q4))
+    answer_data = answer_data[8:]
+    Q4 = extract_value_from_tuple(Q4)
+
+    print('Q4', Q4)
+
+    # ТЕПЕРЬ ВСЕ ЭТО СОБИРАЕМ В ЕДИНЫЙ СЛОВАРЬ
+    answer_data_decode = \
+        {
+            # Nsh Номер счетчика STR<10>
+            'Nsh': Nsh,
+            # Dd_mm_yyyy Время авточтения TIME_T
+            'Dd_mm_yyyy': Dd_mm_yyyy,
+            # Akwh Показание тарифа 1 FLOAT8
+            'Akwh': Akwh,
+            # Akw Максимум мощности тарифа 1 FLOAT8
+            'Akw': Akw,
+            # Atd Время максимума тарифа 1 TIME_T
+            'Atd': Atd,
+            # Akwcum Куммулятивный максим тарифа 1 FLOAT8
+            'Akwcum': Akwcum,
+            # Akwc Совмещенный максимум тарифа 1 FLOAT8
+            'Akwc': Akwc,
+            # Bkwh Показание тарифа 2 FLOAT8
+            'Bkwh': Bkwh,
+            # Bkw Максимум мощности тарифа 2 FLOAT8
+            'Bkw': Bkw,
+            # Btd Время максимума тарифа 2 TIME_T
+            'Btd': Btd,
+            # Bkwcum Куммулятивный максим тарифа 2 FLOAT8
+            'Bkwcum': Bkwcum,
+            # Bkwc Совмещенный максимум тарифа 2 FLOAT8
+            'Bkwc': Bkwc,
+            # Ckwh Показание тарифа 3 FLOAT8
+            'Ckwh': Ckwh,
+            # Ckw Максимум мощности тарифа 3 FLOAT8
+            'Ckw': Ckw,
+            # Ctd Время максимума тарифа 3 TIME_T
+            'Ctd': Ctd,
+            # Ckwcum Куммулятивный максим тарифа 3 FLOAT8
+            'Ckwcum': Ckwcum,
+            # Ckwc Совмещенный максимум тарифа 3 FLOAT8
+            'Ckwc': Ckwc,
+            # dkwh Показание тарифа 4 FLOAT8
+            'dkwh': dkwh,
+            # dkw Максимум мощности тарифа 4 FLOAT8
+            'dkw': dkw,
+            # dtd Время максимума тарифа 4 TIME_T
+            'dtd': dtd,
+            # dkwcum Куммулятивный максим тарифа 4 FLOAT8
+            'dkwcum': dkwcum,
+            # dkwc Совмещенный максимум тарифа 4 FLOAT8
+            'dkwc': dkwc,
+            # Kwha Общее показание FLOAT8
+            'Kwha': Kwha,
+            # Q1 Показание квадранта 1 FLOAT8
+            'Q1': Q1,
+            # Q2 Показание квадранта 2 FLOAT8
+            'Q2': Q2,
+            # Q3 Показание квадранта 3 FLOAT8
+            'Q3': Q3,
+            # Q4 Показание квадранта 4 FLOAT8
+            'Q4': Q4,
+
+        }
+    print(answer_data)
+    print(answer_data_decode)
+
+    return answer_data_decode
+
+
+def form_data_to_GETAUTOREAD(answer_data, Serial, Kanal):
+    """
+    Формируем данные для ответа для команды GETAUTOREAD
+    """
+    # Получаем наши данные , и формируем нащ словарь
+    # ПОЛУЧАЕМ НУЖНЫЙ ТАЙМШТАМП
+
+    # теперь смотрим КАКОЙ КАНАЛ МЫ ВЫбрали
+    kanal_dict = \
+        {
+            1: 'A+',
+            2: 'A-',
+            3: 'R+',
+            4: 'R-',
+        }
+
+    # ТЕПЕРЬ Получаем значения ТАРИФОВ
+    value_tarrif = {
+        'Akwh': answer_data.get(str(kanal_dict.get(Kanal)) + str(1)) / 1000,
+        'Bkwh': answer_data.get(str(kanal_dict.get(Kanal)) + str(2)) / 1000,
+        'Ckwh': answer_data.get(str(kanal_dict.get(Kanal)) + str(3)) / 1000,
+        'dkwh': answer_data.get(str(kanal_dict.get(Kanal)) + str(4)) / 1000,
+    }
+
+    # ТЕПЕРЬ ВСЕ ЭТО СОБИРАЕМ В ЕДИНЫЙ СЛОВАРЬ
+    answer_data = \
+        {
+            # Nsh Номер счетчика STR<10>
+            'Nsh': str(Serial),
+            # Dd_mm_yyyy Время авточтения TIME_T
+            'Dd_mm_yyyy': answer_data.get('Timestamp'),
+            # Akwh Показание тарифа 1 FLOAT8
+            'Akwh': -1.0,
+            # Akw Максимум мощности тарифа 1 FLOAT8
+            'Akw': -1.0,
+            # Atd Время максимума тарифа 1 TIME_T
+            'Atd': 0,
+            # Akwcum Куммулятивный максим тарифа 1 FLOAT8
+            'Akwcum': -1.0,
+            # Akwc Совмещенный максимум тарифа 1 FLOAT8
+            'Akwc': -1.0,
+            # Bkwh Показание тарифа 2 FLOAT8
+            'Bkwh': -1.0,
+            # Bkw Максимум мощности тарифа 2 FLOAT8
+            'Bkw': -1.0,
+            # Btd Время максимума тарифа 2 TIME_T
+            'Btd': 0,
+            # Bkwcum Куммулятивный максим тарифа 2 FLOAT8
+            'Bkwcum': -1.0,
+            # Bkwc Совмещенный максимум тарифа 2 FLOAT8
+            'Bkwc': -1.0,
+            # Ckwh Показание тарифа 3 FLOAT8
+            'Ckwh': -1.0,
+            # Ckw Максимум мощности тарифа 3 FLOAT8
+            'Ckw': -1.0,
+            # Ctd Время максимума тарифа 3 TIME_T
+            'Ctd': 0,
+            # Ckwcum Куммулятивный максим тарифа 3 FLOAT8
+            'Ckwcum': -1.0,
+            # Ckwc Совмещенный максимум тарифа 3 FLOAT8
+            'Ckwc': -1.0,
+            # dkwh Показание тарифа 4 FLOAT8
+            'dkwh': -1.0,
+            # dkw Максимум мощности тарифа 4 FLOAT8
+            'dkw': -1.0,
+            # dtd Время максимума тарифа 4 TIME_T
+            'dtd': 0,
+            # dkwcum Куммулятивный максим тарифа 4 FLOAT8
+            'dkwcum': -1.0,
+            # dkwc Совмещенный максимум тарифа 4 FLOAT8
+            'dkwc': -1.0,
+            # Kwha Общее показание FLOAT8
+            'Kwha': -1.0,
+            # Q1 Показание квадранта 1 FLOAT8
+            'Q1': -1.0,
+            # Q2 Показание квадранта 2 FLOAT8
+            'Q2': -1.0,
+            # Q3 Показание квадранта 3 FLOAT8
+            'Q3': -1.0,
+            # Q4 Показание квадранта 4 FLOAT8
+            'Q4': -1.0,
+        }
+
+    answer_data.update(value_tarrif)
+
+    return answer_data
+
+
+def code_data_to_GETAUTOREAD(answer_data):
+    """
+    Здесь кодируем наши данные
+    """
+    data = b''
+    import struct
+
+    # Nsh Номер счетчика STR<10>
+    Nsh = answer_data.get('Nsh').encode()
+
+    data = data + Nsh
+
+    # Dd_mm_yyyy Время авточтения TIME_T
+    Dd_mm_yyyy = int.to_bytes(answer_data.get('Dd_mm_yyyy'), length=4, byteorder='little')
+    data = data + Dd_mm_yyyy
+
+    # Akwh Показание тарифа 1 FLOAT8
+    Akwh = struct.pack("<d", answer_data.get('Akwh'))
+
+    data = data + Akwh
+
+    # Akw Максимум мощности тарифа 1 FLOAT8
+    Akw = struct.pack("<d", answer_data.get('Akw'))
+
+    data = data + Akw
+
+    # Atd Время максимума тарифа 1 TIME_T
+    Atd = int.to_bytes(answer_data.get('Atd'), length=4, byteorder='little')
+
+    data = data + Atd
+
+    # Akwcum Куммулятивный максим тарифа 1 FLOAT8
+    Akwcum = struct.pack("<d", answer_data.get('Akwcum'))
+
+    data = data + Akwcum
+
+    # Akwc Совмещенный максимум тарифа 1 FLOAT8
+    Akwc = struct.pack("<d", answer_data.get('Akwc'))
+
+    data = data + Akwc
+
+    # Bkwh Показание тарифа 2 FLOAT8
+    Bkwh = struct.pack("<d", answer_data.get('Bkwh'))
+
+    data = data + Bkwh
+
+    # Bkw Максимум мощности тарифа 2 FLOAT8
+    Bkw = struct.pack("<d", answer_data.get('Bkw'))
+
+    data = data + Bkw
+
+    # Btd Время максимума тарифа 2 TIME_T
+    Btd = int.to_bytes(answer_data.get('Btd'), length=4, byteorder='little')
+
+    data = data + Btd
+
+    # Bkwcum Куммулятивный максим тарифа 2 FLOAT8
+    Bkwcum = struct.pack("<d", answer_data.get('Bkwcum'))
+
+    data = data + Bkwcum
+
+    # Bkwc Совмещенный максимум тарифа 2 FLOAT8
+    Bkwc = struct.pack("<d", answer_data.get('Bkwc'))
+
+    data = data + Bkwc
+
+    # Ckwh Показание тарифа 3 FLOAT8
+    Ckwh = struct.pack("<d", answer_data.get('Ckwh'))
+
+    data = data + Ckwh
+
+    # Ckw Максимум мощности тарифа 3 FLOAT8
+    Ckw = struct.pack("<d", answer_data.get('Ckw'))
+
+    data = data + Ckw
+
+    # Ctd Время максимума тарифа 3 TIME_T
+    Ctd = int.to_bytes(answer_data.get('Ctd'), length=4, byteorder='little')
+
+    data = data + Ctd
+
+    # Ckwcum Куммулятивный максим тарифа 3 FLOAT8
+    Ckwcum = struct.pack("<d", answer_data.get('Ckwcum'))
+
+    data = data + Ckwcum
+
+    # Ckwc Совмещенный максимум тарифа 3 FLOAT8
+    Ckwc = struct.pack("<d", answer_data.get('Ckwc'))
+
+    data = data + Ckwc
+
+    # dkwh Показание тарифа 4 FLOAT8
+    dkwh = struct.pack("<d", answer_data.get('dkwh'))
+
+    data = data + dkwh
+
+    # dkw Максимум мощности тарифа 4 FLOAT8
+    dkw = struct.pack("<d", answer_data.get('dkw'))
+
+    data = data + dkw
+
+    # dtd Время максимума тарифа 4 TIME_T
+    dtd = int.to_bytes(answer_data.get('dtd'), length=4, byteorder='little')
+
+    data = data + dtd
+
+    # dkwcum Куммулятивный максим тарифа 4 FLOAT8
+    dkwcum = struct.pack("<d", answer_data.get('dkwcum'))
+
+    data = data + dkwcum
+
+    # dkwc Совмещенный максимум тарифа 4 FLOAT8
+    dkwc = struct.pack("<d", answer_data.get('dkwc'))
+
+    data = data + dkwc
+
+    # Kwha Общее показание FLOAT8
+    Kwha = struct.pack("<d", answer_data.get('Kwha'))
+
+    data = data + Kwha
+
+    # Q1 Показание квадранта 1 FLOAT8
+    Q1 = struct.pack("<d", answer_data.get('Q1'))
+
+    data = data + Q1
+
+    # Q2 Показание квадранта 2 FLOAT8
+    Q2 = struct.pack("<d", answer_data.get('Q2'))
+
+    data = data + Q2
+
+    # Q3 Показание квадранта 3 FLOAT8
+    Q3 = struct.pack("<d", answer_data.get('Q3'))
+
+    data = data + Q3
+
+    # Q4 Показание квадранта 4 FLOAT8
+    Q4 = struct.pack("<d", answer_data.get('Q4'))
+
+    data = data + Q4
 
     return data

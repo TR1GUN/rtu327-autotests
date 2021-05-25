@@ -179,7 +179,7 @@ def command_SETTIME(time_correct: int = 60):
                                                            str(datetime.fromtimestamp(unix_time_expected))
 
 
-command_SETTIME(601)
+# command_SETTIME(601)
 
 
 # //-----------------------------------------------------------------------------------------------------------------
@@ -243,3 +243,4 @@ def command_GETLOG():
     total_assert(answer_uspd=answer, answer_normal=normal_answer)
 
 # ---------------------------------------------------------------------------------------------------------------------
+command_GETLOG()

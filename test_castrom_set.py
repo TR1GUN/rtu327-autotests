@@ -329,8 +329,30 @@ def test_GETLP(Qp, Qm, Pp, Pm, Kk):
 #
 #               Получение зафиксированных показаний счетчика ( показаний авточтения)
 # -------------------------------------------------------------------------------------------------------------------
-def test_GETAUTOREAD():
-    print('ПОКА НЕ ГОТОВА')
+parametrize_GETAUTOREAD = [
+                                {
+                                    'Kanal': 'Ap'
+                                },
+                                {
+                                    'Kanal': 'Am'
+                                },
+                                {
+                                    'Kanal': 'Rp'
+                                },
+                                {
+                                    'Kanal': 'Rm'
+                                },
+                            ]
+
+
+@pytest.mark.parametrize("Kanal", parametrize(parametrize_GETAUTOREAD))
+def test_GETAUTOREAD(Kanal):
+    """
+    Функция для прогона тестов для команды GETAUTOREAD
+
+    """
+    from command_GETAUTOREAD import command_GETAUTOREAD
+    command_GETAUTOREAD(Kanal=Kanal)
 
 
 # -------------------------------------------------------------------------------------------------------------------

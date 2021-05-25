@@ -494,7 +494,11 @@ class RTU327(unittest.TestCase):
         res_text_protocol_dict = self._helper_text_protocol_answer_to_dict(all_strings)
 
         N_SH = work_with_device.uspd_counter_number
-        Tday = get_at_day_start_datetime_bytes(amoun_of_days=1)  ## !!! Смотрит на текущую дату, а не минус день. !!!!
+        # Tday = get_at_day_start_datetime_bytes(amoun_of_days=1)  ## !!! Смотрит на текущую дату, а не минус день. !!!!
+
+        Timestamp = 1590969599
+        Tday = int(Timestamp).to_bytes(length=4, byteorder='little')
+
         Kanal = b'\x01'
         Kk = b'\x01'
         result_answer_map = send_command_and_get_answer(109, command_params=N_SH + Tday + Kanal + Kk)

@@ -11,9 +11,9 @@ from copy import deepcopy
 #                            Запрос журнала событий по счетчикам
 # -------------------------------------------------------------------------------------------------------------------
 def command_GETMTRLOG(RecordTypeId: list =
-                   ["ElJrnlPwr", "ElJrnlTimeCorr", "ElJrnlReset", "ElJrnlOpen",
-                    "ElJrnlPwrA", "ElJrnlPwrB", "ElJrnlPwrC"],
-                   count_timestamp: int = 11):
+                      ["ElJrnlPwr", "ElJrnlTimeCorr", "ElJrnlReset", "ElJrnlOpen",
+                       "ElJrnlPwrA", "ElJrnlPwrB", "ElJrnlPwrC"],
+                      count_timestamp: int = 11):
     """
     Получение значений ЖУРНАЛОВ
 
@@ -24,7 +24,6 @@ def command_GETMTRLOG(RecordTypeId: list =
 
     # Определяем тип команды
     type_command = 'GETMTRLOG'
-
 
     # ПРОВЕРЯЕМ ТИП ДАННЫХ ДА
     assert ('ElJrnlPwr' in RecordTypeId) or ('ElJrnlTimeCorr' in RecordTypeId) or ('ElJrnlReset' in RecordTypeId) or \
@@ -39,9 +38,9 @@ def command_GETMTRLOG(RecordTypeId: list =
     Generate_data_dict = deepcopy(ElectricEnergyValues.GETMTRLOG)
     Serial = deepcopy(ElectricEnergyValues.Serial)
 
-
     # Формируем команду
-    from Service.Service_function import get_form_NSH, decode_data_to_GETMTRLOG, code_data_to_GETMTRLOG , form_data_to_GETMTRLOG
+    from Service.Service_function import get_form_NSH, decode_data_to_GETMTRLOG, code_data_to_GETMTRLOG, \
+        form_data_to_GETMTRLOG
 
     # ---------- ФОРМИРУЕМ ДАННЫЕ ДЛЯ КОМАНДЫ ЗАПРОСА ----------
     # БЕРЕМ ТАЙМШТАМП
@@ -50,7 +49,7 @@ def command_GETMTRLOG(RecordTypeId: list =
     for i in Generate_data_dict:
         Timestamp = Timestamp + sorted(Generate_data_dict[i].keys())
 
-    print('Timestamp',len(Timestamp),Timestamp)
+    print('Timestamp', len(Timestamp), Timestamp)
     # print(' из них уникальных', len(set(Timestamp)), set(Timestamp))
     Timestamp = min(Timestamp)
 
@@ -64,7 +63,7 @@ def command_GETMTRLOG(RecordTypeId: list =
 
     # Максимальное кол-во запрашиваемых событий INT16
     Cnt = count_timestamp * len(RecordTypeId)
-    print('Cnt' , Cnt)
+    print('Cnt', Cnt)
     Cnt = int(Cnt).to_bytes(length=2, byteorder='little', signed=True)
     # ---------- ФОРМИРУЕМ КОМАНДУ ----------
     data_request = NSH + Tstart + Cnt
@@ -96,5 +95,7 @@ def command_GETMTRLOG(RecordTypeId: list =
 
     # ТЕПЕРЬ ПРОВОДИМ ТОТАЛЬНОЕ СРАВНИВАНИЕ
     total_assert(answer_uspd=Answer, answer_normal=Answer_expected)
+
+
 # -------------------------------------------------------------------------------------------------------------------
-command_GETMTRLOG(count_timestamp=56 ,RecordTypeId=['ElJrnlTimeCorr'])
+command_GETMTRLOG(count_timestamp=56, RecordTypeId=['ElJrnlTimeCorr'])

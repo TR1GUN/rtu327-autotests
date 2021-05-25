@@ -629,17 +629,13 @@ class GenerateGETMTRLOG:
 
         from Service.Generate.Generate_JournalValues import GeneratorJournalValues
 
-
         JournalValues_dict = {}
         for i in range(len(self.RecordTypeId)):
-
             JournalValues = GeneratorJournalValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
                                                    RecordTypeId=self.RecordTypeId[i],
                                                    Redefine_tag={},
                                                    Count_timestamp=self.Count_timestamp
                                                    ).JournalValues
-
-
 
             JournalValues_dict[self.RecordTypeId[i]] = JournalValues
 
@@ -654,7 +650,6 @@ class GenerateGETMTRLOG:
 
         # сначала записываем все нужные данные в БД
         RecordData = self._generate_JournalValues()
-
 
         # print('----->', RecordData)
         # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
@@ -711,3 +706,128 @@ def define_count_measure(count: int, measure_list: list):
         measure.append(measure_list[i])
 
     return measure
+
+
+# //--------------------------------------------------------------------------------------------------------------
+# //
+# //--------------------------------------------------------------------------------------------------------------
+
+class GenerateGETAUTOREAD:
+    """Класс Генерации данных для запроса GETAUTOREAD """
+
+    RecordTypeId = ['ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy']
+
+    Count_timestamp = 1
+
+    MeterTable_tag = {}
+    Redefine_tag = {}
+    MeterId = 0
+    Serial = 0
+    DeviceIdx = 0
+    Timestamp = 0
+    GETAUTOREAD = {}
+
+    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1,
+                 RecordTypeId: list = ['ElMomentEnergy']):
+
+        self.RecordTypeId = RecordTypeId
+        self.Count_timestamp = 1
+        self.MeterId = 0
+        self.Serial = 0
+        self.DeviceIdx = 0
+        self.Timestamp = 0
+        self.MeterTable_tag = {}
+        self.Redefine_tag = {}
+        self.GETAUTOREAD = {}
+
+        # Итак - Теперь переопределяем данные
+        self.Count_timestamp = Count_timestamp
+
+        self.MeterTable_tag = MeterTable_tag
+        self.Redefine_tag = Redefine_tag
+
+        self.GETAUTOREAD = self._generate_data_for_GETAUTOREAD()
+
+    def _generate_Config(self):
+        """
+        Метод для генерации конфига
+        """
+        from Service.Generate.Generate_Config import GeneratorElectricConfig
+        # СНАЧАЛА - ГЕНЕРИРУЕМ КОНФИГ и МЕТЕР ДАТА
+        Config = GeneratorElectricConfig(MeterTable_tag=self.MeterTable_tag, Config_tag={})
+
+        RecordData = {}
+        RecordData.update(Config.MeterTable)
+
+        RecordData.update(Config.Config)
+        return RecordData
+
+    def _generate_ElectricEnergyValues(self):
+        """
+        Метод для генерации Энергии чо так , да вот так
+        """
+        # начала генерируем наш конфиг
+        RecordData_Config = self._generate_Config()
+
+        # Перезаписываем наши поля которые нам нужны
+        self.Serial = RecordData_Config.get('Serial')
+
+        # Теперь когда получиили конфиг можно сгенерировать Энергию. ШО уж там
+
+        from Service.Generate.Generate_ElectricEnergyValues import GeneratorElectricEnergyValues
+
+        ElectricEnergyValues_dict = {}
+        for i in range(len(self.RecordTypeId)):
+            ElectricEnergyValues = GeneratorElectricEnergyValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
+                                                                 RecordTypeId=self.RecordTypeId[i],
+                                                                 Redefine_tag={},
+                                                                 Count_timestamp=self.Count_timestamp
+                                                                 ).ElectricEnergyValues
+
+            ElectricEnergyValues_dict.update(ElectricEnergyValues)
+
+        # Теперь возвращаем в зад ЭТО
+
+        return ElectricEnergyValues_dict
+
+    def _generate_data_for_GETAUTOREAD(self):
+        """
+        Здесь генерируем наши данные для нашей команды
+        """
+        # сначала записываем все нужные данные в БД
+        RecordData = self._generate_ElectricEnergyValues()
+
+        # print('----->', RecordData)
+        # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
+        GETAUTOREAD = {}
+        for key in RecordData:
+            GETPOK_element_dict = {
+                'Id': RecordData[key].get('Id'),
+
+                'A+1': RecordData[key].get('A+1'),
+                'A-1': RecordData[key].get('A-1'),
+                'R+1': RecordData[key].get('R+1'),
+                'R-1': RecordData[key].get('R-1'),
+
+                'A+2': RecordData[key].get('A+2'),
+                'A-2': RecordData[key].get('A-2'),
+                'R+2': RecordData[key].get('R+2'),
+                'R-2': RecordData[key].get('R-2'),
+
+                'A+3': RecordData[key].get('A+3'),
+                'A-3': RecordData[key].get('A-3'),
+                'R+3': RecordData[key].get('R+3'),
+                'R-3': RecordData[key].get('R-3'),
+
+                'A+4': RecordData[key].get('A+4'),
+                'A-4': RecordData[key].get('A-4'),
+                'R+4': RecordData[key].get('R+4'),
+                'R-4': RecordData[key].get('R-4'),
+
+                'DeviceIdx': RecordData[key].get('DeviceIdx'),
+                'Timestamp': RecordData[key].get('Timestamp')
+            }
+
+            GETAUTOREAD[RecordData[key].get('Timestamp')] = GETPOK_element_dict
+
+        return GETAUTOREAD
