@@ -98,4 +98,4 @@ def command_GETMTRLOG(RecordTypeId: list =
 
 
 # -------------------------------------------------------------------------------------------------------------------
-command_GETMTRLOG(count_timestamp=56, RecordTypeId=['ElJrnlTimeCorr'])
+command_GETMTRLOG(count_timestamp=48, RecordTypeId=["ElJrnlPwr"])
