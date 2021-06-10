@@ -13,6 +13,8 @@ def parametrize(parametrize_dict: list):
     parametrs = []
     for i in parametrize_dict:
         line_parametrs = tuple(i.values())
+        if len(line_parametrs) == 1 :
+            line_parametrs = line_parametrs[0]
         parametrs.append(line_parametrs)
     return parametrs
 
@@ -245,14 +247,15 @@ parametrize_GETTESTS = [
 ]
 
 
-@pytest.mark.parametrize("NumTests", parametrize(parametrize_GETTESTS))
-def test_GETTESTS(NumTests):
+# @pytest.mark.parametrize("NumTests", parametrize(parametrize_GETTESTS))
+# def test_GETTESTS(NumTests):
+def test_GETTESTS():
     """
     Функция для прогона тестов для команды GETTESTS
 
     """
     from command_GETTESTS import command_GETTESTS
-    command_GETTESTS(NumTests=int(NumTests))
+    command_GETTESTS()
 
 
 # -------------------------------------------------------------------------------------------------------------------

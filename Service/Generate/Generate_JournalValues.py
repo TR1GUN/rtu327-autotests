@@ -88,12 +88,12 @@ class GeneratorJournalValues(GeneratorWithMeterData):
             }
 
         if self.RecordTypeId in ['ElJrnlLimUAMax', 'ElJrnlLimUAMin', 'ElJrnlLimUBMax', 'ElJrnlLimUBMin',
-                                'ElJrnlLimUCMax', 'ElJrnlLimUCMin', 'ElJrnlPwrC', 'ElJrnlPwrB', 'ElJrnlPwrA',
-                                "ElJrnlPwr", ]:
+                                'ElJrnlLimUCMax', 'ElJrnlLimUCMin',
+                                 ]:
             # Если у нас действительно этот тип значений , тогда что делаем - мы ставим либо 1 либо 0
             JournalValues_format_JSON['Event'] = 1
 
-        elif self.RecordTypeId in ['ElJrnlUnAyth', "ElJrnlTrfCorr", 'ElJrnlReset', 'ElJrnlTimeCorr']:
+        elif self.RecordTypeId in ['ElJrnlUnAyth', "ElJrnlTrfCorr", 'ElJrnlReset','ElJrnlOpen']:
             JournalValues_format_JSON['Event'] = 0
 
         else:

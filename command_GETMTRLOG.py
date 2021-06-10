@@ -86,8 +86,8 @@ def command_GETMTRLOG(RecordTypeId: list =
     Answer_expected['answer_data'] = answer_data_expected
 
     # ------------------->
-    print(Answer_expected['answer_data'])
-    print(Answer['answer_data'])
+    print('Answer_expected',Answer_expected['answer_data'])
+    print('Answer',Answer['answer_data'])
     # ------------------->
 
     # ТЕПЕРЬ СРАВНИВАЕМ НАШИ ДАННЫЕ - ЦЕ ВАЖНО
@@ -98,4 +98,5 @@ def command_GETMTRLOG(RecordTypeId: list =
 
 
 # -------------------------------------------------------------------------------------------------------------------
-command_GETMTRLOG(count_timestamp=48, RecordTypeId=["ElJrnlPwr"])
+command_GETMTRLOG(count_timestamp=2, RecordTypeId=["ElJrnlPwr", "ElJrnlTimeCorr", "ElJrnlReset", "ElJrnlOpen",
+                       "ElJrnlPwrA", "ElJrnlPwrB", "ElJrnlPwrC"])

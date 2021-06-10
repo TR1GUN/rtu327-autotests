@@ -186,6 +186,21 @@ def decode_data_to_GETSHPRM(answer_data):
     return GETSHPRM
 
 
+def form_data_to_GETSHPRM(data):
+    answer_data = \
+        {
+            'Vers': data.get('Vers'),
+            'Typ_Sh': 100,
+            'Kt': data.get('Kt'),
+            'Kn': data.get('Kn'),
+            'M': data.get('M'),
+            'Interv': data.get('Interv'),
+            'Syb_Rnk': data.get('Syb_Rnk'),
+            'N_Ob': data.get('N_Ob'),
+            'N_Fid': data.get('N_Fid'),
+        }
+
+    return answer_data
 # Вспомомгательная функция для проведения соответсвия МЕЖДУ ИНДЕКСАМИ RTU и нашими индексами
 def MeterId_from_USPD_to_RTU(MeterId):
     """
@@ -270,6 +285,8 @@ def assert_answer_data(answer_data: dict, answer_data_expected: dict):
     Эта функцуия нужна для проверки значений - предпологаемого ответа и ответа реального
 
     """
+
+    import math
     error = []
     # перебираем по элементам ответа предпологаемый ответ
     for filed in answer_data_expected:
@@ -282,7 +299,11 @@ def assert_answer_data(answer_data: dict, answer_data_expected: dict):
 
             epsilon = 5.96e-08
             # print(value_answer_data_expected - value_answer_data)
-            if abs(value_answer_data_expected - value_answer_data) > epsilon:
+
+
+            # if abs(value_answer_data_expected - value_answer_data) > epsilon:
+
+            if math.isclose(value_answer_data_expected, value_answer_data, rel_tol=epsilon) is False:
                 error.append({
                     "Не верное значение поля ": str(filed),
                     'Значение что ожидали в ответе': value_answer_data_expected,
@@ -297,6 +318,8 @@ def assert_answer_data(answer_data: dict, answer_data_expected: dict):
                     'Значение что получили': value_answer_data,
                 })
         # ЕСЛИ У НАС СЛОВАРЬ - ВЫЗЫВАЕМ ФУНКЦИЮ САМУ ИЗ СЕБЯ
+
+
         elif type(value_answer_data_expected) == dict:
             assert_answer_data(answer_data=value_answer_data, answer_data_expected=value_answer_data_expected)
         else:
@@ -1304,38 +1327,37 @@ def define_evType_by_RTU_from_measure_Id_event(measure_Id, event):
         {
             # ElJrnlPwr - журнал управление питанием электросчетчика
             17: {
-                1: 0,
-                # 0 : 1
+                1: 1,
+                0: 0
             },
             # ElJrnlTimeCorr - журнал коррекция времени электросчетчика
             18: {
-                0: 3,
-                # 2: 1
+                0: 2,
+                1: 3
             },
             # ElJrnlReset - журнал сброс показаний электросчетчика
             19: {
                 0: 6,
-                # 2: 1
+
             },
             # ElJrnlOpen - журнал открытие крышки электросчетчика
             23: {
-                1: 9,
                 0: 9
             },
             # ElJrnlPwrA - журнал управление фазой А электросчетчика
             25: {
                 1: 208,
-                # 2: 1
+                0: 209
             },
             # ElJrnlPwrB  - журнал управление фазой В электросчетчика
             26: {
                 1: 210,
-                # 2: 1
+                0: 211
             },
             # ElJrnlPwrC - журнал управление фазой С электросчетчика
             27: {
                 1: 212,
-                # 2: 1
+                0: 213
             },
         }
 
@@ -1401,14 +1423,14 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     from copy import deepcopy
     import struct
 
-    print('ДЛИНА', len(answer_data))
+    # print('ДЛИНА', len(answer_data))
     # Nsh Номер счетчика STR<10>
     Nsh = b''
-    for i in range(5):
+    for i in range(10):
         Nsh = bytes.fromhex(answer_data[i]) + Nsh
     Nsh = Nsh.decode()
-    answer_data = answer_data[5:]
-    print('Nsh', Nsh)
+    answer_data = answer_data[10:]
+    # print('Nsh', Nsh)
 
     # Dd_mm_yyyy Время авточтения TIME_T
     Dd_mm_yyyy = b''
@@ -1416,8 +1438,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
         Dd_mm_yyyy = Dd_mm_yyyy + bytes.fromhex(answer_data[i])
     answer_data = answer_data[4:]
     Dd_mm_yyyy = int.from_bytes(Dd_mm_yyyy, byteorder='little')
-
-    print('Dd_mm_yyyy', Dd_mm_yyyy)
+    #
+    # print('Dd_mm_yyyy', Dd_mm_yyyy)
 
     # Akwh Показание тарифа 1 FLOAT8
     Akwh = ''
@@ -1426,8 +1448,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Akwh = struct.unpack('<d', bytes.fromhex(Akwh))
     answer_data = answer_data[8:]
     Akwh = extract_value_from_tuple(Akwh)
-
-    print('Akwh', Akwh)
+    #
+    # print('Akwh', Akwh)
 
     # Akw Максимум мощности тарифа 1 FLOAT8
     Akw = ''
@@ -1436,8 +1458,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Akw = struct.unpack('<d', bytes.fromhex(Akw))
     answer_data = answer_data[8:]
     Akw = extract_value_from_tuple(Akw)
-
-    print('Akw', Akw)
+    #
+    # print('Akw', Akw)
 
     # Atd Время максимума тарифа 1 TIME_T
     Atd = b''
@@ -1445,8 +1467,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
         Atd = Atd + bytes.fromhex(answer_data[i])
     answer_data = answer_data[4:]
     Atd = int.from_bytes(Atd, byteorder='little')
-
-    print('Atd', Atd)
+    #
+    # print('Atd', Atd)
 
     # Akwcum Куммулятивный максим тарифа 1 FLOAT8
     Akwcum = ''
@@ -1455,8 +1477,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Akwcum = struct.unpack('<d', bytes.fromhex(Akwcum))
     answer_data = answer_data[8:]
     Akwcum = extract_value_from_tuple(Akwcum)
-
-    print('Akwcum', Akwcum)
+    #
+    # print('Akwcum', Akwcum)
 
     # Akwc Совмещенный максимум тарифа 1 FLOAT8
     Akwc = ''
@@ -1465,8 +1487,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Akwc = struct.unpack('<d', bytes.fromhex(Akwc))
     answer_data = answer_data[8:]
     Akwc = extract_value_from_tuple(Akwc)
-
-    print('Akwc', Akwc)
+    #
+    # print('Akwc', Akwc)
 
     # Bkwh Показание тарифа 2 FLOAT8
     Bkwh = ''
@@ -1475,8 +1497,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Bkwh = struct.unpack('<d', bytes.fromhex(Bkwh))
     answer_data = answer_data[8:]
     Bkwh = extract_value_from_tuple(Bkwh)
-
-    print('Bkwh', Bkwh)
+    #
+    # print('Bkwh', Bkwh)
 
     # Bkw Максимум мощности тарифа 2 FLOAT8
     Bkw = ''
@@ -1485,8 +1507,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Bkw = struct.unpack('<d', bytes.fromhex(Bkw))
     answer_data = answer_data[8:]
     Bkw = extract_value_from_tuple(Bkw)
-
-    print('Bkw', Bkw)
+    #
+    # print('Bkw', Bkw)
 
     # Btd Время максимума тарифа 2 TIME_T
     Btd = b''
@@ -1494,8 +1516,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
         Btd = Btd + bytes.fromhex(answer_data[i])
     answer_data = answer_data[4:]
     Btd = int.from_bytes(Btd, byteorder='little')
-
-    print('Btd', Btd)
+    #
+    # print('Btd', Btd)
 
     # Bkwcum Куммулятивный максим тарифа 2 FLOAT8
     Bkwcum = ''
@@ -1504,8 +1526,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Bkwcum = struct.unpack('<d', bytes.fromhex(Bkwcum))
     answer_data = answer_data[8:]
     Bkwcum = extract_value_from_tuple(Bkwcum)
-
-    print('Bkwcum', Bkwcum)
+    #
+    # print('Bkwcum', Bkwcum)
 
     # Bkwc Совмещенный максимум тарифа 2 FLOAT8
     Bkwc = ''
@@ -1514,8 +1536,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Bkwc = struct.unpack('<d', bytes.fromhex(Bkwc))
     answer_data = answer_data[8:]
     Bkwc = extract_value_from_tuple(Bkwc)
-
-    print('Bkwc', Bkwc)
+    #
+    # print('Bkwc', Bkwc)
 
     # Ckwh Показание тарифа 3 FLOAT8
     Ckwh = ''
@@ -1524,8 +1546,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Ckwh = struct.unpack('<d', bytes.fromhex(Ckwh))
     answer_data = answer_data[8:]
     Ckwh = extract_value_from_tuple(Ckwh)
-
-    print('Ckwh', Ckwh)
+    #
+    # print('Ckwh', Ckwh)
 
     # Ckw Максимум мощности тарифа 3 FLOAT8
     Ckw = ''
@@ -1534,8 +1556,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Ckw = struct.unpack('<d', bytes.fromhex(Ckw))
     answer_data = answer_data[8:]
     Ckw = extract_value_from_tuple(Ckw)
-
-    print('Ckw', Ckw)
+    #
+    # print('Ckw', Ckw)
 
     # Ctd Время максимума тарифа 3 TIME_T
     Ctd = b''
@@ -1543,8 +1565,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
         Ctd = Ctd + bytes.fromhex(answer_data[i])
     answer_data = answer_data[4:]
     Ctd = int.from_bytes(Ctd, byteorder='little')
-
-    print('Ctd', Ctd)
+    #
+    # print('Ctd', Ctd)
 
     # Ckwcum Куммулятивный максим тарифа 3 FLOAT8
     Ckwcum = ''
@@ -1554,7 +1576,7 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     answer_data = answer_data[8:]
     Ckwcum = extract_value_from_tuple(Ckwcum)
 
-    print('Ckwcum', Ckwcum)
+    # print('Ckwcum', Ckwcum)
 
     # Ckwc Совмещенный максимум тарифа 3 FLOAT8
     Ckwc = ''
@@ -1563,8 +1585,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Ckwc = struct.unpack('<d', bytes.fromhex(Ckwc))
     answer_data = answer_data[8:]
     Ckwc = extract_value_from_tuple(Ckwc)
-
-    print('Ckwc', Ckwc)
+    #
+    # print('Ckwc', Ckwc)
 
     # dkwh Показание тарифа 4 FLOAT8
     dkwh = ''
@@ -1573,8 +1595,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     dkwh = struct.unpack('<d', bytes.fromhex(dkwh))
     answer_data = answer_data[8:]
     dkwh = extract_value_from_tuple(dkwh)
-
-    print('dkwh', dkwh)
+    #
+    # print('dkwh', dkwh)
 
     # dkw Максимум мощности тарифа 4 FLOAT8
     dkw = ''
@@ -1583,8 +1605,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     dkw = struct.unpack('<d', bytes.fromhex(dkw))
     answer_data = answer_data[8:]
     dkw = extract_value_from_tuple(dkw)
-
-    print('dkw', dkw)
+    #
+    # print('dkw', dkw)
 
     # dtd Время максимума тарифа 4 TIME_T
     dtd = b''
@@ -1593,7 +1615,7 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     answer_data = answer_data[4:]
     dtd = int.from_bytes(dtd, byteorder='little')
 
-    print('dtd', dtd)
+    # print('dtd', dtd)
 
     # dkwcum Куммулятивный максим тарифа 4 FLOAT8
     dkwcum = ''
@@ -1602,8 +1624,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     dkwcum = struct.unpack('<d', bytes.fromhex(dkwcum))
     answer_data = answer_data[8:]
     dkwcum = extract_value_from_tuple(dkwcum)
-
-    print('dkwcum', dkwcum)
+    #
+    # print('dkwcum', dkwcum)
 
     # dkwc Совмещенный максимум тарифа 4 FLOAT8
     dkwc = ''
@@ -1613,7 +1635,7 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     answer_data = answer_data[8:]
     dkwc = extract_value_from_tuple(dkwc)
 
-    print('dkwc', dkwc)
+    # print('dkwc', dkwc)
 
     # Kwha Общее показание FLOAT8
     Kwha = ''
@@ -1623,7 +1645,7 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     answer_data = answer_data[8:]
     Kwha = extract_value_from_tuple(Kwha)
 
-    print('Kwha', Kwha)
+    # print('Kwha', Kwha)
 
     # Q1 Показание квадранта 1 FLOAT8
     Q1 = ''
@@ -1632,8 +1654,8 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     Q1 = struct.unpack('<d', bytes.fromhex(Q1))
     answer_data = answer_data[8:]
     Q1 = extract_value_from_tuple(Q1)
-
-    print('Q1', Q1)
+    #
+    # print('Q1', Q1)
 
     # Q2 Показание квадранта 2 FLOAT8
     Q2 = ''
@@ -1643,7 +1665,7 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     answer_data = answer_data[8:]
     Q2 = extract_value_from_tuple(Q2)
 
-    print('Q2', Q2)
+    # print('Q2', Q2)
 
     # Q3 Показание квадранта 3 FLOAT8
     Q3 = ''
@@ -1653,7 +1675,7 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     answer_data = answer_data[8:]
     Q3 = extract_value_from_tuple(Q3)
 
-    print('Q3', Q3)
+    # print('Q3', Q3)
 
     # Q4 Показание квадранта 4 FLOAT8
     Q4 = ''
@@ -1663,7 +1685,7 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
     answer_data = answer_data[8:]
     Q4 = extract_value_from_tuple(Q4)
 
-    print('Q4', Q4)
+    # print('Q4', Q4)
 
     # ТЕПЕРЬ ВСЕ ЭТО СОБИРАЕМ В ЕДИНЫЙ СЛОВАРЬ
     answer_data_decode = \
@@ -1724,8 +1746,6 @@ def decode_data_to_GETAUTOREAD(answer_data, ):
             'Q4': Q4,
 
         }
-    print(answer_data)
-    print(answer_data_decode)
 
     return answer_data_decode
 
@@ -1737,7 +1757,7 @@ def form_data_to_GETAUTOREAD(answer_data, Serial, Kanal):
     # Получаем наши данные , и формируем нащ словарь
     # ПОЛУЧАЕМ НУЖНЫЙ ТАЙМШТАМП
 
-    # теперь смотрим КАКОЙ КАНАЛ МЫ ВЫбрали
+    # теперь смотрим КАКОЙ КАНАЛ МЫ Выбрали
     kanal_dict = \
         {
             1: 'A+',
@@ -1746,12 +1766,28 @@ def form_data_to_GETAUTOREAD(answer_data, Serial, Kanal):
             4: 'R-',
         }
 
-    # ТЕПЕРЬ Получаем значения ТАРИФОВ
+    Akwh = str(kanal_dict[int(Kanal)]) + '1'
+    Bkwh = str(kanal_dict[int(Kanal)]) + '2'
+    Ckwh = str(kanal_dict[int(Kanal)]) + '3'
+    dkwh = str(kanal_dict[int(Kanal)]) + '4'
+
     value_tarrif = {
-        'Akwh': answer_data.get(str(kanal_dict.get(Kanal)) + str(1)) / 1000,
-        'Bkwh': answer_data.get(str(kanal_dict.get(Kanal)) + str(2)) / 1000,
-        'Ckwh': answer_data.get(str(kanal_dict.get(Kanal)) + str(3)) / 1000,
-        'dkwh': answer_data.get(str(kanal_dict.get(Kanal)) + str(4)) / 1000,
+        'Akwh': float(
+            answer_data[Akwh]
+
+        ) / 1000.0,
+        'Bkwh': float(
+            answer_data[Bkwh]
+
+        ) / 1000.0,
+        'Ckwh': float(
+            answer_data[Ckwh]
+
+        ) / 1000.0,
+        'dkwh': float(
+            answer_data[dkwh]
+
+        ) / 1000.0,
     }
 
     # ТЕПЕРЬ ВСЕ ЭТО СОБИРАЕМ В ЕДИНЫЙ СЛОВАРЬ

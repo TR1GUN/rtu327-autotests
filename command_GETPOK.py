@@ -95,8 +95,8 @@ def command_GETPOK(Ap: bool = True, Am: bool = True, Rp: bool = True, Rm: bool =
     Answer_expected['answer_data'] = answer_data_expected
 
     # ------------------->
-    print(Answer_expected['answer_data'])
-    print(Answer['answer_data'])
+    print('Answer_expected',Answer_expected['answer_data'])
+    print('Answer',Answer['answer_data'])
     # ------------------->
 
     # ТЕПЕРЬ СРАВНИВАЕМ НАШИ ДАННЫЕ - ЦЕ ВАЖНО

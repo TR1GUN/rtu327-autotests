@@ -11,7 +11,7 @@ from work_with_device import print_bytes
 #
 #               Получение зафиксированных показаний счетчика ( показаний авточтения)
 # -------------------------------------------------------------------------------------------------------------------
-def command_GETAUTOREAD(Kanal: str = 'Ap', ):
+def command_GETAUTOREAD(Kanal: str = 'Ap'):
     """
     Получение Профиля мощности
 
@@ -25,9 +25,9 @@ def command_GETAUTOREAD(Kanal: str = 'Ap', ):
     # Определяем тип команды
     type_command = 'GETAUTOREAD'
     # 'ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy'
-    RecordTypeId: list = ['ElMomentEnergy']
-    count_timestamp: int = 1
-    Kk = count_timestamp
+    RecordTypeId: list = ['ElDayEnergy', 'ElMonthEnergy']
+    count_timestamp: int = 3
+    Kk = 1
 
     # assert ('ElMomentEnergy' in RecordTypeId) or ('ElDayEnergy' in RecordTypeId) or ('ElMonthEnergy' in RecordTypeId), \
     #     'НЕ ВЕРНО ЗАДАН ТИП ДАННЫХ '
@@ -36,35 +36,51 @@ def command_GETAUTOREAD(Kanal: str = 'Ap', ):
 
     ElectricEnergyValues = GenerateGETAUTOREAD(Count_timestamp=count_timestamp, RecordTypeId=RecordTypeId)
     # получаем данные
-    Generate_data_dict = deepcopy(ElectricEnergyValues.GETAUTOREAD)
+
+
+    Generate_data_dict_full = deepcopy(ElectricEnergyValues.GETAUTOREAD)
+    print(Generate_data_dict_full)
+
     Serial = deepcopy(ElectricEnergyValues.Serial)
 
     # Формируем команду
     from Service.Service_function import get_form_NSH, decode_data_to_GETAUTOREAD, form_data_to_GETAUTOREAD, \
         code_data_to_GETAUTOREAD
 
+    # выбираем все типы данных которые у нас есть
+    data_type = set()
+    for Idx in Generate_data_dict_full:
+        data_type.add(Generate_data_dict_full[Idx].get('RecordTypeId'))
+
+    # Теперь выбираем этот тип данных
+    data_type = list(data_type)
+    from random import randint
+    RecordTypeId = data_type[randint(0, (len(data_type)- 1))]
+    # и вытаскиваем ТОЛЬКО ЭТОТ ТИП ДАННЫХ
+    Generate_data_dict = {}
+    for Idx in Generate_data_dict_full:
+        if Generate_data_dict_full[Idx].get('RecordTypeId') == RecordTypeId :
+            Generate_data_dict.update({Generate_data_dict_full[Idx].get('Timestamp') : Generate_data_dict_full[Idx]})
+
     # ---------- ФОРМИРУЕМ ДАННЫЕ ДЛЯ КОМАНДЫ ЗАПРОСА ----------
     # БЕРЕМ ТАЙМШТАМП
     Timestamp = []
     for i in Generate_data_dict:
         Timestamp.append(Generate_data_dict[i].get('Timestamp'))
+    # print('ЧТО ЕСТЬ ',Timestamp)
+    Timestamp.remove(max(Timestamp))
+    Timestamp.remove(min(Timestamp))
+    Timestamp = Timestamp.pop()
 
-    Timestamp = max(Timestamp)
 
-    # import time
-    # from datetime import datetime
-    # Timestamp = datetime.now()
-    #
-    # # Timestamp =int(time.mktime(Timestamp.timetuple())) - 10815
-    # # Timestamp = 1621814399 - 10800
-    # Timestamp = 1618693199
+    # print('Данные ',Generate_data_dict.get(Timestamp))
     print('Timestamp --->', Timestamp)
 
     # Serial = '39902651'
     print('Serial', Serial)
     # NSH Номер счетчика BCD5
     NSH = get_form_NSH(Serial=Serial)
-    print_bytes(string='NSH ===>', byte_string=NSH)
+    # print_bytes(string='NSH ===>', byte_string=NSH)
     # Формируем Признаки заказываемых измерений.
     Kanal_dict = \
         {
@@ -73,7 +89,6 @@ def command_GETAUTOREAD(Kanal: str = 'Ap', ):
             'Am': 2,
             'Ap': 1,
         }
-
     if type(Kanal) != int:
         Kanal = Kanal_dict.get(Kanal)
 
@@ -82,15 +97,15 @@ def command_GETAUTOREAD(Kanal: str = 'Ap', ):
                                                     Serial=Serial,
                                                     Kanal=Kanal)
 
-    print(answer_data_expected)
+
     # Формируем байтовую строку нагрузочных байтов
     data = code_data_to_GETAUTOREAD(answer_data_expected)
     # Формируем предполагаемый ответ
     Answer_expected = Constructor_Answer(data)
     # Время запроса показаний счетчика TIME_T
-    Tday = int(Timestamp).to_bytes(length=4, byteorder='little')
+    Tday = Timestamp - 1
+    Tday = int(Tday).to_bytes(length=4, byteorder='little')
 
-    print(Kanal)
     # # Признаки заказываемых измерений. INT8
 
     Kanal = int(Kanal).to_bytes(length=1, byteorder='little', signed=True)
@@ -106,16 +121,16 @@ def command_GETAUTOREAD(Kanal: str = 'Ap', ):
     Answer = Setup(command=command).answer
 
     # ---------- ТЕПЕРЬ ДЕКОДИРУЕМ ДАННЫЕ ОТВЕТА ----------
-    print(Answer)
+    # print(Answer)
     # # ДЕКОДИРУЕМ ПОЛЕ ДАТА
     Answer['answer_data'] = decode_data_to_GETAUTOREAD(answer_data=Answer['answer_data'], )
     # БЕРЕМ ДАННЫЕ В НОРМАЛЬНОМ ВИДЕ
     Answer_expected['answer_data'] = answer_data_expected
 
     # ------------------->
-    print(Answer_expected['answer_data'])
-    print(Answer)
-    print(Answer['answer_data'])
+    print('Answer_expected',Answer_expected['answer_data'])
+    # print(Answer)
+    print('Answer',Answer['answer_data'])
     # ------------------->
 
     # ТЕПЕРЬ СРАВНИВАЕМ НАШИ ДАННЫЕ - ЦЕ ВАЖНО
@@ -128,6 +143,6 @@ def command_GETAUTOREAD(Kanal: str = 'Ap', ):
 # -------------------------------------------------------------------------------------------------------------------
 #                            Запрос замеров параметров электросети.
 # -------------------------------------------------------------------------------------------------------------------
-
-
-command_GETAUTOREAD(Kanal='Ap')
+#
+#
+command_GETAUTOREAD(Kanal='Am')

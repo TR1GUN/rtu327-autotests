@@ -56,7 +56,7 @@ def command_GETVERSION():
     # ## Ожидаемый ответ железки -- ['0x30','0x32','0x30','0x31','0x30','0x32']
     # self.assertEqual(['30', '32', '30', '31', '30', '32'], result_answer_map['answer_data'])
 
-
+# command_GETVERSION()
 # //-----------------------------------------------------------------------------------------------------------------
 #                                         GETTIME
 #                               # Тест на команду запроса времени
@@ -111,7 +111,7 @@ def command_GETTIME():
                                                         str(datetime.fromtimestamp(unix_time_sys))
 
 
-# test_get_time()
+# command_GETTIME()
 
 
 # //-----------------------------------------------------------------------------------------------------------------
@@ -149,6 +149,8 @@ def command_SETTIME(time_correct: int = 60):
     # ПОЛУЧАЕМ ВРЕМЯ ДО изменений
     unix_time_before = get_sys_time()
     # Запускаем
+    # command = b'\x02\x00\r\x01\x00\x00\x00\x00\x00\x00\x00\x73\x59\x00\x00\xe5x'
+
     answer = Setup(command=command).answer
 
     # Генерируем предпологаемый ответ
@@ -178,8 +180,8 @@ def command_SETTIME(time_correct: int = 60):
                                                            '\nОжидаемое время после коррекции\n' + \
                                                            str(datetime.fromtimestamp(unix_time_expected))
 
-
-# command_SETTIME(601)
+#
+command_SETTIME(600)
 
 
 # //-----------------------------------------------------------------------------------------------------------------
@@ -243,4 +245,4 @@ def command_GETLOG():
     total_assert(answer_uspd=answer, answer_normal=normal_answer)
 
 # ---------------------------------------------------------------------------------------------------------------------
-command_GETLOG()
+# command_GETLOG()

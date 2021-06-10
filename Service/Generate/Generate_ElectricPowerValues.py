@@ -93,8 +93,8 @@ class GeneratorElectricPowerValues(GeneratorWithMeterData):
                 'Q+': float(3.0),
                 'P-': float(2.0),
                 'Q-': float(4.0),
-                'isPart': 1,
-                'isOvfl': 1,
+                'isPart': 0,
+                'isOvfl': 0,
                 'isSummer': 1,
             }
         # ТЕПЕРЬ ПЕРЕЗАПИСЫВАЕМ ЗНАЧЕНИЯ

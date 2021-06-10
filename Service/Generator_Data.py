@@ -823,11 +823,12 @@ class GenerateGETAUTOREAD:
                 'A-4': RecordData[key].get('A-4'),
                 'R+4': RecordData[key].get('R+4'),
                 'R-4': RecordData[key].get('R-4'),
-
+                'RecordTypeId': RecordData[key].get('RecordTypeId'),
                 'DeviceIdx': RecordData[key].get('DeviceIdx'),
                 'Timestamp': RecordData[key].get('Timestamp')
+
             }
 
-            GETAUTOREAD[RecordData[key].get('Timestamp')] = GETPOK_element_dict
+            GETAUTOREAD[RecordData[key].get('Id')] = GETPOK_element_dict
 
         return GETAUTOREAD

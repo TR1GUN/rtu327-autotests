@@ -10,30 +10,44 @@ from copy import deepcopy
 #
 #                   Запрос на передачу профиля расходов коммерческого интервала.
 # -------------------------------------------------------------------------------------------------------------------
-def command_GETTESTS(NumTests: int = 1):
+def command_GETTESTS():
     """
     Получение Профиля мощности?
     """
-    import struct
     # Определяем тип команды
     type_command = 'GETTESTS'
-
+    NumTests: int = 1
     # Первое что делаем - генерируем необходимые нам данные
     from Service.Generator_Data import GenerateGETTESTS
-
-    ElectricPowerValues = GenerateGETTESTS(Count_timestamp=NumTests)
+    # ГЕНЕРИРУЕМ 3 таймштампа
+    ElectricPowerValues = GenerateGETTESTS(Count_timestamp=3)
     # # получаем данные
-    Generate_data_GETLP_dict = deepcopy(ElectricPowerValues.GETTESTS)
+    Generate_data_dict = deepcopy(ElectricPowerValues.GETTESTS)
     Serial = deepcopy(ElectricPowerValues.Serial)
+    # ---------- ОТСИКАЕМ ЛИШНИЕ ДАННЫЕ  ----------
 
     # ---------- ФОРМИРУЕМ ДАННЫЕ ДЛЯ КОМАНДЫ ЗАПРОСА ----------
     from Service.Service_function import get_form_NSH, decode_data_to_GETTESTS, code_data_to_GETTESTS, \
         form_data_to_GETTESTS
     Timestamp_list = []
-    for i in Generate_data_GETLP_dict:
-        Timestamp_list.append(Generate_data_GETLP_dict[i].get('Timestamp'))
+    for i in Generate_data_dict:
+        Timestamp_list.append(Generate_data_dict[i].get('Timestamp'))
     print(Timestamp_list)
     Timestamp = min(Timestamp_list)
+    # ОТСИКАЕМ ЛИШНИЕ ДАННЫЕ
+    # БЕРЕМ ТАЙМШТАМП
+    Timestamp = []
+    for i in Generate_data_dict:
+        Timestamp.append(Generate_data_dict[i].get('Timestamp'))
+    # print('ЧТО ЕСТЬ ',Timestamp)
+    Timestamp.remove(max(Timestamp))
+    Timestamp.remove(min(Timestamp))
+    Timestamp = Timestamp.pop()
+    # и вытаскиваем данные
+
+    Generate_data_dict = Generate_data_dict.get(Timestamp)
+
+
     print('-->Timestamp--->', Timestamp)
     # NSH Номер счетчика BCD5
     NSH = get_form_NSH(Serial=Serial)
@@ -51,7 +65,7 @@ def command_GETTESTS(NumTests: int = 1):
     command = FormCommand(type_command=type_command, data=data_request).command
 
     # ---------- ФОРМИРУЕМ ПРЕДПОЛАГАЕМЫЙ ОТВЕТ ----------
-    answer_data_expected = form_data_to_GETTESTS(answer_data=Generate_data_GETLP_dict)
+    answer_data_expected = form_data_to_GETTESTS(answer_data={Timestamp:Generate_data_dict})
 
     # Формируем байтовую строку нагрузочных байтов
     data = code_data_to_GETTESTS(answer_data=answer_data_expected)
@@ -73,7 +87,7 @@ def command_GETTESTS(NumTests: int = 1):
 
     # ------------------->
     print('Answer_expected ==>',Answer_expected['answer_data'])
-    print('Answer  ==>',Answer['answer_data'])
+    print('Answer          ==>',Answer['answer_data'])
     # ------------------->
     # ТЕПЕРЬ СРАВНИВАЕМ НАШИ ДАННЫЕ - ЦЕ ВАЖНО
     assert_answer_data(answer_data_expected=Answer_expected['answer_data'], answer_data=Answer['answer_data'])
@@ -85,4 +99,4 @@ def command_GETTESTS(NumTests: int = 1):
 # -------------------------------------------------------------------------------------------------------------------
 #                            Запрос замеров параметров электросети.
 # -------------------------------------------------------------------------------------------------------------------
-# command_GETTESTS(NumTests=2)
+command_GETTESTS()

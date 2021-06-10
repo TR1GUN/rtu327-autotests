@@ -17,7 +17,7 @@ def command_GETLP(Qp: bool = True, Qm: bool = True, Pp: bool = True, Pm: bool = 
     # Определяем тип команды
     type_command = 'GETLP'
 
-    cTime = 60
+    cTime = 30
     # Первое что делаем - генерируем необходимые нам данные
     from Service.Generator_Data import GenerateGETLP
 
@@ -53,10 +53,10 @@ def command_GETLP(Qp: bool = True, Qm: bool = True, Pp: bool = True, Pm: bool = 
 
     # ---------- ФОРМИРУЕМ ПРЕДПОЛАГАЕМЫЙ ОТВЕТ ----------
     answer_data_expected = form_data_to_GETLP(answer_data=Generate_data_GETLP_dict,
-                                              Kanal= {"Qp": Qp, "Qm": Qm, "Pm": Pm, "Pp": Pp, })
+                                              Kanal={"Qp": Qp, "Qm": Qm, "Pm": Pm, "Pp": Pp, })
 
     # Формируем байтовую строку нагрузочных байтов
-    data = code_data_to_GETLP(answer_data=answer_data_expected ,
+    data = code_data_to_GETLP(answer_data=answer_data_expected,
                               Kanal={"Qp": Qp, "Qm": Qm, "Pm": Pm, "Pp": Pp, },
                               cTime=cTime)
     # Формируем предполагаемый ответ
@@ -76,8 +76,8 @@ def command_GETLP(Qp: bool = True, Qm: bool = True, Pp: bool = True, Pm: bool = 
     # БЕРЕМ ДАННЫЕ В НОРМАЛЬНОМ ВИДЕ
     Answer_expected['answer_data'] = answer_data_expected
     # ------------------->
-    print(Answer_expected['answer_data'])
-    print(Answer['answer_data'])
+    print('Answer_expected',Answer_expected['answer_data'])
+    print('Answer',Answer['answer_data'])
     # ------------------->
     # ТЕПЕРЬ СРАВНИВАЕМ НАШИ ДАННЫЕ - ЦЕ ВАЖНО
     assert_answer_data(answer_data_expected=Answer_expected['answer_data'], answer_data=Answer['answer_data'])
@@ -88,5 +88,5 @@ def command_GETLP(Qp: bool = True, Qm: bool = True, Pp: bool = True, Pm: bool = 
 # -------------------------------------------------------------------------------------------------------------------
 #                            Запрос замеров параметров электросети.
 # -------------------------------------------------------------------------------------------------------------------
-command_GETLP(Kk=10, Qp=True, Qm=True, Pm=True, Pp=True)
+command_GETLP(Kk=50, Qp=False, Qm=True, Pm=True, Pp=True)
 

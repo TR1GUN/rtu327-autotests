@@ -24,7 +24,7 @@ class Connect:
     def _setup(self):
         # Создаем сокет
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(20)
+        sock.settimeout(10)
         # Подключаемся по нужному адресу
 
         # print(address)
@@ -40,8 +40,9 @@ class Connect:
         # Успд не вседа отвечает сразу #Работает ?
         answer = {}
         # //----------------------------------------------------------------------------
+        # sock.sendall(self.data)
+        # self.data = self.data[:-]
         sock.sendall(self.data)
-
         while True:
             try:
                 buffer = bytes
@@ -51,9 +52,9 @@ class Connect:
                 # print('buffer', buffer)
                 answer_bytes.append(buffer)
             except:
-
                 break
-
+        # answer_bytes = sock.recv(1)
+        print(answer_bytes)
         # //----------------------------------------------------------------------------
         #         for i in range(3):
         #             buffer = sock.recv(1)

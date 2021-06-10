@@ -26,12 +26,13 @@ def command_GETSHPRM():
     Config = GeneratorDataConfig()
     # получаем данные
 
-    data_SHPRM_dict = deepcopy(Config.GETSHPRM)
     Serial = deepcopy(Config.Serial)
 
-    from Service.Service_function import get_form_NSH, decode_data_to_GETSHPRM, code_data_to_GETSHPRM
+    from Service.Service_function import get_form_NSH, decode_data_to_GETSHPRM, code_data_to_GETSHPRM , form_data_to_GETSHPRM
 
     # Формируем предполагаемый ответ
+    data_SHPRM_dict = form_data_to_GETSHPRM(deepcopy(Config.GETSHPRM))
+
     data = code_data_to_GETSHPRM(data_SHPRM_dict=data_SHPRM_dict)
     Answer_expected = Constructor_Answer(data)
 
@@ -62,5 +63,5 @@ def command_GETSHPRM():
     # ТЕПЕРЬ ПРОВОДИМ ТОТАЛЬНОЕ СРАВНИВАНИЕ
     total_assert(answer_uspd=Answer, answer_normal=Answer_expected)
 
-
-# test_GETSHPRM()
+# -------------------------------------------------------------------------------------------------------------------
+command_GETSHPRM()
