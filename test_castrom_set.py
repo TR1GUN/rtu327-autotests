@@ -59,18 +59,18 @@ parametrize_SETTIME = \
         {
             'time_correct': 100,
         },
-        {
-            'time_correct': 600,
-        },
-        {
-            'time_correct': -600,
-        },
-        {
-            'time_correct': 601,
-        },
-        {
-            'time_correct': -601,
-        },
+        # {
+        #     'time_correct': 600,
+        # },
+        # {
+        #     'time_correct': -600,
+        # },
+        # {
+        #     'time_correct': 601,
+        # },
+        # {
+        #     'time_correct': -601,
+        # },
     ]
 
 

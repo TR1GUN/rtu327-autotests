@@ -98,5 +98,7 @@ def command_GETMTRLOG(RecordTypeId: list =
 
 
 # -------------------------------------------------------------------------------------------------------------------
-command_GETMTRLOG(count_timestamp=2, RecordTypeId=["ElJrnlPwr", "ElJrnlTimeCorr", "ElJrnlReset", "ElJrnlOpen",
-                       "ElJrnlPwrA", "ElJrnlPwrB", "ElJrnlPwrC"])
+#                            Запуск тестов - Если идет прогон по Pytest - Закоментировать
+# -------------------------------------------------------------------------------------------------------------------
+# command_GETMTRLOG(count_timestamp=2, RecordTypeId=["ElJrnlPwr", "ElJrnlTimeCorr", "ElJrnlReset", "ElJrnlOpen",
+#                        "ElJrnlPwrA", "ElJrnlPwrB", "ElJrnlPwrC"])

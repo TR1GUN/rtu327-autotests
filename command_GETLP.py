@@ -86,7 +86,7 @@ def command_GETLP(Qp: bool = True, Qm: bool = True, Pp: bool = True, Pm: bool = 
     total_assert(answer_uspd=Answer, answer_normal=Answer_expected)
 
 # -------------------------------------------------------------------------------------------------------------------
-#                            Запрос замеров параметров электросети.
+#                            Запуск тестов - Если идет прогон по Pytest - Закоментировать
 # -------------------------------------------------------------------------------------------------------------------
-command_GETLP(Kk=50, Qp=False, Qm=True, Pm=True, Pp=True)
+# command_GETLP(Kk=50, Qp=False, Qm=True, Pm=True, Pp=True)
 
