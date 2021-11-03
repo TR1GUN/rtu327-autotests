@@ -15,15 +15,17 @@ class ConnectSSH:
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         # Берем настройки подключения
-        from Service.Config_Parser import user_login, user_password, addres_ssh ,ip_address
+        from GenerateMeterData import user_login, user_password, IP_address ,IP_port
         # Делаем подкючение к нужному серверу
         # print('user_login', user_login, type(user_login))
         # print('user_password', user_password, type(user_password))
         # print('addres_ssh', addres_ssh, type(addres_ssh))
         # Конектимся
 
-        self.client.connect(hostname=str(ip_address), username=str(user_login), password=str(user_password),
-                            look_for_keys=False, allow_agent=False, )
+        self.client.connect(hostname=str(IP_address), port=int(IP_port),
+                                username=str(user_login), password=str(user_password),
+                                look_for_keys=False, allow_agent=False, )
+
 
     def Exec_command_return_result(self, cmd):
 

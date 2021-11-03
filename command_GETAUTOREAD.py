@@ -42,6 +42,11 @@ def command_GETAUTOREAD(Kanal: str = 'Ap'):
     print(Generate_data_dict_full)
 
     Serial = deepcopy(ElectricEnergyValues.Serial)
+    # Generate_data_SHPRM_dict = {1634850000: {'Id': 1, 'Ap': 410.083, 'Am': 953.153, 'Rp': 333.235, 'Rm': 848.687, 'DeviceIdx': 1, 'Timestamp': 1634850000},
+    #                             # 1634936400: {'Id': 2, 'Ap': 410.083, 'Am': 953.153, 'Rp': 333.235, 'Rm': 848.687, 'DeviceIdx': 1, 'Timestamp': 1634936400},
+    #                             1635022800: {'Id': 3, 'Ap': 410.083, 'Am': 953.153, 'Rp': 333.235, 'Rm': 848.687, 'DeviceIdx': 1, 'Timestamp': 1635022800},
+    #                             }
+    # Serial = '0110188597'
 
     # Формируем команду
     from Service.Service_function import get_form_NSH, decode_data_to_GETAUTOREAD, form_data_to_GETAUTOREAD, \
@@ -143,6 +148,6 @@ def command_GETAUTOREAD(Kanal: str = 'Ap'):
 # -------------------------------------------------------------------------------------------------------------------
 #                            Запуск тестов - Если идет прогон по Pytest - Закоментировать
 # -------------------------------------------------------------------------------------------------------------------
-#
-#
-# command_GETAUTOREAD(Kanal='Am')
+
+
+command_GETAUTOREAD()

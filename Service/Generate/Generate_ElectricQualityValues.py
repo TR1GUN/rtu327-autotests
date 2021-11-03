@@ -65,37 +65,69 @@ class GeneratorElectricQualityValues(GeneratorWithMeterData):
         # генерируем сначала в формате JSON
         ElectricQualityValues_format_JSON = \
             {
-                'UA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'UB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'UC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                #//----
-                'IA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'IB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'IC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'UA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'UB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'UC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # #//----
+                # 'IA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'IB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'IC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # # //----
+                # 'PS': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'PA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'PB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'PC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # # //----
+                # 'QS': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'QA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'QB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'QC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # # //----
+                # 'kPS': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'kPA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'kPB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'kPC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # # //----
+                # 'SS': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'SA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'SB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # 'SC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                # # //----
+                # 'AngAB': float('{:.4f}'.format(float(random.uniform(-99.99, 99.99)))),
+                # 'AngBC': float('{:.4f}'.format(float(random.uniform(-99.99, 99.99)))),
+                # 'AngAC': float('{:.4f}'.format(float(random.uniform(-99.99, 99.99)))),
+                'UA': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'UB': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'UC': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
                 # //----
-                'PS': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'PA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'PB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'PC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                'IA': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'IB': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'IC': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
                 # //----
-                'QS': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'QA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'QB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'QC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                'PS': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'PA': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'PB': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'PC': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
                 # //----
-                'kPS': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'kPA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'kPB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'kPC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                'QS': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'QA': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'QB': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'QC': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
                 # //----
-                'SS': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'SA': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'SB': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
-                'SC': float('{:.3f}'.format(float(random.uniform(111.111, 999.999)))),
+                'kPS': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'kPA': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'kPB': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'kPC': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
                 # //----
-                'AngAB': float('{:.4f}'.format(float(random.uniform(-99.99, 99.99)))),
-                'AngBC': float('{:.4f}'.format(float(random.uniform(-99.99, 99.99)))),
-                'AngAC': float('{:.4f}'.format(float(random.uniform(-99.99, 99.99)))),
+                'SS': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'SA': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'SB': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                'SC': float('{:.3f}'.format(float(random.uniform(0.0, 0.0)))),
+                # //----
+                'AngAB': float('{:.4f}'.format(float(random.uniform(0.0, 0.0)))),
+                'AngBC': float('{:.4f}'.format(float(random.uniform(0.0, 0.0)))),
+                'AngAC': float('{:.4f}'.format(float(random.uniform(0.0, 0.0)))),
+
                 # //----
                 'Freq': float('{:.2f}'.format(float(random.uniform(11.11, 99.99)))),
             }

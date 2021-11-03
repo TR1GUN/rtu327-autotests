@@ -29,6 +29,7 @@ class GeneratorDataConfig:
 
         from Service.Generate.Generate_Config import GeneratorElectricConfig
         from Service.Generate.Generate_ElectricPowerValues import GeneratorElectricPowerValues
+
         Config = GeneratorElectricConfig(MeterTable_tag=self.MeterTable_tag, Config_tag=self.Config_tag)
 
         # Теперь вытаскиваем данные что записали
@@ -46,7 +47,18 @@ class GeneratorDataConfig:
         for keys in ElectricPowerValues:
             RecordData['IntervalPowerArrays'] = ElectricPowerValues[keys]['cTime']
 
+
+
+
         return RecordData
+
+    # Генерируем MeterTable
+    def _Generate_MeterTable(self,MeterTable_tag : dict):
+        """
+        Генерируем MeterTable
+        """
+
+
 
     def _generate_data_for_GETSHPRM(self):
         """
@@ -88,6 +100,7 @@ class GeneratorDataConfig:
         return GETSHPRM
 
 
+
 # //--------------------------------------------------------------------------------------------------------------
 # //
 # //--------------------------------------------------------------------------------------------------------------
@@ -126,6 +139,7 @@ class GenerateGETPOK:
         self.MeterTable_tag = MeterTable_tag
         self.Redefine_tag = Redefine_tag
 
+        print(self.Redefine_tag)
         self.GETPOK = self._generate_data_for_GETPOK()
 
     def _generate_Config(self):
@@ -727,7 +741,10 @@ class GenerateGETAUTOREAD:
     Timestamp = 0
     GETAUTOREAD = {}
 
-    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1,
+    def __init__(self,
+                 MeterTable_tag: dict = {},
+                 Redefine_tag: dict = {},
+                 Count_timestamp: int = 1,
                  RecordTypeId: list = ['ElMomentEnergy']):
 
         self.RecordTypeId = RecordTypeId

@@ -46,11 +46,16 @@ class Connect:
         while True:
             try:
                 buffer = bytes
-                buffer = sock.recv(1)
-                # print(buffer)
 
+                buffer = sock.recv(1)
+
+                print(buffer)
+                # print(buffer)
+                if buffer is not b'' :
                 # print('buffer', buffer)
-                answer_bytes.append(buffer)
+                    answer_bytes.append(buffer)
+                else:
+                    break
             except:
                 break
         # answer_bytes = sock.recv(1)

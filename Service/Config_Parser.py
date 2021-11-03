@@ -11,7 +11,9 @@ file_path = os.path.join(path,settings)
 def get_settings_dictionary_from_ini_file(file_path, uspd_name):
     temp_config_parser = configparser.ConfigParser()
     temp_config_parser.read(file_path)
+
     dict_schema = temp_config_parser.__dict__['_sections'][uspd_name]
+
     return dict(dict_schema) ## Кастим OrderDict в обычный
 
 
@@ -35,3 +37,4 @@ addres_ssh = uspd_rtu_dict.get('ip_address')
 port_ssh = int(uspd_rtu_dict.get('ssh_port'))
 user_login = uspd_rtu_dict.get('user_login')
 user_password = uspd_rtu_dict.get('user_password')
+

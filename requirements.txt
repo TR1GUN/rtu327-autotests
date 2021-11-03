@@ -1,2 +1,3 @@
 numpy==1.16.4
 git+https://osr-dev-git.allmonitoring.local/AutoTestHelpers/uspd-rtu327_proto_framework.git#egg=USPD-RTU327_Proto_Framework
+git+https://osr-dev-git.allmonitoring.local/AutoTestHelpers/um40smart_autotests/generate_meterdata

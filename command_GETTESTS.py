@@ -20,7 +20,7 @@ def command_GETTESTS():
     # Первое что делаем - генерируем необходимые нам данные
     from Service.Generator_Data import GenerateGETTESTS
     # ГЕНЕРИРУЕМ 3 таймштампа
-    ElectricPowerValues = GenerateGETTESTS(Count_timestamp=3)
+    ElectricPowerValues = GenerateGETTESTS(Count_timestamp=4)
     # # получаем данные
     Generate_data_dict = deepcopy(ElectricPowerValues.GETTESTS)
     Serial = deepcopy(ElectricPowerValues.Serial)
@@ -99,4 +99,4 @@ def command_GETTESTS():
 # -------------------------------------------------------------------------------------------------------------------
 #                            Запуск тестов - Если идет прогон по Pytest - Закоментировать
 # -------------------------------------------------------------------------------------------------------------------
-# command_GETTESTS()
+command_GETTESTS()
