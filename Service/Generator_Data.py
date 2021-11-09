@@ -1,76 +1,169 @@
 # Итак - Здесь расположим наши генераторы данных
 
+# //--------------------------------------------------------------------------------------------------------------
+# //                                 Изначальный класс , который содержит общие методы
+# //--------------------------------------------------------------------------------------------------------------
 class GeneratorDataConfig:
-    """Класс Генерации данных для запроса GETSHPRM """
+    """
+    Класс родитель содержащий генерацию Таблицы счетчика и Конфиг
 
-    MeterTable_tag = {}
-    Config_tag = {}
+    """
     MeterId = 0
-    GETSHPRM = {}
     Serial = 0
-
-    def __init__(self, MeterTable_tag: dict = {}, Config_tag: dict = {}):
-        self.MeterId = 0
-        self.Serial = 0
-        self.MeterTable_tag = {}
-        self.Config_tag = {}
-        self.GETSHPRM = {}
-
-        # Итак - Теперь переопределяем данные
-        self.MeterTable_tag = MeterTable_tag
-        self.Config_tag = Config_tag
-
-        self.GETSHPRM = self._generate_data_for_GETSHPRM()
-
-    def _generate_ElConfig(self):
-        """
-        Здесь генерируем данные  El Config
-        """
-
-        from Service.Generate.Generate_Config import GeneratorElectricConfig
-        from Service.Generate.Generate_ElectricPowerValues import GeneratorElectricPowerValues
-
-        Config = GeneratorElectricConfig(MeterTable_tag=self.MeterTable_tag, Config_tag=self.Config_tag)
-
-        # Теперь вытаскиваем данные что записали
-        # ТЕПЕРЬ ЗАПИСЫВАЕМ ПРОФИЛЬ МОЩНОСТИ
-        ElectricPowerValues = GeneratorElectricPowerValues(DeviceIdx=Config.MeterTable.get('DeviceIdx'),
-                                                           RecordTypeId='ElArr1ConsPower',
-                                                           Redefine_tag={'cTime': 30},
-                                                           Count_timestamp=1).ElectricPowerValues
-
-        RecordData = {}
-        RecordData.update(Config.MeterTable)
-        RecordData.update(Config.Config)
-
-        # Теперь - Берем последний ключ ид и по нему берем
-        for keys in ElectricPowerValues:
-            RecordData['IntervalPowerArrays'] = ElectricPowerValues[keys]['cTime']
-
-
-
-
-        return RecordData
+    # -->
+    Redefine_tag = {}
+    MeterTable = None
+    ElConfig = None
 
     # Генерируем MeterTable
-    def _Generate_MeterTable(self,MeterTable_tag : dict):
+    def _Generate_MeterTable(self):
         """
         Генерируем MeterTable
         """
+        from GenerateMeterData import MeterTable
+
+        # Переопределяем тэги для RTU
+
+        redefine_tag = {
+            "Address": 'ТЕСТ RTU327',
+            # ТИП ОБЬЕКТА INTEGER
+            'RTUObjType': 1,
+            # НОМЕР ФИДЕРАINTEGER
+            'RTUFeederNum': 1,
+            # НОМЕР ОБЬЕКТА    INTEGER
+            'RTUObjNum': 1,
+        }
+
+        # Теперь соеденяем это с тэгами что спустили
+
+        redefine_tag.update(self.Redefine_tag)
+
+        MeterTable_record = MeterTable(redefine_tag=redefine_tag)
+
+        return MeterTable_record
+
+    # Генерируем Конфиг
+    def _generate_ElConfig(self):
+        """
+        Здесь генерируем конфиг
+        Необходимо :
+        MeterTable
+        Опционально - Переопределенные тэги
+        """
+        from GenerateMeterData import ElConfig
+
+        redefine_tag = {
+
+        }
+
+        redefine_tag.update(self.Redefine_tag)
+
+        ElConfig_record = ElConfig(MeterTable=self.MeterTable, Config_tag=redefine_tag)
+
+        return ElConfig_record
 
 
+# //--------------------------------------------------------------------------------------------------------------
+# //                                 GETSHPRM
+# //--------------------------------------------------------------------------------------------------------------
+class GeneratorGETSHPRM(GeneratorDataConfig):
+    """Класс Генерации данных для запроса GETSHPRM """
+
+    MeterId = 0
+    Serial = 0
+    GETSHPRM = {}
+
+    # -->
+    Redefine_tag = {}
+    MeterTable = None
+    ElConfig = None
+    ElArr1ConsPower = None
+
+    def __init__(self, Redefine_tag=None):
+        """
+        Здесь Генерируем наши данные для RTU в виден что он кушает
+
+        :param: Redefine_tag - Тэги дял переопределения значений
+
+        """
+
+        if Redefine_tag is None:
+            Redefine_tag = {}
+        self.MeterId = 0
+        self.Serial = 0
+
+        self.GETSHPRM = {}
+
+        # Итак - Теперь переопределяем данные
+
+        self.Redefine_tag = Redefine_tag
+        # --->
+        self.MeterTable = None
+        self.ElConfig = None
+        self.ElArr1ConsPower = None
+
+        # Сначала генерируем данные
+        self._generate_data_for_GETSHPRM()
+        # Потом формируем их если данные пустые
+
+        self.GETSHPRM = self._form_data_to_GETSHPRM()
+
+    def _generate_ElArr1ConsPower(self):
+        # Генерируем ОДИН профиль мощности
+
+        from GenerateMeterData import ElArr1ConsPower
+
+        # Определяем период интеграции - Пол часа
+        redefine_tag = {
+            'cTime': 30
+        }
+
+        redefine_tag.update(self.Redefine_tag)
+
+        ElArr1ConsPower_record = ElArr1ConsPower(
+            Redefine_tag=redefine_tag,
+            Count_timestamp=1,
+            MeterTable=self.MeterTable,
+            ElConfig=self.ElConfig
+        )
+
+        return ElArr1ConsPower_record
 
     def _generate_data_for_GETSHPRM(self):
         """
         Здесь генерируем наши данные для нашей команды
         """
 
-        # сначала записываем все нужные данные в БД
-        RecordData = self._generate_ElConfig()
+        # Генерируем MeterTable
+        MeterTable = self._Generate_MeterTable()
+
+        # print(MeterTable)
+        self.MeterTable = MeterTable.get('MeterTable')
+        # Генерируем Конфиг
+
+        ElConfig = self._generate_ElConfig()
+        # print(ElConfig)
+        self.ElConfig = ElConfig.get('ElConfig')
+
+        # и Генерируем ОДИН профиль мощности для выяснения периода интеграции
+        RecordData = self._generate_ElArr1ConsPower()
+
+        # print(RecordData)
+
+        # Вытаскиваем Профиль мощности
+        ElArr1ConsPower = RecordData.get('ElArr1ConsPower')
+        self.ElArr1ConsPower = ElArr1ConsPower.get(list(ElArr1ConsPower.keys()).pop())
+        # print(ElArr1ConsPower)
+
+    def _form_data_to_GETSHPRM(self):
+        """
+        Основная функция формирования нужных данных
+
+        """
 
         # ПУНКТ ПЕРВЫЙ - ВЫТАСКИВАЕМ в переменную айдишник и серийник нашего счетчика
-        self.MeterId = RecordData['MeterId']
-        self.Serial = RecordData['Serial']
+        self.MeterId = self.MeterTable.get('MeterId')
+        self.Serial = self.ElConfig.get('Serial')
         # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
 
         from Service.Service_function import MeterId_from_USPD_to_RTU
@@ -80,133 +173,177 @@ class GeneratorDataConfig:
                 # Vers Версия параметров ( текущее значение 1) INT16
                 'Vers': 1,
                 # Typ_Sh Тип счетчика INT8
-                'Typ_Sh': MeterId_from_USPD_to_RTU(RecordData['TypeId']),
+                'Typ_Sh': MeterId_from_USPD_to_RTU(self.MeterTable.get('TypeId')),
                 # Kt Коэффициент трансформации по току FLOAT8
-                'Kt': RecordData['CurrentCoeff'],
+                'Kt': self.ElConfig.get('CurrentCoeff'),
                 # Kn Коэффициент трансформации по напряжению FLOAT8
-                'Kn': RecordData['VoltageCoeff'],
+                'Kn': self.ElConfig.get('VoltageCoeff'),
                 # M Множитель FLOAT8
-                'M': RecordData['MeterConst'],
+                'M': self.ElConfig.get('MeterConst'),
                 # Interv Интервал профиля нагрузки INT8
-                'Interv': RecordData['IntervalPowerArrays'],
+
+                # 'Interv': self.ElConfig.get('IntervalPowerArrays'),
+                'Interv': self.ElArr1ConsPower.get('cTime'),
+
                 # Syb_Rnk Тип объекта INT32
-                'Syb_Rnk': RecordData['RTUObjType'],
+                'Syb_Rnk': self.MeterTable.get('RTUObjType'),
                 # N_Ob Номер объекта INT32
-                'N_Ob': RecordData['RTUObjNum'],
+                'N_Ob': self.MeterTable.get('RTUObjNum'),
                 # N_Fid Номер фидера INT32
-                'N_Fid': RecordData['RTUFeederNum'],
+                'N_Fid': self.MeterTable.get('RTUFeederNum'),
             }
 
         return GETSHPRM
 
 
-
 # //--------------------------------------------------------------------------------------------------------------
-# //
+# //                                 GETPOK
 # //--------------------------------------------------------------------------------------------------------------
 
-class GenerateGETPOK:
+class GenerateGETPOK(GeneratorDataConfig):
     """Класс Генерации данных для запроса GETPOK """
 
     RecordTypeId = ['ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy']
-
     Count_timestamp = 1
-
-    MeterTable_tag = {}
     Redefine_tag = {}
     MeterId = 0
     Serial = 0
-    DeviceIdx = 0
     Timestamp = 0
     GETPOK = {}
 
-    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1,
-                 RecordTypeId: list = ['ElMomentEnergy']):
+    # --->
+    MeterTable = None
+    ElConfig = None
+    ElectricEnergyValues = None
 
+    def __init__(self,
+                 Redefine_tag: dict = {},
+                 Count_timestamp: int = 1,
+                 RecordTypeId: list = ['ElMomentEnergy']
+                 ):
+        """
+        Генерация
+        """
+        # Тип данных
         self.RecordTypeId = RecordTypeId
-        self.Count_timestamp = 1
+        # Внешний айдишник - Не определен
         self.MeterId = 0
+        # Серийник
         self.Serial = 0
-        self.DeviceIdx = 0
-        self.Timestamp = 0
-        self.MeterTable_tag = {}
-        self.Redefine_tag = {}
+        # Сами данные
         self.GETPOK = {}
+        self.MeterTable = None
+        self.ElConfig = None
+        self.ElectricEnergyValues = None
 
         # Итак - Теперь переопределяем данные
         self.Count_timestamp = Count_timestamp
-
-        self.MeterTable_tag = MeterTable_tag
         self.Redefine_tag = Redefine_tag
 
-        print(self.Redefine_tag)
-        self.GETPOK = self._generate_data_for_GETPOK()
+        # Генерируем
+        self._generate_data_for_GETPOK()
+        self.GETPOK = self._form_data_to_GETPOK()
 
-    def _generate_Config(self):
+    def _ElectricEnergyValues(self):
         """
-        Метод для генерации конфига
+        Здесь генерируем наш тип данных
+
         """
-        from Service.Generate.Generate_Config import GeneratorElectricConfig
-        # СНАЧАЛА - ГЕНЕРИРУЕМ КОНФИГ и МЕТЕР ДАТА
-        Config = GeneratorElectricConfig(MeterTable_tag=self.MeterTable_tag, Config_tag={})
 
         RecordData = {}
-        RecordData.update(Config.MeterTable)
+        # Первое - По каждому из типов проходим
 
-        RecordData.update(Config.Config)
+        for measure in self.RecordTypeId:
+
+            if measure == 'ElMomentEnergy':
+                # Генерируем Моментные показания энергии
+                from GenerateMeterData import ElMomentEnergy
+
+                ElMomentEnergy_record = ElMomentEnergy(
+                    Redefine_tag=self.Redefine_tag,
+                    Count_timestamp=self.Count_timestamp,
+                    MeterTable=self.MeterTable,
+                    ElConfig=self.ElConfig
+                )
+
+                # А теперь все что есть добавляем
+                RecordData.update(ElMomentEnergy_record.get('ElMomentEnergy'))
+
+            elif measure == 'ElDayEnergy':
+                # Генерируем показания энергии на начало дня
+                from GenerateMeterData import ElDayEnergy
+
+                ElDayEnergy_record = ElDayEnergy(
+                    Redefine_tag=self.Redefine_tag,
+                    Count_timestamp=self.Count_timestamp,
+                    MeterTable=self.MeterTable,
+                    ElConfig=self.ElConfig
+                )
+                # А теперь все что есть добавляем
+                RecordData.update(ElDayEnergy_record.get('ElDayEnergy'))
+
+            elif measure == 'ElMonthEnergy':
+                # Генерируем показания энергии на начало месяца
+                from GenerateMeterData import ElMonthEnergy
+
+                ElMonthEnergy_record = ElMonthEnergy(
+                    Redefine_tag=self.Redefine_tag,
+                    Count_timestamp=self.Count_timestamp,
+                    MeterTable=self.MeterTable,
+                    ElConfig=self.ElConfig
+                )
+
+                # А теперь все что есть добавляем
+                RecordData.update(ElMonthEnergy_record.get('ElMonthEnergy'))
+
         return RecordData
-
-    def _generate_ElectricEnergyValues(self):
-        """
-        Метод для генерации Энергии чо так , да вот так
-        """
-        # начала генерируем наш конфиг
-        RecordData_Config = self._generate_Config()
-
-        # Перезаписываем наши поля которые нам нужны
-        self.Serial = RecordData_Config.get('Serial')
-
-        # Теперь когда получиили конфиг можно сгенерировать Энергию. ШО уж там
-
-        from Service.Generate.Generate_ElectricEnergyValues import GeneratorElectricEnergyValues
-        from copy import deepcopy
-
-        ElectricEnergyValues_dict = {}
-        for i in range(len(self.RecordTypeId)):
-            ElectricEnergyValues = GeneratorElectricEnergyValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
-                                                                 RecordTypeId=self.RecordTypeId[i],
-                                                                 Redefine_tag={},
-                                                                 Count_timestamp=self.Count_timestamp
-                                                                 ).ElectricEnergyValues
-
-            ElectricEnergyValues_dict.update(ElectricEnergyValues)
-
-        # Теперь возвращаем в зад ЭТО
-
-        return ElectricEnergyValues_dict
 
     def _generate_data_for_GETPOK(self):
         """
         Здесь генерируем наши данные для нашей команды
         """
+        # Генерируем MeterTable
+        MeterTable = self._Generate_MeterTable()
+
+        # print(MeterTable)
+        self.MeterTable = MeterTable.get('MeterTable')
+        # Генерируем Конфиг
+
+        ElConfig = self._generate_ElConfig()
+        # print(ElConfig)
+        self.ElConfig = ElConfig.get('ElConfig')
+
         # сначала записываем все нужные данные в БД
-        RecordData = self._generate_ElectricEnergyValues()
+        self.ElectricEnergyValues = self._ElectricEnergyValues()
+
+    def _form_data_to_GETPOK(self):
+
+        """
+        Основная функция формирования нужных данных
+
+        """
+
+        # ПУНКТ ПЕРВЫЙ - ВЫТАСКИВАЕМ в переменную айдишник и серийник нашего счетчика
+        self.MeterId = self.MeterTable.get('MeterId')
+        self.Serial = self.ElConfig.get('Serial')
+        # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
 
         # print('----->', RecordData)
         # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
         GETPOK = {}
-        for key in RecordData:
+        for key in self.ElectricEnergyValues:
             GETPOK_element_dict = {
-                'Id': RecordData[key].get('Id'),
-                'Ap': RecordData[key].get('A+0'),
-                'Am': RecordData[key].get('A-0'),
-                'Rp': RecordData[key].get('R+0'),
-                'Rm': RecordData[key].get('R-0'),
-                'DeviceIdx': RecordData[key].get('DeviceIdx'),
-                'Timestamp': RecordData[key].get('Timestamp')
+                'Id': self.ElectricEnergyValues[key].get('Id'),
+                'Ap': self.ElectricEnergyValues[key].get('A+0'),
+                'Am': self.ElectricEnergyValues[key].get('A-0'),
+                'Rp': self.ElectricEnergyValues[key].get('R+0'),
+                'Rm': self.ElectricEnergyValues[key].get('R-0'),
+                'DeviceIdx': self.ElectricEnergyValues[key].get('DeviceIdx'),
+                'Timestamp': self.ElectricEnergyValues[key].get('Timestamp')
             }
 
-            GETPOK[RecordData[key].get('Timestamp')] = GETPOK_element_dict
+            # Ставим индефикаторы по таймштампам
+            GETPOK[self.ElectricEnergyValues[key].get('Timestamp')] = GETPOK_element_dict
 
         return GETPOK
 
@@ -215,240 +352,148 @@ class GenerateGETPOK:
 # //                Запрос на передачу профиля расходов коммерческого интервала - ПРОФИЛЬ МОЩНОСТИ
 # //--------------------------------------------------------------------------------------------------------------
 
-class GenerateGETLP:
+class GenerateGETLP(GeneratorDataConfig):
     """Класс Генерации данных для запроса GETLP """
 
     RecordTypeId = ['ElArr1ConsPower']
+    GETLP = {}
 
     Count_timestamp = 1
-
-    MeterTable_tag = {}
-    Redefine_tag = {}
     MeterId = 0
     Serial = 0
-    DeviceIdx = 0
-    Timestamp = 0
-    GETLP = {}
+
     cTime = 30
 
-    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1, cTime: int = 30):
-        self.Count_timestamp = 1
+    # -->
+    Redefine_tag = {}
+    MeterTable = None
+    ElConfig = None
+    ElArr1ConsPower = None
+
+    def __init__(self,
+                 Redefine_tag: dict = {},
+                 Count_timestamp: int = 1,
+                 cTime: int = 30
+                 ):
         self.MeterId = 0
         self.Serial = 0
-        self.DeviceIdx = 0
-        self.Timestamp = 0
-        self.MeterTable_tag = {}
-        self.Redefine_tag = {}
         self.GETLP = {}
 
         # Итак - Теперь переопределяем данные
         self.cTime = cTime
         self.Count_timestamp = Count_timestamp
 
-        self.MeterTable_tag = MeterTable_tag
         self.Redefine_tag = Redefine_tag
 
-        self.GETLP = self._generate_data_for_GETLP()
+        self._generate_data_for_GETLP()
 
-    def _generate_Config(self):
-        """
-        Метод для генерации конфига
-        """
-        from Service.Generate.Generate_Config import GeneratorElectricConfig
-        # СНАЧАЛА - ГЕНЕРИРУЕМ КОНФИГ и МЕТЕР ДАТА
-        Config = GeneratorElectricConfig(MeterTable_tag=self.MeterTable_tag, Config_tag={})
+        self.GETLP = self._form_data_to_GETLP()
 
-        RecordData = {}
-        RecordData.update(Config.MeterTable)
+    # Профиль мощности
+    def _generate_ElArr1ConsPower(self):
+        # Генерируем ОДИН профиль мощности
 
-        RecordData.update(Config.Config)
-        return RecordData
+        from GenerateMeterData import ElArr1ConsPower
+
+        # Определяем период интеграции - Пол часа
+        redefine_tag = {
+            'cTime': 30
+        }
+
+        redefine_tag.update(self.Redefine_tag)
+
+        ElArr1ConsPower_record = ElArr1ConsPower(
+            Redefine_tag=redefine_tag,
+            Count_timestamp=self.Count_timestamp,
+            MeterTable=self.MeterTable,
+            ElConfig=self.ElConfig,
+
+        )
+
+        return ElArr1ConsPower_record
 
     def _generate_ElectricPowerValues(self):
         """
         Метод для генерации Энергии чо так , да вот так
         """
-        # начала генерируем наш конфиг
-        RecordData_Config = self._generate_Config()
 
-        # Перезаписываем наши поля которые нам нужны
-        self.Serial = RecordData_Config.get('Serial')
+        # Генерируем MeterTable
+        MeterTable = self._Generate_MeterTable()
 
-        # Теперь когда получиили конфиг можно сгенерировать Энергию. ШО уж там
+        # print(MeterTable)
+        self.MeterTable = MeterTable.get('MeterTable')
+        # Генерируем Конфиг
 
-        from Service.Generate.Generate_ElectricPowerValues import GeneratorElectricPowerValues
+        ElConfig = self._generate_ElConfig()
+        # print(ElConfig)
+        self.ElConfig = ElConfig.get('ElConfig')
 
-        ElectricPowerValues_dict = {}
-        for i in range(len(self.RecordTypeId)):
-            ElectricPowerValues = GeneratorElectricPowerValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
-                                                               RecordTypeId=self.RecordTypeId[i],
-                                                               Redefine_tag={},
-                                                               Count_timestamp=self.Count_timestamp,
-                                                               cTime=self.cTime).ElectricPowerValues
+        # и Генерируем ОДИН профиль мощности для выяснения периода интеграции
+        RecordData = self._generate_ElArr1ConsPower()
 
-            ElectricPowerValues_dict.update(ElectricPowerValues)
+        # print(RecordData)
 
-        # Теперь возвращаем в зад ЭТО
-
-        return ElectricPowerValues_dict
+        # Вытаскиваем Профиль мощности
+        ElArr1ConsPower = RecordData.get('ElArr1ConsPower')
+        self.ElArr1ConsPower = ElArr1ConsPower.get(list(ElArr1ConsPower.keys()).pop())
 
     def _generate_data_for_GETLP(self):
         """
         Здесь генерируем наши данные для нашей команды
         """
-        # сначала записываем все нужные данные в БД
-        RecordData = self._generate_ElectricPowerValues()
+
+        # Генерируем MeterTable
+        MeterTable = self._Generate_MeterTable()
+
+        # print(MeterTable)
+        self.MeterTable = MeterTable.get('MeterTable')
+        # Генерируем Конфиг
+
+        ElConfig = self._generate_ElConfig()
+        # print(ElConfig)
+        self.ElConfig = ElConfig.get('ElConfig')
+
+        # и Генерируем ОДИН профиль мощности для выяснения периода интеграции
+        RecordData = self._generate_ElArr1ConsPower()
+
+        # print(RecordData)
+
+        # Вытаскиваем Профиль мощности
+        # ElArr1ConsPower = RecordData.get('ElArr1ConsPower')
+        self.ElArr1ConsPower = RecordData.get('ElArr1ConsPower')
+        # self.ElArr1ConsPower = ElArr1ConsPower.get(list(ElArr1ConsPower.keys()).pop())
+
+    def _form_data_to_GETLP(self):
+        """
+        Основная функция формирования нужных данных
+
+        """
+        # ПУНКТ ПЕРВЫЙ - ВЫТАСКИВАЕМ в переменную айдишник и серийник нашего счетчика
+        self.MeterId = self.MeterTable.get('MeterId')
+        self.Serial = self.ElConfig.get('Serial')
+        # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
 
         # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
         GETLP = {}
-        for key in RecordData:
+
+        for key in self.ElArr1ConsPower:
             GETLP_element_dict = {
-                'Id': RecordData[key].get('Id'),
-                'cTime': RecordData[key].get('cTime'),
-                'Pp': RecordData[key].get('P+'),
-                'Pm': RecordData[key].get('P-'),
-                'Qp': RecordData[key].get('Q+'),
-                'Qm': RecordData[key].get('Q-'),
-                'isPart': RecordData[key].get('isPart'),
-                'isOvfl': RecordData[key].get('isOvfl'),
-                'isSummer': RecordData[key].get('isSummer'),
-                'DeviceIdx': RecordData[key].get('DeviceIdx'),
-                'Timestamp': RecordData[key].get('Timestamp')
+                'Id': self.ElArr1ConsPower[key].get('Id'),
+                'cTime': self.ElArr1ConsPower[key].get('cTime'),
+                'Pp': self.ElArr1ConsPower[key].get('P+'),
+                'Pm': self.ElArr1ConsPower[key].get('P-'),
+                'Qp': self.ElArr1ConsPower[key].get('Q+'),
+                'Qm': self.ElArr1ConsPower[key].get('Q-'),
+                'isPart': self.ElArr1ConsPower[key].get('isPart'),
+                'isOvfl': self.ElArr1ConsPower[key].get('isOvfl'),
+                'isSummer': self.ElArr1ConsPower[key].get('isSummer'),
+                'DeviceIdx': self.ElArr1ConsPower[key].get('DeviceIdx'),
+                'Timestamp': self.ElArr1ConsPower[key].get('Timestamp')
             }
 
-            GETLP[RecordData[key].get('Timestamp')] = GETLP_element_dict
+            GETLP[self.ElArr1ConsPower[key].get('Timestamp')] = GETLP_element_dict
 
         return GETLP
-
-
-# //--------------------------------------------------------------------------------------------------------------
-# //                    Различные генерации
-# //--------------------------------------------------------------------------------------------------------------
-
-
-class GenerateTest:
-    RecordTypeId = 'ElMomentEnergy'
-    Count_timestamp = 1
-    MeterTable_tag = {}
-    Redefine_tag = {}
-    MeterId = 0
-    Serial = 0
-    DeviceIdx = 0
-    Timestamp = 0
-
-    data = None
-
-    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1):
-        self.Count_timestamp = 1
-        self.MeterId = 0
-        self.Serial = 0
-        self.DeviceIdx = 0
-        self.Timestamp = 0
-        self.MeterTable_tag = {}
-        self.Redefine_tag = {}
-        self.GETPOK = {}
-
-        # Итак - Теперь переопределяем данные
-        self.Count_timestamp = Count_timestamp
-
-        self.MeterTable_tag = MeterTable_tag
-        self.Redefine_tag = Redefine_tag
-
-        self.data = self._generate_data()
-
-    def _generate_Config(self):
-        """
-        Метод для генерации конфига
-        """
-        from Service.Generate.Generate_Config import GeneratorElectricConfig
-        # СНАЧАЛА - ГЕНЕРИРУЕМ КОНФИГ и МЕТЕР ДАТА
-        Config = GeneratorElectricConfig(MeterTable_tag=self.MeterTable_tag, Config_tag={})
-
-        RecordData = {}
-        RecordData.update(Config.MeterTable)
-
-        RecordData.update(Config.Config)
-        return RecordData
-
-    def _generate_ElectricEnergyValues(self):
-        """
-        Метод для генерации Энергии чо так , да вот так
-        """
-        # начала генерируем наш конфиг
-        RecordData_Config = self._generate_Config()
-
-        # Перезаписываем наши поля которые нам нужны
-        self.Serial = RecordData_Config.get('Serial')
-
-        # Теперь когда получиили конфиг можно сгенерировать Энергию. ШО уж там
-
-        from Service.Generate.Generate_ElectricEnergyValues import GeneratorElectricEnergyValues
-
-        ElectricEnergyValues = GeneratorElectricEnergyValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
-                                                             RecordTypeId=self.RecordTypeId,
-                                                             Redefine_tag={},
-                                                             Count_timestamp=self.Count_timestamp,
-                                                             ).ElectricEnergyValues
-
-        # Теперь возвращаем в зад ЭТО
-
-        return ElectricEnergyValues
-
-    def _generate_ElectricPowerValues(self):
-        # начала генерируем наш конфиг
-        RecordData_Config = self._generate_Config()
-
-        # Перезаписываем наши поля которые нам нужны
-        self.Serial = RecordData_Config.get('Serial')
-
-        # Теперь когда получиили конфиг можно сгенерировать Энергию. ШО уж там
-
-        from Service.Generate.Generate_ElectricPowerValues import GeneratorElectricPowerValues
-
-        ElectricPowerValues = GeneratorElectricPowerValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
-                                                           RecordTypeId=self.RecordTypeId,
-                                                           Redefine_tag={},
-                                                           Count_timestamp=self.Count_timestamp).ElectricPowerValues
-
-        # Теперь возвращаем в зад ЭТО
-        # print('---->', ElectricPowerValues)
-        return ElectricPowerValues
-
-    def _generate_ElectricQualityValues(self):
-        # начала генерируем наш конфиг
-        RecordData_Config = self._generate_Config()
-
-        # Перезаписываем наши поля которые нам нужны
-        self.Serial = RecordData_Config.get('Serial')
-
-        # Теперь когда получиили конфиг можно сгенерировать Энергию. ШО уж там
-
-        from Service.Generate.Generate_ElectricQualityValues import GeneratorElectricQualityValues
-
-        ElectricQualityValues = GeneratorElectricQualityValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
-                                                               RecordTypeId=self.RecordTypeId,
-                                                               Redefine_tag={},
-                                                               Count_timestamp=self.Count_timestamp).ElectricQualityValues
-
-        # Теперь возвращаем в зад ЭТО
-        # print('---->', ElectricQualityValues)
-
-        return ElectricQualityValues
-
-    def _generate_data(self):
-        """
-        Здесь генерируем наши данные для нашей команды
-        """
-        # сначала записываем все нужные данные в БД
-        # RecordData = self._generate_ElectricEnergyValues()
-        # RecordData = self._generate_ElectricPowerValues()
-        RecordData = self._generate_ElectricQualityValues()
-        return RecordData
-
-
-#
-# a = GenerateTest(Count_timestamp=3)
-#
 
 
 # //--------------------------------------------------------------------------------------------------------------
@@ -456,117 +501,122 @@ class GenerateTest:
 # //--------------------------------------------------------------------------------------------------------------
 
 
-class GenerateGETTESTS:
-    """Класс Генерации данных для запроса GETLP """
+class GenerateGETTESTS(GeneratorDataConfig):
+    """Класс Генерации данных для запроса GETTESTS """
 
     RecordTypeId = ['ElMomentQuality']
 
     Count_timestamp = 1
-
-    MeterTable_tag = {}
-    Redefine_tag = {}
     MeterId = 0
     Serial = 0
-    DeviceIdx = 0
-    Timestamp = 0
-    GETTESTS = {}
-    cTime = 30
 
-    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1):
-        self.Count_timestamp = 1
+    GETTESTS = {}
+
+    # -->
+    Redefine_tag = {}
+    MeterTable = None
+    ElConfig = None
+    ElMomentQuality = None
+
+    def __init__(
+            self,
+            Redefine_tag: dict = {},
+            Count_timestamp: int = 1
+    ):
         self.MeterId = 0
         self.Serial = 0
-        self.DeviceIdx = 0
-        self.Timestamp = 0
-        self.MeterTable_tag = {}
-        self.Redefine_tag = {}
         self.GETTESTS = {}
 
         # Итак - Теперь переопределяем данные
 
         self.Count_timestamp = Count_timestamp
-
-        self.MeterTable_tag = MeterTable_tag
         self.Redefine_tag = Redefine_tag
 
-        self.GETTESTS = self._generate_data_for_GETTESTS()
+        self._generate_data_for_GETTESTS()
 
-    def _generate_Config(self):
-        """
-        Метод для генерации конфига
-        """
-        from Service.Generate.Generate_Config import GeneratorElectricConfig
-        # СНАЧАЛА - ГЕНЕРИРУЕМ КОНФИГ и МЕТЕР ДАТА
-        Config = GeneratorElectricConfig(MeterTable_tag=self.MeterTable_tag, Config_tag={})
+        self.GETTESTS = self._form_data_to_GETTESTS()
 
-        RecordData = {}
-        RecordData.update(Config.MeterTable)
+    # Профиль мощности
+    def _generate_ElMomentQuality(self):
+        # Генерируем ОДИН профиль мощности
 
-        RecordData.update(Config.Config)
-        return RecordData
+        from GenerateMeterData import ElMomentQuality
 
-    def _generate_ElectricQualityValues(self):
-        """
-        Метод для генерации Энергии чо так , да вот так
-        """
-        # начала генерируем наш конфиг
-        RecordData_Config = self._generate_Config()
+        # Определяем период интеграции - Пол часа
+        redefine_tag = {
 
-        # Перезаписываем наши поля которые нам нужны
-        self.Serial = RecordData_Config.get('Serial')
+        }
 
-        # Теперь когда получиили конфиг можно сгенерировать Энергию. ШО уж там
+        redefine_tag.update(self.Redefine_tag)
 
-        from Service.Generate.Generate_ElectricQualityValues import GeneratorElectricQualityValues
+        ElMomentQuality_record = ElMomentQuality(
+            Redefine_tag=redefine_tag,
+            Count_timestamp=self.Count_timestamp,
+            MeterTable=self.MeterTable,
+            ElConfig=self.ElConfig,
 
-        ElectricQualityValues_dict = {}
-        for i in range(len(self.RecordTypeId)):
-            ElectricQualityValues = GeneratorElectricQualityValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
-                                                                   RecordTypeId=self.RecordTypeId[i],
-                                                                   Redefine_tag={},
-                                                                   Count_timestamp=self.Count_timestamp
-                                                                   ).ElectricQualityValues
+        )
 
-            ElectricQualityValues_dict.update(ElectricQualityValues)
-
-        # Теперь возвращаем в зад ЭТО
-
-        return ElectricQualityValues_dict
+        return ElMomentQuality_record
 
     def _generate_data_for_GETTESTS(self):
         """
         Здесь генерируем наши данные для нашей команды
         """
+        # Генерируем MeterTable
+        MeterTable = self._Generate_MeterTable()
+
+        # print(MeterTable)
+        self.MeterTable = MeterTable.get('MeterTable')
+        # Генерируем Конфиг
+
+        ElConfig = self._generate_ElConfig()
+        # print(ElConfig)
+        self.ElConfig = ElConfig.get('ElConfig')
+
         # сначала записываем все нужные данные в БД
-        RecordData = self._generate_ElectricQualityValues()
+        ElMomentQuality = self._generate_ElMomentQuality()
+        self.ElMomentQuality = ElMomentQuality.get('ElMomentQuality')
+
+    def _form_data_to_GETTESTS(self):
+        """
+        Основная функция формирования нужных данных
+
+        """
+
+        # ПУНКТ ПЕРВЫЙ - ВЫТАСКИВАЕМ в переменную айдишник и серийник нашего счетчика
+        self.MeterId = self.MeterTable.get('MeterId')
+        self.Serial = self.ElConfig.get('Serial')
 
         # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
+        # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
         GETTESTS = {}
-        for key in RecordData:
+
+        for key in self.ElMomentQuality:
             GETTESTS_element_dict = {
-                'Id': RecordData[key].get('Id'),
-                'Wa': RecordData[key].get('PA'),
-                'Wb': RecordData[key].get('PB'),
-                'Wc': RecordData[key].get('PC'),
-                'VAa': RecordData[key].get('SA'),
-                'VAb': RecordData[key].get('SB'),
-                'VAc': RecordData[key].get('SC'),
-                'FREQ': RecordData[key].get('Freq'),
-                'Ia': RecordData[key].get('IA'),
-                'Ib': RecordData[key].get('IB'),
-                'Ic': RecordData[key].get('IC'),
-                'Ua': RecordData[key].get('UA'),
-                'Ub': RecordData[key].get('UB'),
-                'Uc': RecordData[key].get('UC'),
-                'PFangA': RecordData[key].get('LOL'),
-                'PFangB': RecordData[key].get('LOL'),
-                'PFangC': RecordData[key].get('LOL'),
-                'PHangB': RecordData[key].get('AngAB'),
-                'PhangC': RecordData[key].get('AngAC'),
-                'Timestamp': RecordData[key].get('Timestamp')
+                'Id': self.ElMomentQuality[key].get('Id'),
+                'Wa': self.ElMomentQuality[key].get('PA'),
+                'Wb': self.ElMomentQuality[key].get('PB'),
+                'Wc': self.ElMomentQuality[key].get('PC'),
+                'VAa': self.ElMomentQuality[key].get('SA'),
+                'VAb': self.ElMomentQuality[key].get('SB'),
+                'VAc': self.ElMomentQuality[key].get('SC'),
+                'FREQ': self.ElMomentQuality[key].get('Freq'),
+                'Ia': self.ElMomentQuality[key].get('IA'),
+                'Ib': self.ElMomentQuality[key].get('IB'),
+                'Ic': self.ElMomentQuality[key].get('IC'),
+                'Ua': self.ElMomentQuality[key].get('UA'),
+                'Ub': self.ElMomentQuality[key].get('UB'),
+                'Uc': self.ElMomentQuality[key].get('UC'),
+                'PFangA': self.ElMomentQuality[key].get('LOL'),
+                'PFangB': self.ElMomentQuality[key].get('LOL'),
+                'PFangC': self.ElMomentQuality[key].get('LOL'),
+                'PHangB': self.ElMomentQuality[key].get('AngAB'),
+                'PhangC': self.ElMomentQuality[key].get('AngAC'),
+                'Timestamp': self.ElMomentQuality[key].get('Timestamp')
             }
 
-            GETTESTS[RecordData[key].get('Timestamp')] = GETTESTS_element_dict
+            GETTESTS[self.ElMomentQuality[key].get('Timestamp')] = GETTESTS_element_dict
 
         return GETTESTS
 
@@ -574,115 +624,122 @@ class GenerateGETTESTS:
 # //--------------------------------------------------------------------------------------------------------------
 # //                      Генерация для команды - GETMTRLOG - Запрос журнала событий по счетчикам
 # //--------------------------------------------------------------------------------------------------------------
-
-
-class GenerateGETMTRLOG:
+class GenerateGETMTRLOG(GeneratorDataConfig):
     """Класс Генерации данных для запроса GETMTRLOG """
 
     RecordTypeId = ["ElJrnlPwr", "ElJrnlTimeCorr", "ElJrnlReset", "ElJrnlOpen", "ElJrnlPwrA", "ElJrnlPwrB",
                     "ElJrnlPwrC"]
 
     Count_timestamp = 1
-
-    MeterTable_tag = {}
-    Redefine_tag = {}
     MeterId = 0
     Serial = 0
-    DeviceIdx = 0
-    Timestamp = 0
+
     GETMTRLOG = {}
 
-    def __init__(self, MeterTable_tag: dict = {}, Redefine_tag: dict = {}, Count_timestamp: int = 1,
-                 RecordTypeId: list = ["ElJrnlPwr", "ElJrnlTimeCorr", "ElJrnlReset", "ElJrnlOpen", "ElJrnlPwrA",
-                                       "ElJrnlPwrB", "ElJrnlPwrC"]):
+    # -->
+    Redefine_tag = {}
+    MeterTable = None
+    ElConfig = None
+    JournalValues = None
 
-        self.RecordTypeId = RecordTypeId
-        self.Count_timestamp = 1
+    def __init__(self,
+                 Redefine_tag: dict = {},
+                 Count_timestamp: int = 1,
+                 RecordTypeId: list = ["ElJrnlPwr", "ElJrnlTimeCorr",
+                                       "ElJrnlReset", "ElJrnlOpen", "ElJrnlPwrA",
+                                       "ElJrnlPwrB", "ElJrnlPwrC"]
+                 ):
+
         self.MeterId = 0
         self.Serial = 0
-        self.DeviceIdx = 0
-        self.Timestamp = 0
-        self.MeterTable_tag = {}
-        self.Redefine_tag = {}
         self.GETMTRLOG = {}
 
         # Итак - Теперь переопределяем данные
 
         self.Count_timestamp = Count_timestamp
-
-        self.MeterTable_tag = MeterTable_tag
         self.Redefine_tag = Redefine_tag
+        self.RecordTypeId = RecordTypeId
 
-        self.GETMTRLOG = self._generate_data_for_GETMTRLOG()
+        self._generate_data_for_GETMTRLOG()
 
-    def _generate_Config(self):
-        """
-        Метод для генерации конфига
-        """
-        from Service.Generate.Generate_Config import GeneratorElectricConfig
-        # СНАЧАЛА - ГЕНЕРИРУЕМ КОНФИГ и МЕТЕР ДАТА
-        Config = GeneratorElectricConfig(MeterTable_tag=self.MeterTable_tag, Config_tag={})
+        self.GETMTRLOG = self._form_data_to_GETMTRLOG()
 
-        RecordData = {}
-        RecordData.update(Config.MeterTable)
+    # Генерируем журнал
+    def _generate_JournalValues(self, RecordTypeId):
+        # Генерируем ОДИН профиль мощности
 
-        RecordData.update(Config.Config)
-        return RecordData
+        from GenerateMeterData import Journal
 
-    def _generate_JournalValues(self):
-        """
-        Метод для генерации Энергии чо так , да вот так
-        """
-        # начала генерируем наш конфиг
-        RecordData_Config = self._generate_Config()
+        # Определяем период интеграции - Пол часа
+        redefine_tag = {
 
-        # Перезаписываем наши поля которые нам нужны
-        self.Serial = RecordData_Config.get('Serial')
+        }
 
-        # Теперь когда получиили конфиг можно сгенерировать Энергию. ШО уж там
+        redefine_tag.update(self.Redefine_tag)
 
-        from Service.Generate.Generate_JournalValues import GeneratorJournalValues
+        Journal_record = Journal(
+            Redefine_tag=redefine_tag,
+            Count_timestamp=self.Count_timestamp,
+            MeterTable=self.MeterTable,
+            ElConfig=self.ElConfig,
+            RecordTypeId=RecordTypeId
+        )
 
-        JournalValues_dict = {}
-        for i in range(len(self.RecordTypeId)):
-            JournalValues = GeneratorJournalValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
-                                                   RecordTypeId=self.RecordTypeId[i],
-                                                   Redefine_tag={},
-                                                   Count_timestamp=self.Count_timestamp
-                                                   ).JournalValues
-
-            JournalValues_dict[self.RecordTypeId[i]] = JournalValues
-
-        # Теперь возвращаем в зад ЭТО
-
-        return JournalValues_dict
+        return Journal_record
 
     def _generate_data_for_GETMTRLOG(self):
         """
         Здесь генерируем наши данные для нашей команды
         """
+        # Генерируем MeterTable
+        MeterTable = self._Generate_MeterTable()
+
+        # print(MeterTable)
+        self.MeterTable = MeterTable.get('MeterTable')
+        # Генерируем Конфиг
+
+        ElConfig = self._generate_ElConfig()
+        # print(ElConfig)
+        self.ElConfig = ElConfig.get('ElConfig')
 
         # сначала записываем все нужные данные в БД
-        RecordData = self._generate_JournalValues()
+        JournalValues_dict = {}
+        for i in range(len(self.RecordTypeId)):
 
-        # print('----->', RecordData)
+            JournalValues = self._generate_JournalValues(RecordTypeId=self.RecordTypeId[i])
+
+            JournalValues_dict[self.RecordTypeId[i]] = JournalValues.get(self.RecordTypeId[i])
+
+        self.JournalValues = JournalValues_dict
+
+    def _form_data_to_GETMTRLOG(self):
+
+        """
+        Основная функция формирования нужных данных
+
+        """
+
+        # ПУНКТ ПЕРВЫЙ - ВЫТАСКИВАЕМ в переменную айдишник и серийник нашего счетчика
+        self.MeterId = self.MeterTable.get('MeterId')
+        self.Serial = self.ElConfig.get('Serial')
+
         # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
         GETMTRLOG = {}
-        for measure in RecordData:
+        for measure in self.JournalValues:
             RecordData_measure = {}
-            for Idx in RecordData[measure]:
+            for Idx in self.JournalValues[measure]:
                 RecordData_Idx_element_dict = {
-                    'RecordTypeId': RecordData[measure][Idx].get('RecordTypeId'),
-                    'Id': RecordData[measure][Idx].get('Id'),
-                    'evTime': RecordData[measure][Idx].get('Timestamp'),
-                    'evType': RecordData[measure][Idx].get('EventId'),
-                    'Event': RecordData[measure][Idx].get('Event'),
-                    'DeviceIdx': RecordData[measure][Idx].get('DeviceIdx'),
-                    'Timestamp': RecordData[measure][Idx].get('Timestamp')
+                    'RecordTypeId': self.JournalValues[measure][Idx].get('RecordTypeId'),
+                    'Id': self.JournalValues[measure][Idx].get('Id'),
+                    'evTime': self.JournalValues[measure][Idx].get('Timestamp'),
+                    'evType': self.JournalValues[measure][Idx].get('EventId'),
+                    'Event': self.JournalValues[measure][Idx].get('Event'),
+                    'DeviceIdx': self.JournalValues[measure][Idx].get('DeviceIdx'),
+                    'Timestamp': self.JournalValues[measure][Idx].get('Timestamp')
                 }
-                RecordTypeId = RecordData[measure][Idx].get('RecordTypeId')
+                RecordTypeId = self.JournalValues[measure][Idx].get('RecordTypeId')
                 # RecordData_measure[Idx] = RecordData_Idx_element_dict
-                RecordData_measure[RecordData[measure][Idx].get('Timestamp')] = RecordData_Idx_element_dict
+                RecordData_measure[self.JournalValues[measure][Idx].get('Timestamp')] = RecordData_Idx_element_dict
 
             # GETMTRLOG[RecordData[measure].get('Id')] = RecordData_Idx_element_dict
             # GETMTRLOG[measure] = RecordData_measure
@@ -721,131 +778,179 @@ def define_count_measure(count: int, measure_list: list):
 
     return measure
 
-
 # //--------------------------------------------------------------------------------------------------------------
-# //
+# //                Класс Генерации данных для запроса GETAUTOREAD
 # //--------------------------------------------------------------------------------------------------------------
 
-class GenerateGETAUTOREAD:
+
+class GenerateGETAUTOREAD(GeneratorDataConfig):
     """Класс Генерации данных для запроса GETAUTOREAD """
 
     RecordTypeId = ['ElMomentEnergy', 'ElDayEnergy', 'ElMonthEnergy']
 
     Count_timestamp = 1
-
-    MeterTable_tag = {}
-    Redefine_tag = {}
     MeterId = 0
     Serial = 0
-    DeviceIdx = 0
-    Timestamp = 0
+
     GETAUTOREAD = {}
 
+    # -->
+    Redefine_tag = {}
+    MeterTable = None
+    ElConfig = None
+    ElectricEnergyValues = None
+
     def __init__(self,
-                 MeterTable_tag: dict = {},
                  Redefine_tag: dict = {},
                  Count_timestamp: int = 1,
                  RecordTypeId: list = ['ElMomentEnergy']):
 
-        self.RecordTypeId = RecordTypeId
-        self.Count_timestamp = 1
         self.MeterId = 0
         self.Serial = 0
-        self.DeviceIdx = 0
-        self.Timestamp = 0
-        self.MeterTable_tag = {}
-        self.Redefine_tag = {}
         self.GETAUTOREAD = {}
 
         # Итак - Теперь переопределяем данные
+
         self.Count_timestamp = Count_timestamp
-
-        self.MeterTable_tag = MeterTable_tag
         self.Redefine_tag = Redefine_tag
+        self.RecordTypeId = RecordTypeId
 
-        self.GETAUTOREAD = self._generate_data_for_GETAUTOREAD()
+        self._generate_data_for_GETAUTOREAD()
 
-    def _generate_Config(self):
-        """
-        Метод для генерации конфига
-        """
-        from Service.Generate.Generate_Config import GeneratorElectricConfig
-        # СНАЧАЛА - ГЕНЕРИРУЕМ КОНФИГ и МЕТЕР ДАТА
-        Config = GeneratorElectricConfig(MeterTable_tag=self.MeterTable_tag, Config_tag={})
+        self.GETAUTOREAD = self._form_data_to_GETAUTOREAD()
+
+    # Генерируем журнал
+    def _generate_ElectricEnergyValues(self, RecordTypeId):
 
         RecordData = {}
-        RecordData.update(Config.MeterTable)
+        if RecordTypeId == 'ElMomentEnergy':
+            # Генерируем Моментные показания энергии
+            from GenerateMeterData import ElMomentEnergy
 
-        RecordData.update(Config.Config)
+            ElMomentEnergy_record = ElMomentEnergy(
+                Redefine_tag=self.Redefine_tag,
+                Count_timestamp=self.Count_timestamp,
+                MeterTable=self.MeterTable,
+                ElConfig=self.ElConfig
+            )
+
+            # А теперь все что есть добавляем
+            RecordData['ElMomentEnergy'] = ElMomentEnergy_record.get('ElMomentEnergy')
+
+        elif RecordTypeId == 'ElDayEnergy':
+            # Генерируем показания энергии на начало дня
+            from GenerateMeterData import ElDayEnergy
+
+            ElDayEnergy_record = ElDayEnergy(
+                Redefine_tag=self.Redefine_tag,
+                Count_timestamp=self.Count_timestamp,
+                MeterTable=self.MeterTable,
+                ElConfig=self.ElConfig
+            )
+            # А теперь все что есть добавляем
+            RecordData['ElDayEnergy'] = ElDayEnergy_record.get('ElDayEnergy')
+
+        elif RecordTypeId == 'ElMonthEnergy':
+            # Генерируем показания энергии на начало месяца
+            from GenerateMeterData import ElMonthEnergy
+
+            ElMonthEnergy_record = ElMonthEnergy(
+                Redefine_tag=self.Redefine_tag,
+                Count_timestamp=self.Count_timestamp,
+                MeterTable=self.MeterTable,
+                ElConfig=self.ElConfig
+            )
+
+            # А теперь все что есть добавляем
+            RecordData['ElMonthEnergy'] = ElMonthEnergy_record.get('ElMonthEnergy')
+
         return RecordData
-
-    def _generate_ElectricEnergyValues(self):
-        """
-        Метод для генерации Энергии чо так , да вот так
-        """
-        # начала генерируем наш конфиг
-        RecordData_Config = self._generate_Config()
-
-        # Перезаписываем наши поля которые нам нужны
-        self.Serial = RecordData_Config.get('Serial')
-
-        # Теперь когда получиили конфиг можно сгенерировать Энергию. ШО уж там
-
-        from Service.Generate.Generate_ElectricEnergyValues import GeneratorElectricEnergyValues
-
-        ElectricEnergyValues_dict = {}
-        for i in range(len(self.RecordTypeId)):
-            ElectricEnergyValues = GeneratorElectricEnergyValues(DeviceIdx=RecordData_Config.get('DeviceIdx'),
-                                                                 RecordTypeId=self.RecordTypeId[i],
-                                                                 Redefine_tag={},
-                                                                 Count_timestamp=self.Count_timestamp
-                                                                 ).ElectricEnergyValues
-
-            ElectricEnergyValues_dict.update(ElectricEnergyValues)
-
-        # Теперь возвращаем в зад ЭТО
-
-        return ElectricEnergyValues_dict
 
     def _generate_data_for_GETAUTOREAD(self):
         """
         Здесь генерируем наши данные для нашей команды
         """
-        # сначала записываем все нужные данные в БД
-        RecordData = self._generate_ElectricEnergyValues()
+        # Генерируем MeterTable
+        MeterTable = self._Generate_MeterTable()
 
-        # print('----->', RecordData)
+        # print(MeterTable)
+        self.MeterTable = MeterTable.get('MeterTable')
+        # Генерируем Конфиг
+
+        ElConfig = self._generate_ElConfig()
+        # print(ElConfig)
+        self.ElConfig = ElConfig.get('ElConfig')
+
+        # сначала записываем все нужные данные в БД
+        ElectricEnergyValues_dict = {}
+        for i in range(len(self.RecordTypeId)):
+
+            ElectricEnergyValues = self._generate_ElectricEnergyValues(RecordTypeId=self.RecordTypeId[i])
+
+            ElectricEnergyValues_dict[self.RecordTypeId[i]] = ElectricEnergyValues.get(self.RecordTypeId[i])
+
+        self.ElectricEnergyValues = ElectricEnergyValues_dict
+
+    def _form_data_to_GETAUTOREAD(self):
+
+        """
+        Основная функция формирования нужных данных
+
+        """
+
+        # ПУНКТ ПЕРВЫЙ - ВЫТАСКИВАЕМ в переменную айдишник и серийник нашего счетчика
+        self.MeterId = self.MeterTable.get('MeterId')
+        self.Serial = self.ElConfig.get('Serial')
+
         # ПУНКТ ВТОРОЙ - формируем данные для команды ответа
         GETAUTOREAD = {}
-        for key in RecordData:
-            GETPOK_element_dict = {
-                'Id': RecordData[key].get('Id'),
 
-                'A+1': RecordData[key].get('A+1'),
-                'A-1': RecordData[key].get('A-1'),
-                'R+1': RecordData[key].get('R+1'),
-                'R-1': RecordData[key].get('R-1'),
+        for measure in self.ElectricEnergyValues:
+            RecordData_measure = {}
 
-                'A+2': RecordData[key].get('A+2'),
-                'A-2': RecordData[key].get('A-2'),
-                'R+2': RecordData[key].get('R+2'),
-                'R-2': RecordData[key].get('R-2'),
+            for Idx in self.ElectricEnergyValues[measure]:
+                RecordData_Idx_element_dict = {
 
-                'A+3': RecordData[key].get('A+3'),
-                'A-3': RecordData[key].get('A-3'),
-                'R+3': RecordData[key].get('R+3'),
-                'R-3': RecordData[key].get('R-3'),
+                    'Id': self.ElectricEnergyValues[measure][Idx].get('Id'),
 
-                'A+4': RecordData[key].get('A+4'),
-                'A-4': RecordData[key].get('A-4'),
-                'R+4': RecordData[key].get('R+4'),
-                'R-4': RecordData[key].get('R-4'),
-                'RecordTypeId': RecordData[key].get('RecordTypeId'),
-                'DeviceIdx': RecordData[key].get('DeviceIdx'),
-                'Timestamp': RecordData[key].get('Timestamp')
+                    'A+1': self.ElectricEnergyValues[measure][Idx].get('A+1'),
+                    'A-1': self.ElectricEnergyValues[measure][Idx].get('A-1'),
+                    'R+1': self.ElectricEnergyValues[measure][Idx].get('R+1'),
+                    'R-1': self.ElectricEnergyValues[measure][Idx].get('R-1'),
 
-            }
+                    'A+2': self.ElectricEnergyValues[measure][Idx].get('A+2'),
+                    'A-2': self.ElectricEnergyValues[measure][Idx].get('A-2'),
+                    'R+2': self.ElectricEnergyValues[measure][Idx].get('R+2'),
+                    'R-2': self.ElectricEnergyValues[measure][Idx].get('R-2'),
 
-            GETAUTOREAD[RecordData[key].get('Id')] = GETPOK_element_dict
+                    'A+3': self.ElectricEnergyValues[measure][Idx].get('A+3'),
+                    'A-3': self.ElectricEnergyValues[measure][Idx].get('A-3'),
+                    'R+3': self.ElectricEnergyValues[measure][Idx].get('R+3'),
+                    'R-3': self.ElectricEnergyValues[measure][Idx].get('R-3'),
+
+                    'A+4': self.ElectricEnergyValues[measure][Idx].get('A+4'),
+                    'A-4': self.ElectricEnergyValues[measure][Idx].get('A-4'),
+                    'R+4': self.ElectricEnergyValues[measure][Idx].get('R+4'),
+                    'R-4': self.ElectricEnergyValues[measure][Idx].get('R-4'),
+                    'RecordTypeId': self.ElectricEnergyValues[measure][Idx].get('RecordTypeId'),
+                    'DeviceIdx': self.ElectricEnergyValues[measure][Idx].get('DeviceIdx'),
+                    'Timestamp': self.ElectricEnergyValues[measure][Idx].get('Timestamp')
+                }
+                RecordTypeId = self.ElectricEnergyValues[measure][Idx].get('RecordTypeId')
+                # RecordData_measure[Idx] = RecordData_Idx_element_dict
+                RecordData_measure[self.ElectricEnergyValues[measure][Idx].get('Timestamp')] = RecordData_Idx_element_dict
+
+                GETAUTOREAD[self.ElectricEnergyValues[measure][Idx].get('Timestamp')] = RecordData_Idx_element_dict
+            # GETMTRLOG[RecordData[measure].get('Id')] = RecordData_Idx_element_dict
+            # GETMTRLOG[measure] = RecordData_measure
+            # GETAUTOREAD[measure] = RecordData_measure
 
         return GETAUTOREAD
+
+
+# print(GenerateGETAUTOREAD().GETAUTOREAD)
+#
+# print(GeneratorGETSHPRM(Redefine_tag={'Valid':0}).GETSHPRM)
+# print(GenerateGETMTRLOG().GETMTRLOG)
+# print(GenerateGETPOK().GETPOK)
+# print(GenerateGETTESTS().GETTESTS)

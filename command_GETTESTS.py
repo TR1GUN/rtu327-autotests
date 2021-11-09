@@ -32,7 +32,7 @@ def command_GETTESTS():
     Timestamp_list = []
     for i in Generate_data_dict:
         Timestamp_list.append(Generate_data_dict[i].get('Timestamp'))
-    print(Timestamp_list)
+    # print(Timestamp_list)
     Timestamp = min(Timestamp_list)
     # ОТСИКАЕМ ЛИШНИЕ ДАННЫЕ
     # БЕРЕМ ТАЙМШТАМП
@@ -47,7 +47,8 @@ def command_GETTESTS():
 
     Generate_data_dict = Generate_data_dict.get(Timestamp)
 
-
+    # Timestamp = 1636448400
+    # Serial = '0050411372'
     print('-->Timestamp--->', Timestamp)
     # NSH Номер счетчика BCD5
     NSH = get_form_NSH(Serial=Serial)
@@ -99,4 +100,4 @@ def command_GETTESTS():
 # -------------------------------------------------------------------------------------------------------------------
 #                            Запуск тестов - Если идет прогон по Pytest - Закоментировать
 # -------------------------------------------------------------------------------------------------------------------
-command_GETTESTS()
+# command_GETTESTS()

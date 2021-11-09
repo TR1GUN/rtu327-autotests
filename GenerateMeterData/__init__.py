@@ -566,9 +566,15 @@ def ElArr1ConsPower(
 
     from GenerateMeterData.Generate.Generate_ElectricPowerValues import GeneratorElectricPowerValues
 
+    if Redefine_tag.get('сTime') is None:
+        сTime = 30
+    else:
+        сTime = Redefine_tag.get('сTime')
+
     ElectricPowerValues = GeneratorElectricPowerValues(
         Redefine_tag=Redefine_tag,
         Count_timestamp=Count_timestamp,
+        cTime = сTime,
         MeterTable=MeterTable,
         ElConfig=ElConfig
     )

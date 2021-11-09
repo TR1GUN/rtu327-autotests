@@ -32,20 +32,15 @@ def command_GETPOK(Ap: bool = True, Am: bool = True, Rp: bool = True, Rm: bool =
     # Первое что делаем - генерируем необходимые нам данные
     from Service.Generator_Data import GenerateGETPOK
 
-    ElectricEnergyValues = GenerateGETPOK(Count_timestamp=count_timestamp, RecordTypeId=RecordTypeId, Redefine_tag = {'Valid':0})
+    ElectricEnergyValues = GenerateGETPOK(Count_timestamp=count_timestamp, RecordTypeId=RecordTypeId)
     # получаем данные
 
-    # Generate_data_SHPRM_dict = deepcopy(ElectricEnergyValues.GETPOK)
-    # Serial = deepcopy(ElectricEnergyValues.Serial)
+    Generate_data_SHPRM_dict = deepcopy(ElectricEnergyValues.GETPOK)
+    Serial = deepcopy(ElectricEnergyValues.Serial)
     #
     # print('->',Generate_data_SHPRM_dict)
     # print('->',Serial)
 
-    Generate_data_SHPRM_dict = {1634850000: {'Id': 1, 'Ap': 410.083, 'Am': 953.153, 'Rp': 333.235, 'Rm': 848.687, 'DeviceIdx': 1, 'Timestamp': 1634850000},
-                                # 1634936400: {'Id': 2, 'Ap': 410.083, 'Am': 953.153, 'Rp': 333.235, 'Rm': 848.687, 'DeviceIdx': 1, 'Timestamp': 1634936400},
-                                1635022800: {'Id': 3, 'Ap': 410.083, 'Am': 953.153, 'Rp': 333.235, 'Rm': 848.687, 'DeviceIdx': 1, 'Timestamp': 1635022800},
-                                }
-    Serial = '0110188597'
     # Формируем команду
 
     from Service.Service_function import get_form_NSH, decode_data_to_GETPOK, code_data_to_GETPOK
@@ -118,8 +113,4 @@ def command_GETPOK(Ap: bool = True, Am: bool = True, Rp: bool = True, Rm: bool =
 # -------------------------------------------------------------------------------------------------------------------
 #                            Запуск тестов - Если идет прогон по Pytest - Закоментировать
 # -------------------------------------------------------------------------------------------------------------------
-command_GETPOK()
-
-[b'\x02', b'\x00', b')', b'\x01', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00']
-
-[b'\x02', b'\x00', b')', b'\x01', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\xb8', b'\x1e', b'\x85', b'\xeb', b'Q', b'\xd8', b'@', b'@', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'q', b'=', b'\n', b'\xd7', b'\xa3', b'p', b'\x05', b'@', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\xd2', b'!']
+# command_GETPOK()

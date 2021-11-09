@@ -21,9 +21,9 @@ def command_GETSHPRM():
     type_command = 'GETSHPRM'
 
     # Первое что делаем - генерируем необходимые нам данные
-    from Service.Generator_Data import GeneratorDataConfig
+    from Service.Generator_Data import GeneratorGETSHPRM
     # Генерируем конфиг
-    Config = GeneratorDataConfig()
+    Config = GeneratorGETSHPRM()
     # получаем данные
 
     Serial = deepcopy(Config.Serial)
@@ -66,4 +66,4 @@ def command_GETSHPRM():
 # -------------------------------------------------------------------------------------------------------------------
 #                            Запуск тестов - Если идет прогон по Pytest - Закоментировать
 # -------------------------------------------------------------------------------------------------------------------
-command_GETSHPRM()
+# command_GETSHPRM()
