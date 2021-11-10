@@ -119,15 +119,15 @@ class GeneratorJournalValues(GeneratorWithMeterData):
 
         return JournalValues_format_JSON
 
-    def _record_JournalValues(self):
+    def _record_value_queue(self, JournalValues_format_JSON):
         """
-        Это метод записи значений в БД
+
+        Здесь записываем сформированный пакет значений в формате JSON
+
+        :param JournalValues_format_JSON:
+        :return:
         """
-        from copy import deepcopy
 
-        # Итак что делаем - Сделаем цикл
-
-        JournalValues_format_JSON = deepcopy(self.JournalValues)
 
         # Переводим в значения равные БД
         # Перебираем все значения что сгенерированли
@@ -169,6 +169,9 @@ class GeneratorJournalValues(GeneratorWithMeterData):
                     if type(JournalValues_list[i].get(columns_list[x])) == str:
                         JournalValues_list[i][columns_list[x]] = '\"' + JournalValues_list[i].get(
                             columns_list[x]) + '\"'
+                    # Если это None То Null
+                    elif JournalValues_list[i].get(columns_list[x]) is None:
+                        JournalValues_list[i][columns_list[x]] = 'Null'
 
                     values_element = values_element + str(JournalValues_list[i].get(columns_list[x])) + ' , '
                 # Обрезаем последнюю запятую
@@ -184,3 +187,30 @@ class GeneratorJournalValues(GeneratorWithMeterData):
             from GenerateMeterData.Service.Work_With_Database import SQL
 
             result = SQL(command=command)
+
+
+    def _record_JournalValues(self):
+        """
+        Это метод записи значений в БД
+        """
+        from copy import deepcopy
+
+        # Итак что делаем - Сделаем цикл
+
+        JournalValues = deepcopy(self.JournalValues)
+
+        # Итак что делаем - Сделаем цикл
+
+        # Переводим в значения равные БД
+        # Берем наши значения
+        JournalValues_format_JSON = {}
+
+        for key in JournalValues:
+            # Набираем списоак
+            JournalValues_format_JSON[key] = JournalValues[key]
+            # Теперь берем по 150 штук
+            if len(JournalValues_format_JSON) > 150:
+                self._record_value_queue(JournalValues_format_JSON=JournalValues_format_JSON)
+                JournalValues_format_JSON = {}
+        if len(JournalValues_format_JSON) > 0:
+            self._record_value_queue(JournalValues_format_JSON=JournalValues_format_JSON)

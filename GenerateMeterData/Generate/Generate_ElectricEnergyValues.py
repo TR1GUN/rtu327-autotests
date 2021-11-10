@@ -144,16 +144,15 @@ class GeneratorElectricEnergyValues(GeneratorWithMeterData):
 
         return ElectricPowerValues_format_JSON
 
-    def _record_ElectricEnergyValues(self):
+    def _record_value_queue(self, ElectricEnergyValues_format_JSON):
+
         """
-        Это метод записи значений в БД
+
+        Здесь записываем сформированный пакет значений в формате JSON
+
+        :param ElectricEnergyValues_format_JSON:
+        :return:
         """
-        from copy import deepcopy
-
-        # Итак что делаем - Сделаем цикл
-
-        ElectricEnergyValues_format_JSON = deepcopy(self.ElectricEnergyValues)
-
         # Переводим в значения равные БД
         # Перебираем все значения что сгенерированли
         ElectricEnergyValues_list = []
@@ -161,7 +160,7 @@ class GeneratorElectricEnergyValues(GeneratorWithMeterData):
         for ids in ElectricEnergyValues_format_JSON:
             # Формируем 5 списков как раз по тарифам
             # ВСЕ ЗАПИСЫВАЕМ ТОЛЬКО ЕСЛИ VALID > 0 :
-            if ElectricEnergyValues_format_JSON[ids].get('Valid') > 0 :
+            if ElectricEnergyValues_format_JSON[ids].get('Valid') > 0:
                 ElectricEnergyValues_tariff0 = {
                     'Id': ElectricEnergyValues_format_JSON[ids].get('Id'),
                     'Tariff': 0,
@@ -240,6 +239,9 @@ class GeneratorElectricEnergyValues(GeneratorWithMeterData):
                     if type(ElectricEnergyValues_list[i].get(columns_list[x])) == str:
                         ElectricEnergyValues_list[i][columns_list[x]] = '\"' + ElectricEnergyValues_list[i].get(
                             columns_list[x]) + '\"'
+                    # Если это None То Null
+                    elif ElectricEnergyValues_list[i].get(columns_list[x]) is None:
+                        ElectricEnergyValues_list[i][columns_list[x]] = 'Null'
 
                     values_element = values_element + str(ElectricEnergyValues_list[i].get(columns_list[x])) + ' , '
                 # Обрезаем последнюю запятую
@@ -256,3 +258,26 @@ class GeneratorElectricEnergyValues(GeneratorWithMeterData):
             from GenerateMeterData.Service.Work_With_Database import SQL
 
             result = SQL(command=command)
+
+    def _record_ElectricEnergyValues(self):
+        """
+        Это метод записи значений в БД
+        """
+        from copy import deepcopy
+
+        # Итак что делаем - Сделаем цикл
+
+        ElectricEnergyValues = deepcopy(self.ElectricEnergyValues)
+
+        # Берем наши значения
+        ElectricEnergyValues_format_JSON = {}
+
+        for key in ElectricEnergyValues:
+            # Набираем списоак
+            ElectricEnergyValues_format_JSON[key] = ElectricEnergyValues[key]
+            # Теперь берем по 150 штук
+            if len(ElectricEnergyValues_format_JSON) > 150:
+                self._record_value_queue(ElectricEnergyValues_format_JSON=ElectricEnergyValues_format_JSON)
+                ElectricEnergyValues_format_JSON = {}
+        if len(ElectricEnergyValues_format_JSON) > 0 :
+            self._record_value_queue(ElectricEnergyValues_format_JSON=ElectricEnergyValues_format_JSON)

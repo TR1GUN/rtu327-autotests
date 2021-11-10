@@ -121,17 +121,14 @@ class GeneratorElectricQualityValues(GeneratorWithMeterData):
 
         return ElectricQualityValues_format_JSON
 
-    def _record_ElectricQualityValues(self):
+    def _record_value_queue(self, ElectricQualityValues_format_JSON):
         """
-        Это метод записи значений в БД
+        Здесь записываем сформированный пакет значений в формате JSON
+
+        :param ElectricQualityValues_format_JSON:
+        :return:
         """
-        from copy import deepcopy
 
-        # Итак что делаем - Сделаем цикл
-
-        ElectricQualityValues_format_JSON = deepcopy(self.ElectricQualityValues)
-
-        # Переводим в значения равные БД
         # Перебираем все значения что сгенерированли
         ElectricQualityValues_list = []
 
@@ -189,7 +186,6 @@ class GeneratorElectricQualityValues(GeneratorWithMeterData):
                     'F': ElectricQualityValues_format_JSON[ids].get('Freq'),
                 }
 
-
                 # А теперь берем добавляем это все в наш список
                 ElectricQualityValues_list.append(ElectricQualityValues_PhaseA)
                 ElectricQualityValues_list.append(ElectricQualityValues_PhaseB)
@@ -227,9 +223,10 @@ class GeneratorElectricQualityValues(GeneratorWithMeterData):
                     if type(ElectricQualityValues_list[i].get(columns_list[x])) == str:
                         ElectricQualityValues_list[i][columns_list[x]] = '\"' + ElectricQualityValues_list[i].get(
                             columns_list[x]) + '\"'
-                    # Если это нон - То делаем из него стринг NULL
-                    elif ElectricQualityValues_list[i].get(columns_list[x]) == None:
-                        ElectricQualityValues_list[i][columns_list[x]] = 'null'
+                    # Если это None То Null
+                    elif ElectricQualityValues_list[i].get(columns_list[x]) is None:
+                        ElectricQualityValues_list[i][columns_list[x]] = 'Null'
+
 
                     values_element = values_element + str(ElectricQualityValues_list[i].get(columns_list[x])) + ' , '
                 # Обрезаем последнюю запятую
@@ -246,5 +243,43 @@ class GeneratorElectricQualityValues(GeneratorWithMeterData):
             from GenerateMeterData.Service.Work_With_Database import SQL
 
             result = SQL(command=command)
+
+    def _record_ElectricQualityValues(self):
+        """
+        Это метод записи значений в БД
+        """
+        from copy import deepcopy
+
+        # # Итак что делаем - Сделаем цикл
+        #
+        # ElectricQualityValues_format_JSON = deepcopy(self.ElectricQualityValues)
+        #
+        # # Переводим в значения равные БД
+        # # Перебираем все значения что сгенерированли
+        # ElectricQualityValues_list = []
+        #
+        # print(ElectricQualityValues_format_JSON)
+        # # Теперь разбираем все это по 150
+        # print(len(ElectricQualityValues_format_JSON))
+
+
+        # Берем наши значения
+        ElectricQualityValues = deepcopy(self.ElectricQualityValues)
+        ElectricQualityValues_format_JSON = {}
+
+        for key in ElectricQualityValues:
+            # Набираем списоак
+            ElectricQualityValues_format_JSON[key] = ElectricQualityValues[key]
+            # Теперь берем по 150 штук
+            if len(ElectricQualityValues_format_JSON) > 150:
+                self._record_value_queue(ElectricQualityValues_format_JSON=ElectricQualityValues_format_JSON)
+                ElectricQualityValues_format_JSON = {}
+        if len(ElectricQualityValues_format_JSON) > 0:
+            self._record_value_queue(ElectricQualityValues_format_JSON=ElectricQualityValues_format_JSON)
+
+
+
+
+
 
 

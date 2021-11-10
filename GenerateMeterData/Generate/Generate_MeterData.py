@@ -223,10 +223,16 @@ class GeneratorMeterData:
                               ]
 
         for i in range(len(columns_select_list)):
+            print(MeterData)
+            MeterData_DeviceIdx =[]
             for x in MeterData:
-                command_where = command_where + ' ' + columns_select_list[i] + ' == ' + str(
-                    MeterData[x][columns_select_list[i]]) + ' AND '
+                # Сначала добалвяем данный айдищник в общую базу
+                if MeterData[x][columns_select_list[i]] not in MeterData_DeviceIdx :
 
+                    command_where = command_where + ' ' + columns_select_list[i] + ' == ' + str(
+                        MeterData[x][columns_select_list[i]]) + ' AND '
+
+                    MeterData_DeviceIdx.append(MeterData[x][columns_select_list[i]])
         # Теперь обрезаем
         command_where = command_where[:-4]
 
@@ -234,7 +240,7 @@ class GeneratorMeterData:
 
         result = SQL(command=command)
 
-
+        print(result)
         # ТЕПЕРЬ ПОЛУЧИВШУЮСЯ КАШУ РАСКЛАДЫВАЕМ
         result = result.split('\n')
         # КАЖДЫЙ ЭЛЕМЕНТ СПИСКА СОДЕРЖИТ ровно один столбец

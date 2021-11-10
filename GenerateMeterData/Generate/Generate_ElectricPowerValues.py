@@ -126,17 +126,15 @@ class GeneratorElectricPowerValues(GeneratorWithMeterData):
 
         return ElectricPowerValues_format_JSON
 
-    def _record_ElectricPowerValues(self):
+    def _record_value_queue(self, ElectricPowerValues_format_JSON):
+
         """
-        Это метод записи значений в БД
+        Здесь записываем сформированный пакет значений в формате JSON
+
+        :param ElectricPowerValues_format_JSON:
+        :return:
         """
-        from copy import deepcopy
 
-        # Итак что делаем - Сделаем цикл
-
-        ElectricPowerValues_format_JSON = deepcopy(self.ElectricPowerValues)
-
-        # Переводим в значения равные БД
         # Перебираем все значения что сгенерированли
         ElectricPowerValues_list = []
 
@@ -189,6 +187,9 @@ class GeneratorElectricPowerValues(GeneratorWithMeterData):
                     if type(ElectricPowerValues_list[i].get(columns_list[x])) == str:
                         ElectricPowerValues_list[i][columns_list[x]] = '\"' + ElectricPowerValues_list[i].get(
                             columns_list[x]) + '\"'
+                    # Если это None То Null
+                    elif ElectricPowerValues_list[i].get(columns_list[x]) is None:
+                        ElectricPowerValues_list[i][columns_list[x]] = 'Null'
 
                     values_element = values_element + str(ElectricPowerValues_list[i].get(columns_list[x])) + ' , '
                 # Обрезаем последнюю запятую
@@ -205,3 +206,28 @@ class GeneratorElectricPowerValues(GeneratorWithMeterData):
             from GenerateMeterData.Service.Work_With_Database import SQL
 
             result = SQL(command=command)
+
+    def _record_ElectricPowerValues(self):
+        """
+        Это метод записи значений в БД
+        """
+        from copy import deepcopy
+
+        # Итак что делаем - Сделаем цикл
+
+        ElectricPowerValues = deepcopy(self.ElectricPowerValues)
+
+        # Переводим в значения равные БД
+        # Берем наши значения
+        ElectricPowerValues_format_JSON = {}
+
+        for key in ElectricPowerValues:
+            # Набираем списоак
+            ElectricPowerValues_format_JSON[key] = ElectricPowerValues[key]
+            # Теперь берем по 150 штук
+            if len(ElectricPowerValues_format_JSON) > 150:
+                self._record_value_queue(ElectricPowerValues_format_JSON=ElectricPowerValues_format_JSON)
+                ElectricPowerValues_format_JSON = {}
+
+        if len(ElectricPowerValues_format_JSON) > 0:
+            self._record_value_queue(ElectricPowerValues_format_JSON=ElectricPowerValues_format_JSON)
